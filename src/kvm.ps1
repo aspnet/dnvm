@@ -54,13 +54,13 @@ kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-a|-
   -f|-force         install even if specified version is already installed
 
 kvm use <semver>|<alias>|none [-x86][-x64] [-svr50][-svrc50] [-p|-persistent] [-g|-global]
-  <semver>|<alias>  add KRE bin to path of current command line   
+  <semver>|<alias>  add KRE bin to path of current command line
   none              remove KRE bin from path of current command line
   -p|-persistent    add KRE bin to PATH environment variables persistently
   -g|-global        combined with -p to change machine PATH instead of user PATH
 
 kvm list
-  list KRE versions installed 
+  list KRE versions installed
 
 kvm alias
   list KRE aliases which have been defined
@@ -69,7 +69,7 @@ kvm alias <alias>
   display value of named alias
 
 kvm alias <alias> <semver>|<alias> [-x86][-x64] [-svr50][-svrc50]
-  <alias>            The name of the alias to set 
+  <alias>            The name of the alias to set
   <semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias
 
 "@ | Write-Host
@@ -170,7 +170,7 @@ param(
     Add-Proxy-If-Specified($wc)
     [xml]$xml = $wc.DownloadString($url)
 
-    $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml 
+    $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
 
     return $version
 }
@@ -202,7 +202,7 @@ param(
     $kreTempDownload = Join-Path $packagesFolder "temp"
     $tempKreFile = Join-Path $kreTempDownload "$kreFullName.nupkg"
 
-    if(Test-Path $kreTempDownload) {  
+    if(Test-Path $kreTempDownload) {
       del "$kreTempDownload\*" -recurse
     } else {
       md $kreTempDownload -Force | Out-Null
@@ -215,7 +215,7 @@ param(
 
     Do-Kvm-Unpack $tempKreFile $kreTempDownload
 
-    md $kreFolder -Force | Out-Null   
+    md $kreFolder -Force | Out-Null
     Write-Host "Installing to $kreFolder"
     mv "$kreTempDownload\*" $kreFolder
 }
@@ -240,7 +240,7 @@ param(
       #make it a nupkg again
       Rename-Item $kreZip $kreFile
     }
-    
+
     If (Test-Path ($kreFolder + "\[Content_Types].xml")) {
         Remove-Item ($kreFolder + "\[Content_Types].xml")
     }
@@ -266,7 +266,7 @@ param(
     if ($versionOrAlias -eq "latest") {
         $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
     }
-    
+
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
     Do-Kvm-Download $kreFullName $globalKrePackages
@@ -290,20 +290,20 @@ param(
             del $kreFolder -Recurse -Force
             $folderExists = $false;
         }
-        
+
         if($folderExists) {
             Write-Host "Target folder '$kreFolder' already exists"
         } else {
             $tempUnpackFolder = Join-Path $userKrePackages "temp"
             $tempKreFile = Join-Path $tempUnpackFolder "$kreFullName.nupkg"
-        
-            if(Test-Path $tempUnpackFolder) {  
+
+            if(Test-Path $tempUnpackFolder) {
                 del "$tempUnpackFolder\*" -recurse
             } else {
                 md $tempUnpackFolder -Force | Out-Null
             }
             copy $versionOrAlias $tempKreFile
-                        
+
             Do-Kvm-Unpack $tempKreFile $tempUnpackFolder
             md $kreFolder -Force | Out-Null
             Write-Host "Installing to $kreFolder"
@@ -347,7 +347,7 @@ function Kvm-List {
 }
 
 filter List-Parts {
-  $hasBin = Test-Path($_.FullName+"\bin") 
+  $hasBin = Test-Path($_.FullName+"\bin")
   if (!$hasBin) {
     return
   }
@@ -385,7 +385,7 @@ param(
       Write-Host "Removing KRE from process PATH"
       Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
 
-      if ($persistent) {  
+      if ($persistent) {
           Write-Host "Removing KRE from machine PATH"
           $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
           $machinePath = Change-Path $machinePath "" ($globalKrePackages, $userKrePackages)
@@ -400,7 +400,7 @@ param(
     if ($kreBin -eq $null) {
       Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
       return
-    } 
+    }
 
     Write-Host "Adding" $kreBin "to process PATH"
     Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
@@ -421,7 +421,7 @@ param(
       Write-Host "Removing KRE from process PATH"
       Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
 
-      if ($persistent) {  
+      if ($persistent) {
           Write-Host "Removing KRE from user PATH"
           $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
           $userPath = Change-Path $userPath "" ($globalKrePackages, $userKrePackages)
@@ -436,12 +436,12 @@ param(
     if ($kreBin -eq $null) {
       Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
       return
-    } 
+    }
 
     Write-Host "Adding" $kreBin "to process PATH"
     Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
 
-    if ($persistent) {  
+    if ($persistent) {
         Write-Host "Adding $kreBin to user PATH"
         $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
         $userPath = Change-Path $userPath $kreBin ($globalKrePackages, $userKrePackages)
@@ -530,7 +530,7 @@ param(
 )
     if ($svr50 -and $svrc50) {
         Throw "This command cannot accept both -svr50 and -svrc50"
-    } 
+    }
     if ($svr50) {
         return "svr50"
     }
@@ -546,7 +546,7 @@ param(
 )
     if ($x86 -and $x64) {
         Throw "This command cannot accept both -x86 and -x64"
-    } 
+    }
     if ($x86) {
         return "x86"
     }
@@ -568,7 +568,7 @@ param(
       foreach($removePath in $removePaths) {
         if ($portion.StartsWith($removePath)) {
           $skip = $true
-        }      
+        }
       }
       if (!$skip) {
         $newPath = $newPath + ";" + $portion
