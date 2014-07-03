@@ -1,0 +1,22 @@
+use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+use import="Environment"
+
+var PRODUCT_VERSION = '1.0.0'
+var AUTHORS='Microsoft Open Technologies, Inc.'
+
+use-standard-lifecycle
+
+var ROOT = '${Directory.GetCurrentDirectory()}'
+var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
+
+#copy-kvm target='compile'
+    copy sourceDir='${ROOT}' outputDir='${ARTIFACTS_DIR}' include='kvm*' overwrite='${true}'
+    
+    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.ps1")}' @{
+        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
+    }
+    
+    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.sh")}' @{
+        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
+    }
