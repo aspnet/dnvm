@@ -8,10 +8,11 @@ var AUTHORS='Microsoft Open Technologies, Inc.'
 use-standard-lifecycle
 
 var ROOT = '${Directory.GetCurrentDirectory()}'
+var SOURCE_DIR = '${Path.Combine(ROOT, "src")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 
 #copy-kvm target='compile'
-    copy sourceDir='${ROOT}' outputDir='${ARTIFACTS_DIR}' include='kvm*' overwrite='${true}'
+    copy sourceDir='${SOURCE_DIR}' outputDir='${ARTIFACTS_DIR}' include='*.*' overwrite='${true}'
     
     update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.ps1")}' @{
         updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
