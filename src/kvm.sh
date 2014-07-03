@@ -357,15 +357,36 @@ kvm()
                 local searchGlob=$(_kvm_requested_version_or_alias "$versionOrAlias")
             fi
             echo ""
-            local formatString="%-6s %-20s %-7s %-12s %s\n"
-            printf "$formatString" "Active" "Version" "Runtime" "Architecture" "Location"
-            printf "$formatString" "------" "-------" "-------" "------------" "--------"
+            
+            local arr=()            
+            local i=0
+            local format="%-20s %s\n"
+            for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
+                arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
+                let i+=1
+            done
+
+            local formatString="%-6s %-20s %-20s %-7s %-12s %s\n"
+            printf "$formatString" "Active" "Version" "Alias" "Runtime" "Architecture" "Location"
+            printf "$formatString" "------" "-------" "-----" "-------" "------------" "--------"
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
                 local active=""
                 [[ $PATH == *"$KRE_USER_PACKAGES/$f/bin"* ]] && local active="  *"
                 local pkgName=$(_kvm_package_runtime "$f")
                 local pkgVersion=$(_kvm_package_version "$f")
-                printf "$formatString" "$active" "$pkgVersion" "$pkgName" "x86" "$KRE_USER_PACKAGES"
+
+                local alias=""
+                for i in "${arr[@]}"; do
+                    temp="KRE-$pkgName-x86.$pkgVersion"
+                    if [[ ${i#*/} == $temp ]]; then
+                        if [[ $alias != "" ]]; then
+                           alias+=","
+                        fi
+                       alias+="${i%/*}"
+                    fi
+                done
+
+                printf "$formatString" "$active" "$pkgVersion" "$alias" "$pkgName" "x86" "$KRE_USER_PACKAGES"
                 [[ $# == 2 ]] && echo "" &&  return 0
             done
 
