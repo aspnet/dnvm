@@ -336,14 +336,31 @@ function Kvm-List {
   if (!$kreHome) {
     $kreHome = $env:ProgramFiles + "\KRE;%USERPROFILE%\.kre"
   }
+
+  md ($userKrePath + "\alias\") -Force | Out-Null
+  $aliases = Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}
+
   $items = @()
   foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
     if (Test-Path("$path\packages")) {
-      $items += Get-ChildItem ("$path\packages\KRE-*") | List-Parts
+      $current_item = Get-ChildItem ("$path\packages\KRE-*") | List-Parts
+
+      foreach($alias in $aliases){
+        if($current_item.FullName.Contains($alias.Name)){
+            if($current_item.Alias -ne ""){
+                $current_item.Alias += ","
+            }
+            $current_item.Alias += $alias.Alias
+        }
+      }  
+
+      $items += $current_item
     }
   }
-  $items | Sort-Object Version, Runtime, Architecture | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Runtime", "Architecture", "Location"
+  
+
+  $items | Sort-Object Version, Alias, Runtime, Architecture | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Alias", "Runtime", "Architecture", "Location"
 }
 
 filter List-Parts {
@@ -365,6 +382,8 @@ filter List-Parts {
     Runtime = $parts2[1]
     Architecture = $parts2[2]
     Location = $_.Parent.FullName
+    Alias = ""
+    FullName = $_.Name.Split('\', 2)
   }
 }
 
