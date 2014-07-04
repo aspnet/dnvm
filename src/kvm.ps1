@@ -344,26 +344,16 @@ function Kvm-List {
   foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
     if (Test-Path("$path\packages")) {
-      $current_item = Get-ChildItem ("$path\packages\KRE-*") | List-Parts
-
-      foreach($alias in $aliases){
-        if($current_item.FullName.Contains($alias.Name)){
-            if($current_item.Alias -ne ""){
-                $current_item.Alias += ","
-            }
-            $current_item.Alias += $alias.Alias
-        }
-      }  
-
-      $items += $current_item
+      $items += Get-ChildItem ("$path\packages\KRE-*") | List-Parts $aliases
     }
   }
-  
 
-  $items | Sort-Object Version, Alias, Runtime, Architecture | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Alias", "Runtime", "Architecture", "Location"
+  $items | Sort-Object Version, Runtime, Architecture, Alias | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Runtime", "Architecture", "Location", "Alias"
 }
 
 filter List-Parts {
+  param($aliases)
+
   $hasBin = Test-Path($_.FullName+"\bin")
   if (!$hasBin) {
     return
@@ -374,6 +364,17 @@ filter List-Parts {
       $active = $true
     }
   }
+  
+  $fullAlias=""
+  $delim=""
+
+  foreach($alias in $aliases){
+    if($_.Name.Split('\', 2).Contains($alias.Name)){
+        $fullAlias += $delim + $alias.Alias
+        $delim = ", "
+    }
+  }
+
   $parts1 = $_.Name.Split('.', 2)
   $parts2 = $parts1[0].Split('-', 3)
   return New-Object PSObject -Property @{
@@ -382,8 +383,7 @@ filter List-Parts {
     Runtime = $parts2[1]
     Architecture = $parts2[2]
     Location = $_.Parent.FullName
-    Alias = ""
-    FullName = $_.Name.Split('\', 2)
+    Alias = $fullAlias
   }
 }
 
