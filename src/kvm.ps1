@@ -66,11 +66,14 @@ kvm alias
   list KRE aliases which have been defined
 
 kvm alias <alias>
-  display value of named alias
+  display value of the specified alias
 
 kvm alias <alias> <semver>|<alias> [-x86][-x64] [-svr50][-svrc50]
   <alias>            The name of the alias to set
   <semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias
+
+kvm unalias <alias>
+  remove the specified alias
 
 "@ -replace "`n","`r`n" | Write-Host
 }
@@ -480,6 +483,19 @@ param(
     $kreFullName | Out-File ($userKrePath + "\alias\" + $name + ".txt") ascii
 }
 
+function Kvm-Unalias {
+param(
+  [string] $name
+)
+    $aliasPath=$userKrePath + "\alias\" + $name + ".txt"
+    if (Test-Path -literalPath "$aliasPath") {
+        Write-Host "Removing alias $name"
+        Remove-Item -literalPath $aliasPath
+    } else {
+        Write-Host "Cannot remove alias, '$name' is not a valid alias name"
+    }
+}
+
 function Locate-KreBinFromFullName() {
 param(
   [string] $kreFullName
@@ -623,8 +639,9 @@ function Requested-Switches() {
       "alias 0"           {Kvm-Alias-List}
       "alias 1"           {Kvm-Alias-Get $args[0]}
       "alias 2"           {Kvm-Alias-Set $args[0] $args[1]}
-      "help 0"              {Kvm-Help}
-      " 0"              {Kvm-Help}
+      "unalias 1"         {Kvm-Unalias $args[0]}
+      "help 0"            {Kvm-Help}
+      " 0"                {Kvm-Help}
       default             {Write-Host 'Unknown command'; Kvm-Help;}
     }
    }
