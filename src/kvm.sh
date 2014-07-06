@@ -365,10 +365,12 @@ kvm()
                 arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
                 let i+=1
             done
-
-            local formatString="%-6s %-20s %-20s %-7s %-12s %s\n"
-            printf "$formatString" "Active" "Version" "Alias" "Runtime" "Architecture" "Location"
-            printf "$formatString" "------" "-------" "-----" "-------" "------------" "--------"
+    
+            local formatString="%-6s %-20s %-7s %-12s %-20s %s\n"
+            printf "$formatString" "Active" "Version" "Runtime" "Architecture" "Location" "Alias"
+            printf "$formatString" "------" "-------" "-------" "------------" "--------" "-----"
+            
+            local formattedHome=`(echo $KRE_USER_PACKAGES | sed s=$HOME=~=g)`
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
                 local active=""
                 [[ $PATH == *"$KRE_USER_PACKAGES/$f/bin"* ]] && local active="  *"
@@ -376,17 +378,16 @@ kvm()
                 local pkgVersion=$(_kvm_package_version "$f")
 
                 local alias=""
-                for i in "${arr[@]}"; do
+                local delim=""
+                for i in "${arr[@]}"; do    
                     temp="KRE-$pkgName-x86.$pkgVersion"
                     if [[ ${i#*/} == $temp ]]; then
-                        if [[ $alias != "" ]]; then
-                           alias+=","
-                        fi
-                       alias+="${i%/*}"
+                        alias+="$delim${i%/*}"
+                        delim=", "
                     fi
                 done
 
-                printf "$formatString" "$active" "$pkgVersion" "$alias" "$pkgName" "x86" "$KRE_USER_PACKAGES"
+                printf "$formatString" "$active" "$pkgVersion" "$pkgName" "x86" "$formattedHome" "$alias"
                 [[ $# == 2 ]] && echo "" &&  return 0
             done
 
