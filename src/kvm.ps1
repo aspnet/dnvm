@@ -72,7 +72,7 @@ kvm alias <alias> <semver>|<alias> [-x86][-x64] [-svr50][-svrc50]
   <alias>            The name of the alias to set
   <semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias
 
-"@ | Write-Host
+"@ -replace "`n","`r`n" | Write-Host
 }
 
 function Kvm-Global-Setup {
