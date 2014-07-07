@@ -474,8 +474,8 @@ param(
   [string] $value
 )
     $kreFullName = Requested-VersionOrAlias $value
-    $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
-    $action=if (Test-Path $aliasFilePath) { "Updating"} else { "Setting" }
+    $aliasFilePath = $userKrePath + "\alias\" + $name + ".txt"
+    $action = if (Test-Path $aliasFilePath) {"Updating"} else {"Setting"}
     Write-Host "$action alias '$name' to '$kreFullName'"
     md ($userKrePath + "\alias\") -Force | Out-Null
     $kreFullName | Out-File ($aliasFilePath) ascii
