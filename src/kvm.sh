@@ -198,12 +198,14 @@ kvm()
             echo "list KRE aliases which have been defined"
             echo ""
             echo "kvm alias <alias>"
-            echo "display value of named alias"
+            echo "display value of the specified alias"
             echo ""
             echo "kvm alias <alias> <semver>"
             echo "<alias>            The name of the alias to set"
             echo "<semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias"
             echo ""
+            echo "kvm unalias <alias>"
+            echo "remove the specified alias"
             echo ""
         ;;
 
@@ -339,11 +341,21 @@ kvm()
 
             local kreFullName=$(_kvm_requested_version_or_alias "$3")
 
-            [[ ! -d "$KRE_USER_PACKAGES/$kreFullName" ]] && echo "$kreFullName is not an installed KRE version." && return 1
+            [[ ! -d "$KRE_USER_PACKAGES/$kreFullName" ]] && echo "$kreFullName is not an installed KRE version" && return 1
 
             echo "Setting alias '$name' to '$kreFullName'"
 
             echo "$kreFullName" > "$KRE_USER_HOME/alias/$name.alias"
+        ;;
+        
+        "unalias" )
+            [[ $# -ne 2 ]] && kvm help && return
+            
+            local name=$2
+            local aliasPath="$KRE_USER_HOME/alias/$name.alias"
+            [[ ! -e  "$aliasPath" ]] && echo "Cannot remove alias, '$name' is not a valid alias name" && return 1
+            echo "Removing alias $name"
+            rm "$aliasPath" >> /dev/null 2>&1
         ;;
 
         "list" )
