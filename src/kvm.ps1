@@ -363,7 +363,7 @@ filter List-Parts {
   $parts1 = $_.Name.Split('.', 2)
   $parts2 = $parts1[0].Split('-', 3)
   return New-Object PSObject -Property @{
-    Active = if($active){"*"}else{""}
+    Active = if ($active) { "*" } else { "" }
     Version = $parts1[1]
     Runtime = $parts2[1]
     Architecture = $parts2[2]
@@ -477,10 +477,11 @@ param(
   [string] $value
 )
     $kreFullName = Requested-VersionOrAlias $value
-
-    Write-Host "Setting alias '$name' to '$kreFullName'"
+    $aliasFilePath = $userKrePath + "\alias\" + $name + ".txt"
+    $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
+    Write-Host "$action alias '$name' to '$kreFullName'"
     md ($userKrePath + "\alias\") -Force | Out-Null
-    $kreFullName | Out-File ($userKrePath + "\alias\" + $name + ".txt") ascii
+    $kreFullName | Out-File ($aliasFilePath) ascii
 }
 
 function Kvm-Unalias {
