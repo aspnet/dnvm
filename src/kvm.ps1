@@ -221,6 +221,7 @@ param(
     md $kreFolder -Force | Out-Null
     Write-Host "Installing to $kreFolder"
     mv "$kreTempDownload\*" $kreFolder
+    Remove-Item "$kreTempDownload" -Force | Out-Null
 }
 
 function Do-Kvm-Unpack {
@@ -311,6 +312,7 @@ param(
             md $kreFolder -Force | Out-Null
             Write-Host "Installing to $kreFolder"
             mv "$tempUnpackFolder\*" $kreFolder
+            Remove-Item "$tempUnpackFolder" -Force | Out-Null
         }
 
         $packageVersion = Package-Version $kreFullName
