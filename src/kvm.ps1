@@ -339,7 +339,7 @@ param(
 function Kvm-List {
   $kreHome = $env:KRE_HOME
   if (!$kreHome) {
-    $kreHome = $env:ProgramFiles + "\KRE;%USERPROFILE%\.kre"
+    $kreHome = "$globalKrePath;$userKrePath"
   }
   $items = @()
   foreach($portion in $kreHome.Split(';')) {
