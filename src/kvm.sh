@@ -390,6 +390,8 @@ kvm()
             echo "Unknown command $1"
             return 1
     esac
+    
+    return 0
 }
 
 kvm list default >/dev/null && kvm use default >/dev/null || true
