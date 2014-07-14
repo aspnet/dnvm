@@ -339,7 +339,7 @@ param(
 function Kvm-List {
   $kreHome = $env:KRE_HOME
   if (!$kreHome) {
-    $kreHome = $env:ProgramFiles + "\KRE;%USERPROFILE%\.kre"
+    $kreHome = "$globalKrePath;$userKrePath"
   }
   $items = @()
   foreach($portion in $kreHome.Split(';')) {
@@ -505,7 +505,7 @@ param(
 )
   $kreHome = $env:KRE_HOME
   if (!$kreHome) {
-    $kreHome = $env:ProgramFiles + ";%USERPROFILE%\.kre"
+    $kreHome = "$globalKrePath;$userKrePath"
   }
   foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
