@@ -22,6 +22,10 @@ $globalKrePath = $env:ProgramFiles + "\KRE"
 $globalKrePackages = $globalKrePath + "\packages"
 $feed = $env:KRE_NUGET_API_URL
 
+function String-IsEmptyOrWhitespace([string]$str) {
+     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0 
+}
+
 if (!$feed)
 {
     $feed = "https://www.myget.org/F/aspnetvnext/api/v2";
@@ -275,7 +279,7 @@ param(
 
     Do-Kvm-Download $kreFullName $globalKrePackages
     Kvm-Use $versionOrAlias
-    if (![string]::IsNullOrWhiteSpace($alias)) {
+    if (!$(String-IsEmptyOrWhitespace($alias))) {
         Kvm-Alias-Set $alias $versionOrAlias
     }
 }
@@ -317,7 +321,7 @@ param(
 
         $packageVersion = Package-Version $kreFullName
         Kvm-Use $packageVersion
-        if (![string]::IsNullOrWhiteSpace($alias)) {
+        if (!$(String-IsEmptyOrWhitespace($alias))) {
             Kvm-Alias-Set $alias $packageVersion
         }
     }
@@ -330,7 +334,7 @@ param(
 
         Do-Kvm-Download $kreFullName $userKrePackages
         Kvm-Use $versionOrAlias
-        if (![string]::IsNullOrWhiteSpace($alias)) {
+        if (!$(String-IsEmptyOrWhitespace($alias))) {
             Kvm-Alias-Set $alias $versionOrAlias
         }
     }
