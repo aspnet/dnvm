@@ -23,7 +23,7 @@ $globalKrePackages = $globalKrePath + "\packages"
 $feed = $env:KRE_NUGET_API_URL
 
 function String-IsEmptyOrWhitespace([string]$str) {
-     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0 
+     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0
 }
 
 if (!$feed)
@@ -135,13 +135,13 @@ function Kvm-Global-Upgrade {
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         break
     }
-    Kvm-Global-Install "latest"
+    Kvm-Install "latest" $true
 }
 
 function Kvm-Upgrade {
     $persistent = $true
     $alias="default"
-    Kvm-Install "latest"
+    Kvm-Install "latest" $false
 }
 
 function Add-Proxy-If-Specified {
@@ -260,49 +260,46 @@ param(
     }
 }
 
-function Kvm-Global-Install {
+function Kvm-Install {
 param(
-  [string] $versionOrAlias
+  [string] $versionOrAlias,
+  [boolean] $isGlobal
 )
-    If (Needs-Elevation) {
-        $arguments = "& '$scriptPath' install -global $versionOrAlias $(Requested-Switches)"
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-        Kvm-Global-Use $versionOrAlias
-        break
-    }
-
     if ($versionOrAlias -eq "latest") {
         $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
     }
 
-    $kreFullName = Requested-VersionOrAlias $versionOrAlias
-
-    Do-Kvm-Download $kreFullName $globalKrePackages
-    Kvm-Use $versionOrAlias
-    if (!$(String-IsEmptyOrWhitespace($alias))) {
-        Kvm-Alias-Set $alias $versionOrAlias
+    if ($versionOrAlias.EndsWith(".nupkg")) {
+      $kreFullName = [System.IO.Path]::GetFileNameWithoutExtension($versionOrAlias)
+    } else {
+      $kreFullName =  Requested-VersionOrAlias $versionOrAlias
     }
-}
 
-function Kvm-Install {
-param(
-  [string] $versionOrAlias
-)
-    if ($versionOrAlias.EndsWith(".nupkg"))
-    {
-        $kreFullName = [System.IO.Path]::GetFileNameWithoutExtension($versionOrAlias)
-        $kreFolder = "$userKrePackages\$kreFullName"
+    If ($isGlobal) {
+      If (Needs-Elevation) {
+          $arguments = "& '$scriptPath' install -global $versionOrAlias $(Requested-Switches)"
+          Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+          Kvm-Use (Package-Version $kreFullName)
+          break
+      }
+      $packageFolder = $globalKrePackages
+    } else {
+      $packageFolder = $userKrePackages
+    }
+
+    if ($versionOrAlias.EndsWith(".nupkg")) {
+        $kreFolder = "$packageFolder\$kreFullName"
         $folderExists = Test-Path $kreFolder
 
-        if($folderExists -and $force) {
+        if ($folderExists -and $force) {
             del $kreFolder -Recurse -Force
             $folderExists = $false;
         }
 
-        if($folderExists) {
+        if ($folderExists) {
             Write-Host "Target folder '$kreFolder' already exists"
         } else {
-            $tempUnpackFolder = Join-Path $userKrePackages "temp"
+            $tempUnpackFolder = Join-Path $packageFolder "temp"
             $tempKreFile = Join-Path $tempUnpackFolder "$kreFullName.nupkg"
 
             if(Test-Path $tempUnpackFolder) {
@@ -327,12 +324,7 @@ param(
     }
     else
     {
-        if ($versionOrAlias -eq "latest") {
-            $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
-        }
-        $kreFullName = Requested-VersionOrAlias $versionOrAlias
-
-        Do-Kvm-Download $kreFullName $userKrePackages
+        Do-Kvm-Download $kreFullName $packageFolder
         Kvm-Use $versionOrAlias
         if (!$(String-IsEmptyOrWhitespace($alias))) {
             Kvm-Alias-Set $alias $versionOrAlias
@@ -373,7 +365,7 @@ filter List-Parts {
       $active = $true
     }
   }
-  
+
   $fullAlias=""
   $delim=""
 
@@ -650,8 +642,7 @@ function Requested-Switches() {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Global-Upgrade}
-      "install 1"         {Kvm-Global-Install $args[0]}
-#      "list 0"            {Kvm-Global-List}
+      "install 1"         {Kvm-Install $args[0] $true}
       "use 1"             {Kvm-Global-Use $args[0]}
       default             {Write-Host 'Unknown command, or global switch not supported'; Kvm-Help;}
     }
@@ -659,7 +650,7 @@ function Requested-Switches() {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Upgrade}
-      "install 1"         {Kvm-Install $args[0]}
+      "install 1"         {Kvm-Install $args[0] $false}
       "list 0"            {Kvm-List}
       "use 1"             {Kvm-Use $args[0]}
       "alias 0"           {Kvm-Alias-List}
