@@ -10,6 +10,7 @@ param(
   [switch] $x64 = $false,
   [switch] $svr50 = $false,
   [switch] $svrc50 = $false,
+  [alias("w")][switch] $wait = $false,
   [alias("a")]
   [string] $alias = $null,
   [parameter(Position=1, ValueFromRemainingArguments=$true)]
@@ -23,7 +24,7 @@ $globalKrePackages = $globalKrePath + "\packages"
 $feed = $env:KRE_NUGET_API_URL
 
 function String-IsEmptyOrWhitespace([string]$str) {
-     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0 
+     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0
 }
 
 if (!$feed)
@@ -85,7 +86,7 @@ kvm unalias <alias>
 function Kvm-Global-Setup {
     If (Needs-Elevation)
     {
-        $arguments = "& '$scriptPath' setup $(Requested-Switches) -persistent"
+        $arguments = "& '$scriptPath' setup $(Requested-Switches) -persistent -wait"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         Write-Host "Setup complete"
         Kvm-Help
@@ -122,20 +123,20 @@ function Kvm-Global-Setup {
     $machineKreHome = Change-Path $machineKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
     $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
     [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
-
-    Write-Host "Press any key to continue ..."
-    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
 }
 
 function Kvm-Global-Upgrade {
     $persistent = $true
     $alias="default"
+    $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+
     If (Needs-Elevation) {
-        $arguments = "& '$scriptPath' upgrade -global $(Requested-Switches)"
+        $arguments = "& '$scriptPath' upgrade -global $(Requested-Switches) -wait"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+        Kvm-Set-Global-Process-Path $versionOrAlias
         break
     }
-    Kvm-Global-Install "latest"
+    Kvm-Global-Install $versionOrAlias
 }
 
 function Kvm-Upgrade {
@@ -264,22 +265,22 @@ function Kvm-Global-Install {
 param(
   [string] $versionOrAlias
 )
-    If (Needs-Elevation) {
-        $arguments = "& '$scriptPath' install -global $versionOrAlias $(Requested-Switches)"
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-        Kvm-Global-Use $versionOrAlias
-        break
-    }
-
     if ($versionOrAlias -eq "latest") {
         $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+    }
+
+    If (Needs-Elevation) {
+        $arguments = "& '$scriptPath' install -global $versionOrAlias $(Requested-Switches) -wait"
+        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments
+        Kvm-Set-Global-Process-Path $versionOrAlias
+        break
     }
 
     $kreFullName = Requested-VersionOrAlias $versionOrAlias
 
     Do-Kvm-Download $kreFullName $globalKrePackages
-    Kvm-Use $versionOrAlias
-    if (!$(String-IsEmptyOrWhitespace($alias))) {
+    Kvm-Global-Use $versionOrAlias
+   if (!$(String-IsEmptyOrWhitespace($alias))) {
         Kvm-Alias-Set $alias $versionOrAlias
     }
 }
@@ -373,7 +374,7 @@ filter List-Parts {
       $active = $true
     }
   }
-  
+
   $fullAlias=""
   $delim=""
 
@@ -400,45 +401,62 @@ function Kvm-Global-Use {
 param(
   [string] $versionOrAlias
 )
-    If (Needs-Elevation) {
-        $arguments = "& '$scriptPath' use -global $versionOrAlias $(Requested-Switches)"
-        if ($persistent) {
-          $arguments = $arguments + " -persistent"
-        }
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-        break
-    }
-
-    if ($versionOrAlias -eq "none") {
-      Write-Host "Removing KRE from process PATH"
-      Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
-
+  If (Needs-Elevation) {
+      $arguments = "& '$scriptPath' use -global $versionOrAlias $(Requested-Switches) -wait"
       if ($persistent) {
-          Write-Host "Removing KRE from machine PATH"
-          $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-          $machinePath = Change-Path $machinePath "" ($globalKrePackages, $userKrePackages)
-          [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+        $arguments = $arguments + " -persistent"
       }
-      return;
-    }
+      Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+      Kvm-Set-Global-Process-Path $versionOrAlias
+      break
+  }
 
-    $kreFullName = Requested-VersionOrAlias $versionOrAlias
+  Kvm-Set-Global-Process-Path $versionOrAlias
 
-    $kreBin = Locate-KreBinFromFullName $kreFullName
-    if ($kreBin -eq $null) {
-      Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
-      return
-    }
-
-    Write-Host "Adding" $kreBin "to process PATH"
-    Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
-
+  if ($versionOrAlias -eq "none") {
     if ($persistent) {
-        Write-Host "Adding $kreBin to machine PATH"
+        Write-Host "Removing KRE from machine PATH"
         $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-        $machinePath = Change-Path $machinePath $kreBin ($globalKrePackages, $userKrePackages)
+        $machinePath = Change-Path $machinePath "" ($globalKrePackages, $userKrePackages)
         [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
     }
+    return;
+  }
+
+  $kreFullName = Requested-VersionOrAlias $versionOrAlias
+  $kreBin = Locate-KreBinFromFullName $kreFullName
+  if ($kreBin -eq $null) {
+    Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
+    return
+  }
+
+  if ($persistent) {
+      Write-Host "Adding $kreBin to machine PATH"
+      $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+      $machinePath = Change-Path $machinePath $kreBin ($globalKrePackages, $userKrePackages)
+      [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+  }
+}
+
+function Kvm-Set-Global-Process-Path {
+param(
+  [string] $versionOrAlias
+)
+  if ($versionOrAlias -eq "none") {
+    Write-Host "Removing KRE from process PATH"
+    Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
+    return
+  }
+
+  $kreFullName = Requested-VersionOrAlias $versionOrAlias
+  $kreBin = Locate-KreBinFromFullName $kreFullName
+  if ($kreBin -eq $null) {
+    Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
+    return
+  }
+
+  Write-Host "Adding" $kreBin "to process PATH"
+  Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
 }
 
 function Kvm-Use {
@@ -674,4 +692,8 @@ function Requested-Switches() {
   }
   catch {
     Write-Host $_ -ForegroundColor Red ;
+  }
+  if ($wait) {
+    Write-Host "Press any key to continue ..."
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
   }
