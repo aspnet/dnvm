@@ -85,7 +85,7 @@ kvm unalias <alias>
 function Kvm-Global-Setup {
     If (Needs-Elevation)
     {
-        $arguments = "& '$scriptPath' setup $(Requested-Switches) -persistent"
+        $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup $(Requested-Switches) -persistent"
         Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
         Write-Host "Setup complete"
         Kvm-Help
