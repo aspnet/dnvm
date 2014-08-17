@@ -40,7 +40,7 @@ K Runtime Environment Version Manager - Build {{BUILD_NUMBER}}
 
 USAGE: kvm <command> [options]
 
-kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global] [-proxy <ADDRESS>]
+kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global] [-f|-force] [-proxy <ADDRESS>]
   install latest KRE from feed
   set 'default' alias to installed version
   add KRE bin to user PATH environment variable
@@ -84,18 +84,24 @@ kvm unalias <alias>
 }
 
 function Kvm-Global-Setup {
+  $kvmBinPath = "$userKrePath\bin"
+
   If (Needs-Elevation)
   {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup $(Requested-Switches) -persistent -wait"
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup -global -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+    Write-Host "Adding $kvmBinPath to process PATH"
+    Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
+    Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to process KRE_HOME"
+    $envKreHome = $env:KRE_HOME
+    $envKreHome = Change-Path $envKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+    $envKreHome = Change-Path $envKreHome $globalKrePath ($globalKrePath)
+    $env:KRE_HOME = $envKreHome
     Write-Host "Setup complete"
-    Kvm-Help
     break
   }
 
   $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
-
-  $kvmBinPath = "$userKrePath\bin"
 
   Write-Host "Copying file $kvmBinPath\kvm.ps1"
   md $kvmBinPath -Force | Out-Null
@@ -129,9 +135,8 @@ function Kvm-Global-Upgrade {
   $persistent = $true
   $alias="default"
   $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
-
   If (Needs-Elevation) {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' upgrade -global $(Requested-Switches) -wait"
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) $(Requested-Arguments) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
     Kvm-Set-Global-Process-Path $versionOrAlias
     break
@@ -278,7 +283,7 @@ param(
 
   if ($isGlobal) {
     if (Needs-Elevation) {
-      $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install -global $versionOrAlias $(Requested-Switches) -wait"
+      $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) $(Requested-Arguments) -wait"
       Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
       Kvm-Set-Global-Process-Path $versionOrAlias
       break
@@ -328,7 +333,7 @@ param(
     Do-Kvm-Download $kreFullName $packageFolder
     Kvm-Use $versionOrAlias
     if (!$(String-IsEmptyOrWhitespace($alias))) {
-        Kvm-Alias-Set $alias $versionOrAlias
+        Kvm-Alias-Set "$alias" $versionOrAlias
     }
   }
 }
@@ -394,16 +399,13 @@ param(
   [string] $versionOrAlias
 )
   If (Needs-Elevation) {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use -global $versionOrAlias $(Requested-Switches) -wait"
-    if ($persistent) {
-      $arguments = $arguments + " -persistent"
-    }
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use '$versionOrAlias' -global $(Requested-Switches) $(Requested-Arguments) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
     Kvm-Set-Global-Process-Path $versionOrAlias
     break
   }
 
-  Kvm-Set-Global-Process-Path $versionOrAlias
+  Kvm-Set-Global-Process-Path "$versionOrAlias"
 
   if ($versionOrAlias -eq "none") {
     if ($persistent) {
@@ -415,7 +417,7 @@ param(
     return;
   }
 
-  $kreFullName = Requested-VersionOrAlias $versionOrAlias
+  $kreFullName = Requested-VersionOrAlias "$versionOrAlias"
   $kreBin = Locate-KreBinFromFullName $kreFullName
   if ($kreBin -eq $null) {
     Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
@@ -652,6 +654,14 @@ function Requested-Switches() {
   if ($x64) {$arguments = "$arguments -x64"}
   if ($svr50) {$arguments = "$arguments -svr50"}
   if ($svrc50) {$arguments = "$arguments -svrc50"}
+  return $arguments
+}
+
+function Requested-Arguments() {
+  $arguments = ""
+  if ($persistent) {$arguments = "$arguments -persistent"}
+  if ($force) {$arguments = "$arguments -force"}
+  if (!$(String-IsEmptyOrWhitespace($alias))) {$arguments = "$arguments -alias '$alias'"}
   return $arguments
 }
 
