@@ -84,103 +84,103 @@ kvm unalias <alias>
 }
 
 function Kvm-Global-Setup {
-    If (Needs-Elevation)
-    {
-        $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup $(Requested-Switches) -persistent -wait"
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-        Write-Host "Setup complete"
-        Kvm-Help
-        break
-    }
+  If (Needs-Elevation)
+  {
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup $(Requested-Switches) -persistent -wait"
+    Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+    Write-Host "Setup complete"
+    Kvm-Help
+    break
+  }
 
-    $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
+  $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
 
-    $kvmBinPath = "$userKrePath\bin"
+  $kvmBinPath = "$userKrePath\bin"
 
-    Write-Host "Copying file $kvmBinPath\kvm.ps1"
-    md $kvmBinPath -Force | Out-Null
-    copy "$scriptFolder\kvm.ps1" "$kvmBinPath\kvm.ps1"
+  Write-Host "Copying file $kvmBinPath\kvm.ps1"
+  md $kvmBinPath -Force | Out-Null
+  copy "$scriptFolder\kvm.ps1" "$kvmBinPath\kvm.ps1"
 
-    Write-Host "Copying file $kvmBinPath\kvm.cmd"
-    copy "$scriptFolder\kvm.cmd" "$kvmBinPath\kvm.cmd"
+  Write-Host "Copying file $kvmBinPath\kvm.cmd"
+  copy "$scriptFolder\kvm.cmd" "$kvmBinPath\kvm.cmd"
 
-    Write-Host "Adding $kvmBinPath to process PATH"
-    Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
+  Write-Host "Adding $kvmBinPath to process PATH"
+  Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
 
-    Write-Host "Adding $kvmBinPath to user PATH"
-    $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-    $userPath = Change-Path $userPath $kvmBinPath ($kvmBinPath)
-    [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
+  Write-Host "Adding $kvmBinPath to user PATH"
+  $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+  $userPath = Change-Path $userPath $kvmBinPath ($kvmBinPath)
+  [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
 
-    Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to process KRE_HOME"
-    $envKreHome = $env:KRE_HOME
-    $envKreHome = Change-Path $envKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
-    $envKreHome = Change-Path $envKreHome $globalKrePath ($globalKrePath)
-    $env:KRE_HOME = $envKreHome
+  Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to process KRE_HOME"
+  $envKreHome = $env:KRE_HOME
+  $envKreHome = Change-Path $envKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+  $envKreHome = Change-Path $envKreHome $globalKrePath ($globalKrePath)
+  $env:KRE_HOME = $envKreHome
 
-    Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to machine KRE_HOME"
-    $machineKreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
-    $machineKreHome = Change-Path $machineKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
-    $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
-    [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
+  Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to machine KRE_HOME"
+  $machineKreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
+  $machineKreHome = Change-Path $machineKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+  $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
+  [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 }
 
 function Kvm-Global-Upgrade {
-    $persistent = $true
-    $alias="default"
-    $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+  $persistent = $true
+  $alias="default"
+  $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
 
-    If (Needs-Elevation) {
-        $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' upgrade -global $(Requested-Switches) -wait"
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-        Kvm-Set-Global-Process-Path $versionOrAlias
-        break
-    }
-    Kvm-Install $versionOrAlias $true
+  If (Needs-Elevation) {
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' upgrade -global $(Requested-Switches) -wait"
+    Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+    Kvm-Set-Global-Process-Path $versionOrAlias
+    break
+  }
+  Kvm-Install $versionOrAlias $true
 }
 
 function Kvm-Upgrade {
-    $persistent = $true
-    $alias="default"
-    Kvm-Install "latest" $false
+  $persistent = $true
+  $alias="default"
+  Kvm-Install "latest" $false
 }
 
 function Add-Proxy-If-Specified {
 param(
-    [System.Net.WebClient] $wc
+  [System.Net.WebClient] $wc
 )
-    if (!$proxy) {
-        $proxy = $env:http_proxy
+  if (!$proxy) {
+    $proxy = $env:http_proxy
+  }
+  if ($proxy) {
+    $wp = New-Object System.Net.WebProxy($proxy)
+    $pb = New-Object UriBuilder($proxy)
+    if (!$pb.UserName) {
+        $wp.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+    } else {
+        $wp.Credentials = New-Object System.Net.NetworkCredential($pb.UserName, $pb.Password)
     }
-    if ($proxy) {
-        $wp = New-Object System.Net.WebProxy($proxy)
-        $pb = New-Object UriBuilder($proxy)
-        if (!$pb.UserName) {
-            $wp.Credentials = [System.Net.CredentialCache]::DefaultCredentials
-        } else {
-            $wp.Credentials = New-Object System.Net.NetworkCredential($pb.UserName, $pb.Password)
-        }
-        $wc.Proxy = $wp
-    }
+    $wc.Proxy = $wp
+  }
 }
 
 function Kvm-Find-Latest {
 param(
-    [string] $platform,
-    [string] $architecture
+  [string] $platform,
+  [string] $architecture
 )
-    Write-Host "Determining latest version"
+  Write-Host "Determining latest version"
 
-    $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+  $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
-    $wc = New-Object System.Net.WebClient
-    $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
-    Add-Proxy-If-Specified($wc)
-    [xml]$xml = $wc.DownloadString($url)
+  $wc = New-Object System.Net.WebClient
+  $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
+  Add-Proxy-If-Specified($wc)
+  [xml]$xml = $wc.DownloadString($url)
 
-    $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
+  $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
 
-    return $version
+  return $version
 }
 
 function Do-Kvm-Download {
@@ -188,45 +188,45 @@ param(
   [string] $kreFullName,
   [string] $packagesFolder
 )
-    $parts = $kreFullName.Split(".", 2)
+  $parts = $kreFullName.Split(".", 2)
 
-    $url = "$feed/package/" + $parts[0] + "/" + $parts[1]
-    $kreFolder = Join-Path $packagesFolder $kreFullName
-    $kreFile = Join-Path $kreFolder "$kreFullName.nupkg"
+  $url = "$feed/package/" + $parts[0] + "/" + $parts[1]
+  $kreFolder = Join-Path $packagesFolder $kreFullName
+  $kreFile = Join-Path $kreFolder "$kreFullName.nupkg"
 
-    If (Test-Path $kreFolder) {
-      if($force)
-      {
-        rm $kreFolder -Recurse -Force
-      } else {
-        Write-Host "$kreFullName already installed."
-        return;
-      }
-    }
-
-    Write-Host "Downloading" $kreFullName "from $feed"
-
-    #Downloading to temp location
-    $kreTempDownload = Join-Path $packagesFolder "temp"
-    $tempKreFile = Join-Path $kreTempDownload "$kreFullName.nupkg"
-
-    if(Test-Path $kreTempDownload) {
-      del "$kreTempDownload\*" -recurse
+  If (Test-Path $kreFolder) {
+    if($force)
+    {
+      rm $kreFolder -Recurse -Force
     } else {
-      md $kreTempDownload -Force | Out-Null
+      Write-Host "$kreFullName already installed."
+      return;
     }
+  }
 
-    $wc = New-Object System.Net.WebClient
-    $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
-    Add-Proxy-If-Specified($wc)
-    $wc.DownloadFile($url, $tempKreFile)
+  Write-Host "Downloading" $kreFullName "from $feed"
 
-    Do-Kvm-Unpack $tempKreFile $kreTempDownload
+  #Downloading to temp location
+  $kreTempDownload = Join-Path $packagesFolder "temp"
+  $tempKreFile = Join-Path $kreTempDownload "$kreFullName.nupkg"
 
-    md $kreFolder -Force | Out-Null
-    Write-Host "Installing to $kreFolder"
-    mv "$kreTempDownload\*" $kreFolder
-    Remove-Item "$kreTempDownload" -Force | Out-Null
+  if(Test-Path $kreTempDownload) {
+    del "$kreTempDownload\*" -recurse
+  } else {
+    md $kreTempDownload -Force | Out-Null
+  }
+
+  $wc = New-Object System.Net.WebClient
+  $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
+  Add-Proxy-If-Specified($wc)
+  $wc.DownloadFile($url, $tempKreFile)
+
+  Do-Kvm-Unpack $tempKreFile $kreTempDownload
+
+  md $kreFolder -Force | Out-Null
+  Write-Host "Installing to $kreFolder"
+  mv "$kreTempDownload\*" $kreFolder
+  Remove-Item "$kreTempDownload" -Force | Out-Null
 }
 
 function Do-Kvm-Unpack {
@@ -234,31 +234,31 @@ param(
   [string] $kreFile,
   [string] $kreFolder
 )
-    Write-Host "Unpacking to" $kreFolder
-    try {
-      #Shell will not recognize nupkg as a zip and throw, so rename it to zip
-      $kreZip = [System.IO.Path]::ChangeExtension($kreFile, "zip")
-      Rename-Item $kreFile $kreZip
-      #Use the shell to uncompress the nupkg
-      $shell_app=new-object -com shell.application
-      $zip_file = $shell_app.namespace($kreZip)
-      $destination = $shell_app.namespace($kreFolder)
-      $destination.Copyhere($zip_file.items(), 0x14) #0x4 = don't show UI, 0x10 = overwrite files
-    }
-    finally {
-      #make it a nupkg again
-      Rename-Item $kreZip $kreFile
-    }
+  Write-Host "Unpacking to" $kreFolder
+  try {
+    #Shell will not recognize nupkg as a zip and throw, so rename it to zip
+    $kreZip = [System.IO.Path]::ChangeExtension($kreFile, "zip")
+    Rename-Item $kreFile $kreZip
+    #Use the shell to uncompress the nupkg
+    $shell_app=new-object -com shell.application
+    $zip_file = $shell_app.namespace($kreZip)
+    $destination = $shell_app.namespace($kreFolder)
+    $destination.Copyhere($zip_file.items(), 0x14) #0x4 = don't show UI, 0x10 = overwrite files
+  }
+  finally {
+    #make it a nupkg again
+    Rename-Item $kreZip $kreFile
+  }
 
-    If (Test-Path ($kreFolder + "\[Content_Types].xml")) {
-        Remove-Item ($kreFolder + "\[Content_Types].xml")
-    }
-    If (Test-Path ($kreFolder + "\_rels\")) {
-        Remove-Item ($kreFolder + "\_rels\") -Force -Recurse
-    }
-    If (Test-Path ($kreFolder + "\package\")) {
-        Remove-Item ($kreFolder + "\package\") -Force -Recurse
-    }
+  If (Test-Path ($kreFolder + "\[Content_Types].xml")) {
+    Remove-Item ($kreFolder + "\[Content_Types].xml")
+  }
+  If (Test-Path ($kreFolder + "\_rels\")) {
+    Remove-Item ($kreFolder + "\_rels\") -Force -Recurse
+  }
+  If (Test-Path ($kreFolder + "\package\")) {
+    Remove-Item ($kreFolder + "\package\") -Force -Recurse
+  }
 }
 
 function Kvm-Install {
@@ -266,73 +266,71 @@ param(
   [string] $versionOrAlias,
   [boolean] $isGlobal
 )
-    if ($versionOrAlias -eq "latest") {
-        $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+  if ($versionOrAlias -eq "latest") {
+    $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+  }
+
+  if ($versionOrAlias.EndsWith(".nupkg")) {
+    $kreFullName = [System.IO.Path]::GetFileNameWithoutExtension($versionOrAlias)
+  } else {
+    $kreFullName =  Requested-VersionOrAlias $versionOrAlias
+  }
+
+  if ($isGlobal) {
+    if (Needs-Elevation) {
+      $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install -global $versionOrAlias $(Requested-Switches) -wait"
+      Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+      Kvm-Set-Global-Process-Path $versionOrAlias
+      break
+    }
+    $packageFolder = $globalKrePackages
+  } else {
+    $packageFolder = $userKrePackages
+  }
+
+  if ($versionOrAlias.EndsWith(".nupkg")) {
+    $kreFolder = "$packageFolder\$kreFullName"
+    $folderExists = Test-Path $kreFolder
+
+    if ($folderExists -and $force) {
+      del $kreFolder -Recurse -Force
+      $folderExists = $false;
     }
 
-    if ($versionOrAlias.EndsWith(".nupkg")) {
-      $kreFullName = [System.IO.Path]::GetFileNameWithoutExtension($versionOrAlias)
+    if ($folderExists) {
+      Write-Host "Target folder '$kreFolder' already exists"
     } else {
-      $kreFullName =  Requested-VersionOrAlias $versionOrAlias
-    }
+      $tempUnpackFolder = Join-Path $packageFolder "temp"
+      $tempKreFile = Join-Path $tempUnpackFolder "$kreFullName.nupkg"
 
-    if ($isGlobal) {
-      if (Needs-Elevation) {
-        $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install -global $versionOrAlias $(Requested-Switches) -wait"
-        Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-        Kvm-Set-Global-Process-Path $versionOrAlias
-        break
+      if(Test-Path $tempUnpackFolder) {
+          del "$tempUnpackFolder\*" -recurse
+      } else {
+          md $tempUnpackFolder -Force | Out-Null
       }
-      $packageFolder = $globalKrePackages
-    } else {
-      $packageFolder = $userKrePackages
+      copy $versionOrAlias $tempKreFile
 
-
+      Do-Kvm-Unpack $tempKreFile $tempUnpackFolder
+      md $kreFolder -Force | Out-Null
+      Write-Host "Installing to $kreFolder"
+      mv "$tempUnpackFolder\*" $kreFolder
+      Remove-Item "$tempUnpackFolder" -Force | Out-Null
     }
 
-    if ($versionOrAlias.EndsWith(".nupkg")) {
-        $kreFolder = "$packageFolder\$kreFullName"
-        $folderExists = Test-Path $kreFolder
-
-        if ($folderExists -and $force) {
-            del $kreFolder -Recurse -Force
-            $folderExists = $false;
-        }
-
-        if ($folderExists) {
-            Write-Host "Target folder '$kreFolder' already exists"
-        } else {
-            $tempUnpackFolder = Join-Path $packageFolder "temp"
-            $tempKreFile = Join-Path $tempUnpackFolder "$kreFullName.nupkg"
-
-            if(Test-Path $tempUnpackFolder) {
-                del "$tempUnpackFolder\*" -recurse
-            } else {
-                md $tempUnpackFolder -Force | Out-Null
-            }
-            copy $versionOrAlias $tempKreFile
-
-            Do-Kvm-Unpack $tempKreFile $tempUnpackFolder
-            md $kreFolder -Force | Out-Null
-            Write-Host "Installing to $kreFolder"
-            mv "$tempUnpackFolder\*" $kreFolder
-            Remove-Item "$tempUnpackFolder" -Force | Out-Null
-        }
-
-        $packageVersion = Package-Version $kreFullName
-        Kvm-Use $packageVersion
-        if (!$(String-IsEmptyOrWhitespace($alias))) {
-            Kvm-Alias-Set $alias $packageVersion
-        }
+    $packageVersion = Package-Version $kreFullName
+    Kvm-Use $packageVersion
+    if (!$(String-IsEmptyOrWhitespace($alias))) {
+        Kvm-Alias-Set $alias $packageVersion
     }
-    else
-    {
-        Do-Kvm-Download $kreFullName $packageFolder
-        Kvm-Use $versionOrAlias
-        if (!$(String-IsEmptyOrWhitespace($alias))) {
-            Kvm-Alias-Set $alias $versionOrAlias
-        }
+  }
+  else
+  {
+    Do-Kvm-Download $kreFullName $packageFolder
+    Kvm-Use $versionOrAlias
+    if (!$(String-IsEmptyOrWhitespace($alias))) {
+        Kvm-Alias-Set $alias $versionOrAlias
     }
+  }
 }
 
 function Kvm-List {
@@ -396,23 +394,23 @@ param(
   [string] $versionOrAlias
 )
   If (Needs-Elevation) {
-      $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use -global $versionOrAlias $(Requested-Switches) -wait"
-      if ($persistent) {
-        $arguments = $arguments + " -persistent"
-      }
-      Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-      Kvm-Set-Global-Process-Path $versionOrAlias
-      break
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use -global $versionOrAlias $(Requested-Switches) -wait"
+    if ($persistent) {
+      $arguments = $arguments + " -persistent"
+    }
+    Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
+    Kvm-Set-Global-Process-Path $versionOrAlias
+    break
   }
 
   Kvm-Set-Global-Process-Path $versionOrAlias
 
   if ($versionOrAlias -eq "none") {
     if ($persistent) {
-        Write-Host "Removing KRE from machine PATH"
-        $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-        $machinePath = Change-Path $machinePath "" ($globalKrePackages, $userKrePackages)
-        [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+      Write-Host "Removing KRE from machine PATH"
+      $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+      $machinePath = Change-Path $machinePath "" ($globalKrePackages, $userKrePackages)
+      [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
     }
     return;
   }
@@ -425,10 +423,10 @@ param(
   }
 
   if ($persistent) {
-      Write-Host "Adding $kreBin to machine PATH"
-      $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-      $machinePath = Change-Path $machinePath $kreBin ($globalKrePackages, $userKrePackages)
-      [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
+    Write-Host "Adding $kreBin to machine PATH"
+    $machinePath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+    $machinePath = Change-Path $machinePath $kreBin ($globalKrePackages, $userKrePackages)
+    [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
   }
 }
 
@@ -457,55 +455,55 @@ function Kvm-Use {
 param(
   [string] $versionOrAlias
 )
-    if ($versionOrAlias -eq "none") {
-      Write-Host "Removing KRE from process PATH"
-      Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
-
-      if ($persistent) {
-          Write-Host "Removing KRE from user PATH"
-          $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-          $userPath = Change-Path $userPath "" ($globalKrePackages, $userKrePackages)
-          [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
-      }
-      return;
-    }
-
-    $kreFullName = Requested-VersionOrAlias $versionOrAlias
-
-    $kreBin = Locate-KreBinFromFullName $kreFullName
-    if ($kreBin -eq $null) {
-      Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
-      return
-    }
-
-    Write-Host "Adding" $kreBin "to process PATH"
-    Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
+  if ($versionOrAlias -eq "none") {
+    Write-Host "Removing KRE from process PATH"
+    Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
 
     if ($persistent) {
-        Write-Host "Adding $kreBin to user PATH"
-        $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-        $userPath = Change-Path $userPath $kreBin ($globalKrePackages, $userKrePackages)
-        [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
+      Write-Host "Removing KRE from user PATH"
+      $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+      $userPath = Change-Path $userPath "" ($globalKrePackages, $userKrePackages)
+      [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
     }
+    return;
+  }
+
+  $kreFullName = Requested-VersionOrAlias $versionOrAlias
+
+  $kreBin = Locate-KreBinFromFullName $kreFullName
+  if ($kreBin -eq $null) {
+    Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
+    return
+  }
+
+  Write-Host "Adding" $kreBin "to process PATH"
+  Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
+
+  if ($persistent) {
+    Write-Host "Adding $kreBin to user PATH"
+    $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+    $userPath = Change-Path $userPath $kreBin ($globalKrePackages, $userKrePackages)
+    [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
+  }
 }
 
 function Kvm-Alias-List {
-    md ($userKrePath + "\alias\") -Force | Out-Null
+  md ($userKrePath + "\alias\") -Force | Out-Null
 
-    Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
+  Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
 }
 
 function Kvm-Alias-Get {
 param(
   [string] $name
 )
-    md ($userKrePath + "\alias\") -Force | Out-Null
-    $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
-    if (!(Test-Path $aliasFilePath)) {
-        Write-Host "Alias '$name' does not exist"
-    } else {
-        Write-Host "Alias '$name' is set to" (Get-Content ($userKrePath + "\alias\" + $name + ".txt"))
-    }
+  md ($userKrePath + "\alias\") -Force | Out-Null
+  $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
+  if (!(Test-Path $aliasFilePath)) {
+    Write-Host "Alias '$name' does not exist"
+  } else {
+    Write-Host "Alias '$name' is set to" (Get-Content ($userKrePath + "\alias\" + $name + ".txt"))
+  }
 }
 
 function Kvm-Alias-Set {
@@ -513,25 +511,25 @@ param(
   [string] $name,
   [string] $value
 )
-    $kreFullName = Requested-VersionOrAlias $value
-    $aliasFilePath = $userKrePath + "\alias\" + $name + ".txt"
-    $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
-    Write-Host "$action alias '$name' to '$kreFullName'"
-    md ($userKrePath + "\alias\") -Force | Out-Null
-    $kreFullName | Out-File ($aliasFilePath) ascii
+  $kreFullName = Requested-VersionOrAlias $value
+  $aliasFilePath = $userKrePath + "\alias\" + $name + ".txt"
+  $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
+  Write-Host "$action alias '$name' to '$kreFullName'"
+  md ($userKrePath + "\alias\") -Force | Out-Null
+  $kreFullName | Out-File ($aliasFilePath) ascii
 }
 
 function Kvm-Unalias {
 param(
   [string] $name
 )
-    $aliasPath=$userKrePath + "\alias\" + $name + ".txt"
-    if (Test-Path -literalPath "$aliasPath") {
-        Write-Host "Removing alias $name"
-        Remove-Item -literalPath $aliasPath
-    } else {
-        Write-Host "Cannot remove alias, '$name' is not a valid alias name"
-    }
+  $aliasPath=$userKrePath + "\alias\" + $name + ".txt"
+  if (Test-Path -literalPath "$aliasPath") {
+      Write-Host "Removing alias $name"
+      Remove-Item -literalPath $aliasPath
+  } else {
+      Write-Host "Cannot remove alias, '$name' is not a valid alias name"
+  }
 }
 
 function Locate-KreBinFromFullName() {
@@ -556,58 +554,58 @@ function Package-Version() {
 param(
   [string] $kreFullName
 )
-    return $kreFullName -replace '[^.]*.(.*)', '$1'
+  return $kreFullName -replace '[^.]*.(.*)', '$1'
 }
 
 function Requested-VersionOrAlias() {
 param(
   [string] $versionOrAlias
 )
-    If (Test-Path ($userKrePath + "\alias\" + $versionOrAlias + ".txt")) {
-        $aliasValue = Get-Content ($userKrePath + "\alias\" + $versionOrAlias + ".txt")
-        $parts = $aliasValue.Split('.', 2)
-        $pkgVersion = $parts[1]
-        $parts =$parts[0].Split('-', 3)
-        $pkgPlatform = Requested-Platform $parts[1]
-        $pkgArchitecture = Requested-Architecture $parts[2]
-    } else {
-        $pkgVersion = $versionOrAlias
-        $pkgPlatform = Requested-Platform "svr50"
-        $pkgArchitecture = Requested-Architecture "x86"
-    }
-    return "KRE-" + $pkgPlatform + "-" + $pkgArchitecture + "." + $pkgVersion
+  If (Test-Path ($userKrePath + "\alias\" + $versionOrAlias + ".txt")) {
+    $aliasValue = Get-Content ($userKrePath + "\alias\" + $versionOrAlias + ".txt")
+    $parts = $aliasValue.Split('.', 2)
+    $pkgVersion = $parts[1]
+    $parts =$parts[0].Split('-', 3)
+    $pkgPlatform = Requested-Platform $parts[1]
+    $pkgArchitecture = Requested-Architecture $parts[2]
+  } else {
+    $pkgVersion = $versionOrAlias
+    $pkgPlatform = Requested-Platform "svr50"
+    $pkgArchitecture = Requested-Architecture "x86"
+  }
+  return "KRE-" + $pkgPlatform + "-" + $pkgArchitecture + "." + $pkgVersion
 }
 
 function Requested-Platform() {
 param(
   [string] $default
 )
-    if ($svr50 -and $svrc50) {
-        Throw "This command cannot accept both -svr50 and -svrc50"
-    }
-    if ($svr50) {
-        return "svr50"
-    }
-    if ($svrc50) {
-        return "svrc50"
-    }
-    return $default
+  if ($svr50 -and $svrc50) {
+    Throw "This command cannot accept both -svr50 and -svrc50"
+}
+  if ($svr50) {
+    return "svr50"
+  }
+  if ($svrc50) {
+    return "svrc50"
+  }
+  return $default
 }
 
 function Requested-Architecture() {
 param(
   [string] $default
 )
-    if ($x86 -and $x64) {
-        Throw "This command cannot accept both -x86 and -x64"
-    }
-    if ($x86) {
-        return "x86"
-    }
-    if ($x64) {
-        return "x64"
-    }
-    return $default
+  if ($x86 -and $x64) {
+    Throw "This command cannot accept both -x86 and -x64"
+  }
+  if ($x86) {
+    return "x86"
+  }
+  if ($x64) {
+    return "x64"
+  }
+  return $default
 }
 
 function Change-Path() {
@@ -616,19 +614,19 @@ param(
   [string] $prependPath,
   [string[]] $removePaths
 )
-    $newPath = $prependPath
-    foreach($portion in $existingPaths.Split(';')) {
-      $skip = $portion -eq ""
-      foreach($removePath in $removePaths) {
-        if ($portion.StartsWith($removePath)) {
-          $skip = $true
-        }
-      }
-      if (!$skip) {
-        $newPath = $newPath + ";" + $portion
+  $newPath = $prependPath
+  foreach($portion in $existingPaths.Split(';')) {
+    $skip = $portion -eq ""
+    foreach($removePath in $removePaths) {
+      if ($portion.StartsWith($removePath)) {
+        $skip = $true
       }
     }
-    return $newPath
+    if (!$skip) {
+      $newPath = $newPath + ";" + $portion
+    }
+  }
+  return $newPath
 }
 
 function Set-Path() {
@@ -643,9 +641,9 @@ SET "PATH=$newPath"
 }
 
 function Needs-Elevation() {
-    $user = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
-    $elevated = $user.IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
-    return -NOT $elevated
+  $user = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+  $elevated = $user.IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+  return -NOT $elevated
 }
 
 function Requested-Switches() {
@@ -657,8 +655,8 @@ function Requested-Switches() {
   return $arguments
 }
 
- try {
-   if ($global) {
+try {
+  if ($global) {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Global-Upgrade}
@@ -666,7 +664,7 @@ function Requested-Switches() {
       "use 1"             {Kvm-Global-Use $args[0]}
       default             {Write-Host 'Unknown command, or global switch not supported'; Kvm-Help;}
     }
-   } else {
+  } else {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Upgrade}
@@ -681,12 +679,12 @@ function Requested-Switches() {
       " 0"                {Kvm-Help}
       default             {Write-Host 'Unknown command'; Kvm-Help;}
     }
-   }
   }
-  catch {
-    Write-Host $_ -ForegroundColor Red ;
-  }
-  if ($wait) {
-    Write-Host "Press any key to continue ..."
-    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
-  }
+}
+catch {
+  Write-Host $_ -ForegroundColor Red ;
+}
+if ($wait) {
+  Write-Host "Press any key to continue ..."
+  $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
+}
