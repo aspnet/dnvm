@@ -136,7 +136,7 @@ function Kvm-Global-Upgrade {
   $alias="default"
   $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
   If (Needs-Elevation) {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) $(Requested-Arguments) -wait"
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
     Kvm-Set-Global-Process-Path $versionOrAlias
     break
@@ -283,7 +283,7 @@ param(
 
   if ($isGlobal) {
     if (Needs-Elevation) {
-      $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) $(Requested-Arguments) -wait"
+      $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) -wait"
       Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
       Kvm-Set-Global-Process-Path $versionOrAlias
       break
@@ -399,7 +399,7 @@ param(
   [string] $versionOrAlias
 )
   If (Needs-Elevation) {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use '$versionOrAlias' -global $(Requested-Switches) $(Requested-Arguments) -wait"
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use '$versionOrAlias' -global $(Requested-Switches) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
     Kvm-Set-Global-Process-Path $versionOrAlias
     break
@@ -654,11 +654,6 @@ function Requested-Switches() {
   if ($x64) {$arguments = "$arguments -x64"}
   if ($svr50) {$arguments = "$arguments -svr50"}
   if ($svrc50) {$arguments = "$arguments -svrc50"}
-  return $arguments
-}
-
-function Requested-Arguments() {
-  $arguments = ""
   if ($persistent) {$arguments = "$arguments -persistent"}
   if ($force) {$arguments = "$arguments -force"}
   if (!$(String-IsEmptyOrWhitespace($alias))) {$arguments = "$arguments -alias '$alias'"}
