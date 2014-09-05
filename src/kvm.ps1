@@ -307,6 +307,9 @@ param(
   }
 
   if ($versionOrAlias.EndsWith(".nupkg")) {
+    Set-Variable -Name "selectedArch" -Value (Package-Arch $kreFullName) -Scope Script
+    Set-Variable -Name "selectedRuntime" -Value (Package-Platform $kreFullName) -Scope Script
+
     $kreFolder = "$packageFolder\$kreFullName"
     $folderExists = Test-Path $kreFolder
 
@@ -336,6 +339,7 @@ param(
     }
 
     $packageVersion = Package-Version $kreFullName
+
     Kvm-Use $packageVersion
     if (!$(String-IsEmptyOrWhitespace($alias))) {
         Kvm-Alias-Set $alias $packageVersion
@@ -571,6 +575,21 @@ param(
 )
   return $kreFullName -replace '[^.]*.(.*)', '$1'
 }
+
+function Package-Platform() {
+param(
+  [string] $kreFullName
+)
+  return $kreFullName -replace 'KRE-([^-]*).*', '$1'
+}
+
+function Package-Arch() {
+param(
+  [string] $kreFullName
+)
+  return $kreFullName -replace 'KRE-[^-]*-([^.]*).*', '$1'
+}
+
 
 function Requested-VersionOrAlias() {
 param(
