@@ -6,9 +6,14 @@ param(
   [alias("g")][switch] $global = $false,
   [alias("p")][switch] $persistent = $false,
   [alias("f")][switch] $force = $false,
+  [alias("r")][string] $runtime,
   [switch] $x86 = $false,
+  [switch] $amd64 = $false,
+  #deprecated
   [switch] $x64 = $false,
+  #deprecated
   [switch] $svr50 = $false,
+  #deprecated
   [switch] $svrc50 = $false,
   [alias("w")][switch] $wait = $false,
   [alias("a")]
@@ -17,6 +22,10 @@ param(
   [string[]]$args=@()
 )
 
+$selectedArch=$null;
+$defaultArch="x86"
+$selectedRuntime=$null
+$defaultRuntime="CLR"
 $userKrePath = $env:USERPROFILE + "\.kre"
 $userKrePackages = $userKrePath + "\packages"
 $globalKrePath = $env:ProgramFiles + "\KRE"
@@ -40,7 +49,7 @@ K Runtime Environment Version Manager - Build {{BUILD_NUMBER}}
 
 USAGE: kvm <command> [options]
 
-kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global] [-f|-force] [-proxy <ADDRESS>]
+kvm upgrade [-x86][-amd64] [-r|-runtime CLR|CoreCLR] [-g|-global] [-f|-force] [-proxy <ADDRESS>]
   install latest KRE from feed
   set 'default' alias to installed version
   add KRE bin to user PATH environment variable
@@ -48,7 +57,7 @@ kvm upgrade [-x86][-x64] [-svr50][-svrc50] [-g|-global] [-f|-force] [-proxy <ADD
   -f|-force         upgrade even if latest is already installed
   -proxy <ADDRESS>  use given address as proxy when accessing remote server
 
-kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-a|-alias <alias>] [-g|-global] [-f|-force]
+kvm install <semver>|<alias>|<nupkg>|latest [-x86][-amd64] [-r|-runtime CLR|CoreCLR] [-a|-alias <alias>] [-g|-global] [-f|-force]
   <semver>|<alias>  install requested KRE from feed
   <nupkg>           install requested KRE from package on local filesystem
   latest            install latest KRE from feed
@@ -58,7 +67,7 @@ kvm install <semver>|<alias>|<nupkg>|latest [-x86][-x64] [-svr50][-svrc50] [-a|-
   -g|-global        install to machine-wide location
   -f|-force         install even if specified version is already installed
 
-kvm use <semver>|<alias>|none [-x86][-x64] [-svr50][-svrc50] [-p|-persistent] [-g|-global]
+kvm use <semver>|<alias>|none [-x86][-amd64] [-r|-runtime CLR|CoreCLR] [-p|-persistent] [-g|-global]
   <semver>|<alias>  add KRE bin to path of current command line
   none              remove KRE bin from path of current command line
   -p|-persistent    add KRE bin to PATH environment variables persistently
@@ -73,7 +82,7 @@ kvm alias
 kvm alias <alias>
   display value of the specified alias
 
-kvm alias <alias> <semver>|<alias> [-x86][-x64] [-svr50][-svrc50]
+kvm alias <alias> <semver>|<alias> [-x86][-amd64] [-r|-runtime CLR|CoreCLR]
   <alias>            The name of the alias to set
   <semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias
 
@@ -134,7 +143,7 @@ function Kvm-Global-Setup {
 function Kvm-Global-Upgrade {
   $persistent = $true
   $alias="default"
-  $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+  $versionOrAlias = Kvm-Find-Latest $selectedRuntime $selectedArch
   If (Needs-Elevation) {
     $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
@@ -172,11 +181,11 @@ param(
 function Kvm-Find-Latest {
 param(
   [string] $platform,
-  [string] $architecture
+  [string] $selectedArchitecture
 )
   Write-Host "Determining latest version"
 
-  $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+  $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$selectedArchitecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
   $wc = New-Object System.Net.WebClient
   $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
@@ -184,6 +193,10 @@ param(
   [xml]$xml = $wc.DownloadString($url)
 
   $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
+
+  if (String-IsEmptyOrWhitespace($version)) {
+    throw "There are no packages for platform '$platform', architecture '$selectedArchitecture' in the feed '$feed'"
+  }
 
   return $version
 }
@@ -272,7 +285,7 @@ param(
   [boolean] $isGlobal
 )
   if ($versionOrAlias -eq "latest") {
-    $versionOrAlias = Kvm-Find-Latest (Requested-Platform "svr50") (Requested-Architecture "x86")
+    $versionOrAlias = Kvm-Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
   }
 
   if ($versionOrAlias.EndsWith(".nupkg")) {
@@ -572,8 +585,8 @@ param(
     $pkgArchitecture = Requested-Architecture $parts[2]
   } else {
     $pkgVersion = $versionOrAlias
-    $pkgPlatform = Requested-Platform "svr50"
-    $pkgArchitecture = Requested-Architecture "x86"
+    $pkgPlatform = Requested-Platform $defaultRuntime
+    $pkgArchitecture = Requested-Architecture $defaultArch
   }
   return "KRE-" + $pkgPlatform + "-" + $pkgArchitecture + "." + $pkgVersion
 }
@@ -582,15 +595,7 @@ function Requested-Platform() {
 param(
   [string] $default
 )
-  if ($svr50 -and $svrc50) {
-    Throw "This command cannot accept both -svr50 and -svrc50"
-}
-  if ($svr50) {
-    return "svr50"
-  }
-  if ($svrc50) {
-    return "svrc50"
-  }
+  if (!(String-IsEmptyOrWhitespace($selectedRuntime))) {return $selectedRuntime}
   return $default
 }
 
@@ -598,15 +603,7 @@ function Requested-Architecture() {
 param(
   [string] $default
 )
-  if ($x86 -and $x64) {
-    Throw "This command cannot accept both -x86 and -x64"
-  }
-  if ($x86) {
-    return "x86"
-  }
-  if ($x64) {
-    return "x64"
-  }
+  if ($selectedArch) {return $selectedArch}
   return $default
 }
 
@@ -651,23 +648,59 @@ function Needs-Elevation() {
 function Requested-Switches() {
   $arguments = ""
   if ($x86) {$arguments = "$arguments -x86"}
+  if ($amd64) {$arguments = "$arguments -amd64"}
+  #deprecated
   if ($x64) {$arguments = "$arguments -x64"}
-  if ($svr50) {$arguments = "$arguments -svr50"}
-  if ($svrc50) {$arguments = "$arguments -svrc50"}
+  if ($selectedRuntime) {$arguments = "$arguments -runtime $selectedRuntime"}
   if ($persistent) {$arguments = "$arguments -persistent"}
   if ($force) {$arguments = "$arguments -force"}
   if (!$(String-IsEmptyOrWhitespace($alias))) {$arguments = "$arguments -alias '$alias'"}
   return $arguments
 }
 
+function Validate-And-Santitise-Switches()
+{
+  if ($svr50 -and $runtime) {throw "You cannot select both the -runtime switch and the -svr50 runtimes"}
+  if ($svrc50 -and $runtime) {throw "You cannot select both the -runtime switch and the -svrc50 runtimes"}
+  if ($x86 -and $amd64) {throw "You cannot select both x86 and amd64 architectures"}
+  if ($x86 -and $x64) {throw "You cannot select both x86 and x64 architectures"}
+  if ($x64 -and $amd64) {throw "You cannot select both x64 and amd64 architectures"}
+
+  if ($runtime) {
+    $validRuntimes = "CoreCLR", "CLR", "svr50", "svrc50"
+    $match = $validRuntimes | ? { $_ -like $runtime } | Select -First 1
+    if (!$match) {throw "'$runtime' is not a valid runtime"}
+    Set-Variable -Name "selectedRuntime" -Value $match -Scope Script
+  } elseif ($svr50) {
+    Write-Host "Warning: -svr50 is deprecated, use -runtime CLR for new packages."
+    Set-Variable -Name "selectedRuntime" -Value "svr50" -Scope Script
+  } elseif ($svrc50) {
+    Write-Host "Warning: -svrc50 is deprecated, use -runtime CoreCLR for new packages."
+    Set-Variable -Name "selectedRuntime" -Value "svrc50" -Scope Script
+  }
+
+  if ($x64) {
+    Write-Host "Warning: -x64 is deprecated, use -amd64 for new packages."
+    Set-Variable -Name "selectedArch" -Value "x64" -Scope Script
+  } elseif ($amd64) {
+    Set-Variable -Name "selectedArch" -Value "amd64" -Scope Script
+  } elseif ($x86) {
+    Set-Variable -Name "selectedArch" -Value "x86" -Scope Script
+  }
+}
+
 try {
+  Validate-And-Santitise-Switches
   if ($global) {
     switch -wildcard ($command + " " + $args.Count) {
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Global-Upgrade}
       "install 1"         {Kvm-Install $args[0] $true}
       "use 1"             {Kvm-Global-Use $args[0]}
-      default             {Write-Host 'Unknown command, or global switch not supported'; Kvm-Help;}
+      default             {
+        Write-Host "Unknown command, or global switch not supported";
+        Write-Host "Type 'kvm help' for help on how to use kvm"
+      }
     }
   } else {
     switch -wildcard ($command + " " + $args.Count) {
@@ -682,12 +715,16 @@ try {
       "unalias 1"         {Kvm-Unalias $args[0]}
       "help 0"            {Kvm-Help}
       " 0"                {Kvm-Help}
-      default             {Write-Host 'Unknown command'; Kvm-Help;}
+      default             {
+        Write-Host "Unknown command";
+        Write-Host "Type 'kvm help' for help on how to use kvm."
+      }
     }
   }
 }
 catch {
   Write-Host $_ -ForegroundColor Red ;
+  Write-Host "Type 'kvm help' for help on how to use kvm."
 }
 if ($wait) {
   Write-Host "Press any key to continue ..."
