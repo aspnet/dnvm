@@ -181,11 +181,11 @@ param(
 function Kvm-Find-Latest {
 param(
   [string] $platform,
-  [string] $selectedArchitecture
+  [string] $architecture
 )
   Write-Host "Determining latest version"
 
-  $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$selectedArchitecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+  $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
   $wc = New-Object System.Net.WebClient
   $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
@@ -195,7 +195,7 @@ param(
   $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
 
   if (String-IsEmptyOrWhitespace($version)) {
-    throw "There are no packages for platform '$platform', architecture '$selectedArchitecture' in the feed '$feed'"
+    throw "There are no packages for platform '$platform', architecture '$architecture' in the feed '$feed'"
   }
 
   return $version
