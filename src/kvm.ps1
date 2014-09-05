@@ -603,7 +603,7 @@ function Requested-Architecture() {
 param(
   [string] $default
 )
-  if ($selectedArch) {return $selectedArch}
+  if (!(String-IsEmptyOrWhitespace($selectedArch))) {return $selectedArch}
   return $default
 }
 
@@ -697,10 +697,7 @@ try {
       "upgrade 0"         {Kvm-Global-Upgrade}
       "install 1"         {Kvm-Install $args[0] $true}
       "use 1"             {Kvm-Global-Use $args[0]}
-      default             {
-        Write-Host "Unknown command, or global switch not supported";
-        Write-Host "Type 'kvm help' for help on how to use kvm"
-      }
+      default             {throw "Unknown command, or global switch not supported"};
     }
   } else {
     switch -wildcard ($command + " " + $args.Count) {
@@ -715,10 +712,7 @@ try {
       "unalias 1"         {Kvm-Unalias $args[0]}
       "help 0"            {Kvm-Help}
       " 0"                {Kvm-Help}
-      default             {
-        Write-Host "Unknown command";
-        Write-Host "Type 'kvm help' for help on how to use kvm."
-      }
+      default             {throw "Unknown command"};
     }
   }
 }
