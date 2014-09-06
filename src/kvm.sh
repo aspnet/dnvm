@@ -57,7 +57,7 @@ _kvm_package_name() {
 
 _kvm_package_runtime() {
     local kreFullName="$1"
-    echo "$kreFullName" | sed "s/KRE-\([^-]*\).*/\1/"
+    echo "$kreFullName" | sed "s/KRE-\([^.-]*\).*/\1/"
 }
 
 _kvm_download() {
