@@ -69,7 +69,7 @@ _kvm_download() {
     local url="$KRE_FEED/package/$pkgName/$pkgVersion"
     local kreFile="$kreFolder/$kreFullName.nupkg"
 
-    if [ -e "$kreFolder" ]; then
+    if [ -e "$kreFolder/bin" ]; then
         echo "$kreFullName already installed."
         return 0
     fi
@@ -230,7 +230,7 @@ kvm()
                 local kreFolder="$KRE_USER_PACKAGES/$kreFullName"
                 local kreFile="$kreFolder/$kreFullName.nupkg"
 
-                if [ -e "$kreFolder" ]; then
+                if [ -e "$kreFolder/bin" ]; then
                   echo "$kreFullName already installed"
                 else
                   mkdir "$kreFolder" > /dev/null 2>&1
