@@ -371,6 +371,7 @@ kvm()
             
             local formattedHome=`(echo $KRE_USER_PACKAGES | sed s=$HOME=~=g)`
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
+                [[ ! -e "$KRE_USER_PACKAGES/$f/bin" ]] && continue
                 local active=""
                 [[ $PATH == *"$KRE_USER_PACKAGES/$f/bin"* ]] && local active="  *"
                 local pkgName=$(_kvm_package_runtime "$f")
