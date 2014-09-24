@@ -124,18 +124,12 @@ _kvm_requested_version_or_alias() {
         local pkgName=$(echo $kreFullName | sed "s/\([^.]*\).*/\1/")
         local pkgVersion=$(echo $kreFullName | sed "s/[^.]*.\(.*\)/\1/")
         local pkgPlatform=$(echo "$pkgName" | sed "s/KRE-\([^.-]*\).*/\1/")
-        local pkgArchitecture=$(echo "$pkgName" | sed "s/.*-.*-\([^-]*\).*/\1/")
     else
         local pkgVersion=$versionOrAlias
         local pkgPlatform="Mono"
-        local pkgArchitecture=
     fi
-    
-    if [[ -z $pkgArchitecture ]]; then
-        echo "KRE-$pkgPlatform.$pkgVersion"
-    else
-        echo "KRE-$pkgPlatform-$pkgArchitecture.$pkgVersion"
-    fi
+
+    echo "KRE-$pkgPlatform.$pkgVersion"
 }
 
 # This will be more relevant if we support global installs
