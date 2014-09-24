@@ -89,7 +89,7 @@ _kvm_download() {
     [[ $httpResult != "302" && $httpResult != "200" ]] && echo "HTTP Error $httpResult fetching $kreFullName from $KRE_FEED" && return 1
 
     _kvm_unpack $kreFile $kreFolder
-    return  $? 
+    return  $?
 }
 
 _kvm_unpack() {
@@ -328,10 +328,10 @@ kvm()
             echo "$action alias '$name' to '$kreFullName'"
             echo "$kreFullName" > "$KRE_USER_HOME/alias/$name.alias"
         ;;
-        
+
         "unalias" )
             [[ $# -ne 2 ]] && kvm help && return
-            
+
             local name=$2
             local aliasPath="$KRE_USER_HOME/alias/$name.alias"
             [[ ! -e  "$aliasPath" ]] && echo "Cannot remove alias, '$name' is not a valid alias name" && return 1
@@ -350,7 +350,7 @@ kvm()
                 local searchGlob=$(_kvm_requested_version_or_alias "$versionOrAlias")
             fi
             echo ""
-            
+
             # Separate empty array declaration from initialization
             # to avoid potential ZSH error: local:217: maximum nested function level reached
             local arr
@@ -361,11 +361,11 @@ kvm()
                 arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
                 let i+=1
             done
-    
+
             local formatString="%-6s %-20s %-7s %-20s %s\n"
             printf "$formatString" "Active" "Version" "Runtime" "Location" "Alias"
             printf "$formatString" "------" "-------" "-------" "--------" "-----"
-            
+
             local formattedHome=`(echo $KRE_USER_PACKAGES | sed s=$HOME=~=g)`
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
                 local active=""
@@ -375,7 +375,7 @@ kvm()
 
                 local alias=""
                 local delim=""
-                for i in "${arr[@]}"; do    
+                for i in "${arr[@]}"; do
                     temp="KRE-$pkgName.$pkgVersion"
                     temp2="KRE-$pkgName-x86.$pkgVersion"
                     if [[ ${i#*/} == $temp || ${i#*/} == $temp2 ]]; then
@@ -396,7 +396,7 @@ kvm()
             echo "Unknown command $1"
             return 1
     esac
-    
+
     return 0
 }
 
