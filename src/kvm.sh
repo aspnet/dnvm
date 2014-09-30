@@ -351,7 +351,10 @@ kvm()
             fi
             echo ""
             
-            local arr=()            
+            # Separate empty array declaration from initialization
+            # to avoid potential ZSH error: local:217: maximum nested function level reached
+            local arr
+            arr=()
             local i=0
             local format="%-20s %s\n"
             for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
