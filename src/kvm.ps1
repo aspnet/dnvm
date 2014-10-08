@@ -353,6 +353,10 @@ param(
         Kvm-Alias-Set "$alias" $versionOrAlias
     }
   }
+
+  if ($kreFullName.Contains("CoreCLR")) {
+    k crossgen
+  }
 }
 
 function Kvm-List {
