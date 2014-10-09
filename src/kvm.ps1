@@ -355,6 +355,7 @@ param(
   }
 
   if ($kreFullName.Contains("CoreCLR")) {
+    Write-Host "Compiling native images for $kreFullName to improve startup performance..."
     k crossgen
   }
 }
