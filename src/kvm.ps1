@@ -18,6 +18,7 @@ param(
   [alias("w")][switch] $wait = $false,
   [alias("a")]
   [string] $alias = $null,
+  [switch] $noNative = $false,
   [parameter(Position=1, ValueFromRemainingArguments=$true)]
   [string[]]$args=@()
 )
@@ -354,9 +355,10 @@ param(
     }
   }
 
-  if ($kreFullName.Contains("CoreCLR")) {
+  if ($kreFullName.Contains("CoreCLR") -and !$noNative) {
     Write-Host "Compiling native images for $kreFullName to improve startup performance..."
     k crossgen
+    Write-Host "Finished native image compilation."
   }
 }
 
