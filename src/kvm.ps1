@@ -261,17 +261,17 @@ param(
     
   if($compressionLib -eq $null) {
       try {
-          #Shell will not recognize nupkg as a zip and throw, so rename it to zip
+          # Shell will not recognize nupkg as a zip and throw, so rename it to zip
           $kreZip = [System.IO.Path]::ChangeExtension($kreFile, "zip")
           Rename-Item $kreFile $kreZip
-          #Use the shell to uncompress the nupkg
+          # Use the shell to uncompress the nupkg
           $shell_app=new-object -com shell.application
           $zip_file = $shell_app.namespace($kreZip)
           $destination = $shell_app.namespace($kreFolder)
           $destination.Copyhere($zip_file.items(), 0x14) #0x4 = don't show UI, 0x10 = overwrite files
       }
       finally {
-        #make it a nupkg again
+        # make it a nupkg again
         Rename-Item $kreZip $kreFile
       }
   } else {
