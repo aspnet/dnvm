@@ -1,26 +1,26 @@
 param(
   [parameter(Position=0)]
-  [string] $command,
-  [string] $proxy,
-  [switch] $verbosity = $false,
-  [alias("g")][switch] $global = $false,
-  [alias("p")][switch] $persistent = $false,
-  [alias("f")][switch] $force = $false,
-  [alias("r")][string] $runtime,
-  [switch] $x86 = $false,
-  [switch] $amd64 = $false,
+  [string] $Command,
+  [string] $Proxy,
+  [switch] $Verbosity = $false,
+  [alias("g")][switch] $Global = $false,
+  [alias("p")][switch] $Persistent = $false,
+  [alias("f")][switch] $Force = $false,
+  [alias("r")][string] $Runtime,
+  [switch] $X86 = $false,
+  [switch] $Amd64 = $false,
   #deprecated
-  [switch] $x64 = $false,
+  [switch] $X64 = $false,
   #deprecated
-  [switch] $svr50 = $false,
+  [switch] $Svr50 = $false,
   #deprecated
-  [switch] $svrc50 = $false,
-  [alias("w")][switch] $wait = $false,
+  [switch] $Svrc50 = $false,
+  [alias("w")][switch] $Wait = $false,
   [alias("a")]
-  [string] $alias = $null,
-  [switch] $noNative = $false,
+  [string] $Alias = $null,
+  [switch] $NoNative = $false,
   [parameter(Position=1, ValueFromRemainingArguments=$true)]
-  [string[]]$args=@()
+  [string[]]$Args=@()
 )
 
 $selectedArch=$null;
