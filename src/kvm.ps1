@@ -23,19 +23,25 @@ param(
   [string[]]$Args=@()
 )
 
+function String-IsEmptyOrWhitespace([string]$str) {
+     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0
+}
+
+if(String-IsEmptyOrWhitespace($env:KRE_PROFILE_PATH)) {
+    $userKrePath = $env:USERPROFILE 
+} else {
+    $userKrePath = $env:KRE_PROFILE_PATH
+}
+
 $selectedArch=$null;
 $defaultArch="x86"
 $selectedRuntime=$null
 $defaultRuntime="CLR"
-$userKrePath = $env:USERPROFILE + "\.kre"
+$userKrePath = $userKrePath + "\.kre"
 $userKrePackages = $userKrePath + "\packages"
 $globalKrePath = $env:ProgramFiles + "\KRE"
 $globalKrePackages = $globalKrePath + "\packages"
 $feed = $env:KRE_NUGET_API_URL
-
-function String-IsEmptyOrWhitespace([string]$str) {
-     return [string]::IsNullOrEmpty($str) -or $str.Trim().length -eq 0
-}
 
 if (!$feed)
 {
@@ -104,9 +110,9 @@ function Kvm-Global-Setup {
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
     Write-Host "Adding $kvmBinPath to process PATH"
     Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
-    Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to process KRE_HOME"
+    Write-Host "Adding $globalKrePath;$userKrePath to process KRE_HOME"
     $envKreHome = $env:KRE_HOME
-    $envKreHome = Change-Path $envKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+    $envKreHome = Change-Path $envKreHome $userKrePath ($userKrePath)
     $envKreHome = Change-Path $envKreHome $globalKrePath ($globalKrePath)
     $env:KRE_HOME = $envKreHome
     Write-Host "Setup complete"
@@ -130,15 +136,15 @@ function Kvm-Global-Setup {
   $userPath = Change-Path $userPath $kvmBinPath ($kvmBinPath)
   [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
 
-  Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to process KRE_HOME"
+  Write-Host "Adding $globalKrePath;$userKrePath to process KRE_HOME"
   $envKreHome = $env:KRE_HOME
-  $envKreHome = Change-Path $envKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+  $envKreHome = Change-Path $envKreHome $userKrePath ($userKrePath)
   $envKreHome = Change-Path $envKreHome $globalKrePath ($globalKrePath)
   $env:KRE_HOME = $envKreHome
 
-  Write-Host "Adding $globalKrePath;%USERPROFILE%\.kre to machine KRE_HOME"
+  Write-Host "Adding $globalKrePath;$userKrePath to machine KRE_HOME"
   $machineKreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
-  $machineKreHome = Change-Path $machineKreHome "%USERPROFILE%\.kre" ("%USERPROFILE%\.kre")
+  $machineKreHome = Change-Path $machineKreHome $userKrePath ($userKrePath)
   $machineKreHome = Change-Path $machineKreHome $globalKrePath ($globalKrePath)
   [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 }
