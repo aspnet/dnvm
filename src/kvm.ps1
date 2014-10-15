@@ -304,7 +304,7 @@ param(
   }
   If (Test-Path ($kreFolder + "\package\")) {
     Remove-Item ($kreFolder + "\package\") -Force -Recurse
-  }
+  }  
 }
 
 function Kvm-Install {
@@ -373,6 +373,7 @@ param(
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
         Kvm-Alias-Set $Alias $packageVersion
     }
+    Kvm-Generate-Native $kreFolder $kreFullName
   }
   else
   {
@@ -381,20 +382,27 @@ param(
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
         Kvm-Alias-Set "$Alias" $versionOrAlias
     }
+    Kvm-Generate-Native $kreFolder $kreFullName
   }
+}
 
-  if ($kreFullName.Contains("CoreCLR")) {
-    if ($NoNative) {
-      Write-Host "Native image generation is skipped"
+function Kvm-Generate-Native{
+param(
+    [string] $kreFolder,
+    [string] $kreFullName
+)
+    if ($kreFolder.Contains("CoreCLR")) {
+        if ($NoNative) {
+            Write-Host "Native image generation is skipped"
+        }
+        else {
+            $logFile = "$kreFolder\crossgenLog.txt"
+            Write-Host "Compiling native images for $kreFullName to improve startup performance..."
+            Write-Host "See $logFile for details of native image generation"
+            &"$kreFolder\bin\k" crossgen 2>&1> $logFile
+            Write-Host "Finished native image compilation."
+        }
     }
-    else {
-      $logFile = "$kreFolder\crossgenLog.txt"
-      Write-Host "Compiling native images for $kreFullName to improve startup performance..."
-      Write-Host "See $logFile for details of native image generation"
-      k crossgen 2>&1> $logFile
-      Write-Host "Finished native image compilation."
-    }
-  }
 }
 
 function Kvm-List {
