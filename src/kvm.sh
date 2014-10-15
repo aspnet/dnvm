@@ -69,7 +69,7 @@ _kvm_download() {
     local url="$KRE_FEED/package/$pkgName/$pkgVersion"
     local kreFile="$kreFolder/$kreFullName.nupkg"
 
-    if [ -e "$kreFolder" ]; then
+    if [ -e "$kreFolder/bin" ]; then
         echo "$kreFullName already installed."
         return 0
     fi
@@ -224,7 +224,7 @@ kvm()
                 local kreFolder="$KRE_USER_PACKAGES/$kreFullName"
                 local kreFile="$kreFolder/$kreFullName.nupkg"
 
-                if [ -e "$kreFolder" ]; then
+                if [ -e "$kreFolder/bin" ]; then
                   echo "$kreFullName already installed"
                 else
                   mkdir "$kreFolder" > /dev/null 2>&1
@@ -370,6 +370,7 @@ kvm()
 
             local formattedHome=`(echo $KRE_USER_PACKAGES | sed s=$HOME=~=g)`
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
+                [[ ! -e "$KRE_USER_PACKAGES/$f/bin" ]] && continue
                 local active=""
                 [[ $PATH == *"$KRE_USER_PACKAGES/$f/bin"* ]] && local active="  *"
                 local pkgName=$(_kvm_package_runtime "$f")
