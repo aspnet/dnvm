@@ -42,6 +42,13 @@ $userKrePackages = $userKrePath + "\packages"
 $globalKrePath = $env:ProgramFiles + "\KRE"
 $globalKrePackages = $globalKrePath + "\packages"
 $feed = $env:KRE_NUGET_API_URL
+$kvmBinPath = "$userKrePath\bin"
+$sourcePath = $kvmBinPath + "\source.txt"
+
+if((!$feed) -and (Test-Path($sourcePath)))
+{
+    $feed = Get-Content($sourcePath)
+}   
 
 if (!$feed)
 {
@@ -98,11 +105,16 @@ kvm alias <alias> <semver>|<alias> [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR]
 kvm unalias <alias>
   remove the specified alias
 
+kvm source
+    displays the currently configured source. The source url is where the KVM will install the KRE from.
+
+kvm source <source>
+    sets the source to the specified url.
+
 "@ -replace "`n","`r`n" | Write-Host
 }
 
 function Kvm-Global-Setup {
-  $kvmBinPath = "$userKrePath\bin"
 
   If (Needs-Elevation)
   {
@@ -322,11 +334,12 @@ param(
     $packageFolder = $userKrePackages
   }
 
+  $kreFolder = "$packageFolder\$kreFullName"
+
   if ($versionOrAlias.EndsWith(".nupkg")) {
     Set-Variable -Name "selectedArch" -Value (Package-Arch $kreFullName) -Scope Script
     Set-Variable -Name "selectedRuntime" -Value (Package-Platform $kreFullName) -Scope Script
-
-    $kreFolder = "$packageFolder\$kreFullName"
+    
     $folderExists = Test-Path $kreFolder
 
     if ($folderExists -and $Force) {
@@ -375,8 +388,10 @@ param(
       Write-Host "Native image generation is skipped"
     }
     else {
+      $logFile = "$kreFolder\crossgenLog.txt"
       Write-Host "Compiling native images for $kreFullName to improve startup performance..."
-      Start-Process "K" -ArgumentList "crossgen" -Wait
+      Write-Host "See $logFile for details of native image generation"
+      k crossgen 2>&1> $logFile
       Write-Host "Finished native image compilation."
     }
   }
@@ -531,6 +546,18 @@ param(
     $userPath = Change-Path $userPath $kreBin ($globalKrePackages, $userKrePackages)
     [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
   }
+}
+
+function Kvm-Source-Get {
+    Write-Host "Source is currently set to: $(Get-Content($sourcePath))"
+}
+
+function Kvm-Source-Set {
+param(
+  [string] $value
+)
+    Write-Host "Setting KVM source to $value"
+    $value > $null
 }
 
 function Kvm-Alias-List {
@@ -747,6 +774,8 @@ try {
     }
   } else {
     switch -wildcard ($Command + " " + $Args.Count) {
+      "source 0"          {Kvm-Source-Get}
+      "source 1"          {Kvm-Source-Set $Args[0]}
       "setup 0"           {Kvm-Global-Setup}
       "upgrade 0"         {Kvm-Upgrade}
       "install 1"         {Kvm-Install $Args[0] $false}
