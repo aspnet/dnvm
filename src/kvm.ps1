@@ -182,7 +182,7 @@ function Kvm-Upgrade {
 
 function Add-Proxy-If-Specified {
 param(
-  [System.Net.WebClient] $wc
+  $wr
 )
   if (!$Proxy) {
     $Proxy = $env:http_proxy
@@ -195,7 +195,7 @@ param(
     } else {
         $wp.Credentials = New-Object System.Net.NetworkCredential($pb.UserName, $pb.Password)
     }
-    $wc.Proxy = $wp
+    $wr.Proxy = $wp
   }
 }
 
@@ -255,10 +255,6 @@ param(
     md $kreTempDownload -Force | Out-Null
   }
 
-  #$wc = New-Object System.Net.WebClient
-  #$wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
-  #Add-Proxy-If-Specified($wc)
-  #$wc.DownloadFile($url, $tempKreFile)
   DownloadFile $url $tempKreFile
 
   Do-Kvm-Unpack $tempKreFile $kreTempDownload
@@ -273,34 +269,34 @@ function DownloadFile
 {
 param([String] $url, [String]$targetFile)
 
-   $uri = New-Object "System.Uri" "$url"
-   $request = [System.Net.HttpWebRequest]::Create($uri)
-   $request.set_Timeout(30000)
-   $response = $request.GetResponse()
-   $totalLength = [System.Math]::Floor($response.get_ContentLength()/1024)
-   
-   try {
-       $responseStream = $response.GetResponseStream()
-       $targetStream = New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create
-       $buffer = new-object byte[] 10KB
-       $count = $responseStream.Read($buffer,0,$buffer.length)
-       $downloadedBytes = $count
-
-       while ($count -gt 0)
-       {
-           $targetStream.Write($buffer, 0, $count)
-           $count = $responseStream.Read($buffer,0,$buffer.length)
-           $downloadedBytes = $downloadedBytes + $count
-           
-           Write-Progress -activity "Downloading KRE '$($url.split('/') | Select -Last 1)'" -Status "Downloaded ($([System.Math]::Floor($downloadedBytes/1024))K of $($totalLength)K): " -PercentComplete ((([System.Math]::Floor($downloadedBytes/1024)) / $totalLength)  * 100)
-       }
-    } finally {
-       $targetStream.Flush()
-       $targetStream.Close()
-       $targetStream.Dispose()
-       $responseStream.Dispose()
-       Write-Progress -activity "Finished downloading." -Status "Done." -Completed
+  $uri = New-Object "System.Uri" "$url"
+  $request = [System.Net.HttpWebRequest]::Create($uri)
+  $request.set_Timeout(30000)
+  Add-Proxy-If-Specified $request
+  $response = $request.GetResponse()
+  $totalLength = [System.Math]::Floor($response.get_ContentLength()/1024)
+  try {
+    $responseStream = $response.GetResponseStream()
+    $targetStream = New-Object -TypeName System.IO.FileStream -ArgumentList $targetFile, Create
+    $buffer = new-object byte[] 10KB
+    $count = $responseStream.Read($buffer,0,$buffer.length)
+    $downloadedBytes = $count
+    while ($count -gt 0)
+    {
+        $targetStream.Write($buffer, 0, $count)
+        $count = $responseStream.Read($buffer,0,$buffer.length)
+        $downloadedBytes = $downloadedBytes + $count
+        Write-Progress -activity "Downloading KRE '$($url.split('/') | Select -Last 1)'" -Status "Downloaded ($([System.Math]::Floor($downloadedBytes/1024))K of $($totalLength)K): " -PercentComplete ((([System.Math]::Floor($downloadedBytes/1024)) / $totalLength)  * 100)
     }
+  } 
+  finally 
+  {
+    $targetStream.Flush()
+    $targetStream.Close()
+    $targetStream.Dispose()
+    $responseStream.Dispose()
+    Write-Progress -activity "Finished downloading." -Status "Done." -Completed
+  }
 }
 
 function Do-Kvm-Unpack {
