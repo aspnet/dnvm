@@ -458,8 +458,7 @@ param(
   $kreFullName = Requested-VersionOrAlias "$versionOrAlias"
   $kreBin = Locate-KreBinFromFullName $kreFullName
   if ($kreBin -eq $null) {
-    Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
-    return
+    throw "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
   }
 
   if ($Persistent) {
@@ -512,8 +511,7 @@ param(
 
   $kreBin = Locate-KreBinFromFullName $kreFullName
   if ($kreBin -eq $null) {
-    Write-Host "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
-    return
+    throw "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
   }
 
   Write-Host "Adding" $kreBin "to process PATH"
@@ -729,6 +727,7 @@ function Validate-And-Santitise-Switches()
   }
 }
 
+$exitCode = 0
 try {
   Validate-And-Santitise-Switches
   if ($Global) {
@@ -757,10 +756,13 @@ try {
   }
 }
 catch {
-  Write-Host $_ -ForegroundColor Red ;
+  Write-Error $_
   Write-Host "Type 'kvm help' for help on how to use kvm."
+  $exitCode = -1
 }
 if ($Wait) {
   Write-Host "Press any key to continue ..."
   $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
 }
+
+exit $exitCode
