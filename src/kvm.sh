@@ -365,8 +365,8 @@ kvm()
             done
 
             local formatString="%-6s %-20s %-7s %-20s %s\n"
-            printf "$formatString" "Active" "Version" "Runtime" "Location" "Alias"
-            printf "$formatString" "------" "-------" "-------" "--------" "-----"
+            printf "$formatString" "Active" "Alias" "Version" "Runtime" "Location"
+            printf "$formatString" "------" "-----" "-------" "-------" "--------"
 
             local formattedHome=`(echo $KRE_USER_PACKAGES | sed s=$HOME=~=g)`
             for f in $(find $KRE_USER_PACKAGES/* -name "$searchGlob" -type d -prune -exec basename {} \;); do
@@ -386,7 +386,7 @@ kvm()
                     fi
                 done
 
-                printf "$formatString" "$active" "$pkgVersion" "$pkgName" "$formattedHome" "$alias"
+                printf "$formatString" "$active" "$alias" "$pkgVersion" "$pkgName" "$formattedHome"
                 [[ $# == 2 ]] && echo "" &&  return 0
             done
 
