@@ -73,11 +73,11 @@ kvm install <semver>|<alias>|<nupkg>|latest [-X86][-Amd64] [-r|-Runtime CLR|Core
   -f|-Force         install even if specified version is already installed
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
-kvm use <semver>|<alias>|none [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent] [-g|-Global]
-  <semver>|<alias>  add KRE bin to path of current command line
-  none              remove KRE bin from path of current command line
-  -p|-Persistent    add KRE bin to PATH environment variables persistently
-  -g|-Global        combined with -p to change machine PATH instead of user PATH
+kvm use <semver>|<alias>|<package>|none [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent] [-g|-Global]
+  <semver>|<alias>|<package>  add KRE bin to path of current command line
+  none                        remove KRE bin from path of current command line
+  -p|-Persistent              add KRE bin to PATH environment variables persistently
+  -g|-Global                  combined with -p to change machine PATH instead of user PATH
 
 kvm list
   list KRE versions installed
@@ -88,9 +88,9 @@ kvm alias
 kvm alias <alias>
   display value of the specified alias
 
-kvm alias <alias> <semver>|<alias> [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR]
-  <alias>            The name of the alias to set
-  <semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias
+kvm alias <alias> <semver>|<alias>|<package> [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR]
+  <alias>                      the name of the alias to set
+  <semver>|<alias>|<package>   the KRE version to set the alias to. Alternatively use the version of the specified alias
 
 kvm unalias <alias>
   remove the specified alias
@@ -439,6 +439,8 @@ function Kvm-Global-Use {
 param(
   [string] $versionOrAlias
 )
+  Validate-Full-Package-Name-Arguments-Combination $versionOrAlias
+
   If (Needs-Elevation) {
     $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use '$versionOrAlias' -global $(Requested-Switches) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
@@ -497,6 +499,8 @@ function Kvm-Use {
 param(
   [string] $versionOrAlias
 )
+  Validate-Full-Package-Name-Arguments-Combination $versionOrAlias
+
   if ($versionOrAlias -eq "none") {
     Console-Write "Removing KRE from process PATH"
     Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
@@ -618,6 +622,15 @@ function Requested-VersionOrAlias() {
 param(
   [string] $versionOrAlias
 )
+  Validate-Full-Package-Name-Arguments-Combination $versionOrAlias
+
+  $kreBin = Locate-KreBinFromFullName $versionOrAlias
+
+  # If the name specified is an existing package, just use it as is
+  if ($kreBin -ne $null) {
+    return $versionOrAlias
+  }
+
   If (Test-Path ($userKrePath + "\alias\" + $versionOrAlias + ".txt")) {
     $aliasValue = Get-Content ($userKrePath + "\alias\" + $versionOrAlias + ".txt")
     $parts = $aliasValue.Split('.', 2)
@@ -767,6 +780,16 @@ param(
   else {
    [Console]::Error.WriteLine($message)
   }  
+}
+
+function Validate-Full-Package-Name-Arguments-Combination() {
+param(
+	[string] $versionOrAlias
+)
+	if ($versionOrAlias -like "KRE-*" -and
+	    ($selectedArch -or $selectedRuntime)) {
+		throw "Runtime or architecture cannot be specified when using the full package name."
+  }
 }
 
 $exitCode = 0

@@ -118,18 +118,24 @@ _kvm_unpack() {
 
 _kvm_requested_version_or_alias() {
     local versionOrAlias="$1"
+    local kreBin=$(_kvm_locate_kre_bin_from_full_name "$versionOrAlias")
+	
+	# If the name specified is an existing package, just use it as is
+	if [ -n "$kreBin" ]; then
+	    echo "$versionOrAlias"
+	else
+       if [ -e "$KRE_USER_HOME/alias/$versionOrAlias.alias" ]; then
+           local kreFullName=$(cat "$KRE_USER_HOME/alias/$versionOrAlias.alias")
+           local pkgName=$(echo $kreFullName | sed "s/\([^.]*\).*/\1/")
+           local pkgVersion=$(echo $kreFullName | sed "s/[^.]*.\(.*\)/\1/")
+           local pkgPlatform=$(echo "$pkgName" | sed "s/KRE-\([^.-]*\).*/\1/")
+        else
+            local pkgVersion=$versionOrAlias
+            local pkgPlatform="Mono"
+        fi
 
-    if [ -e "$KRE_USER_HOME/alias/$versionOrAlias.alias" ]; then
-        local kreFullName=$(cat "$KRE_USER_HOME/alias/$versionOrAlias.alias")
-        local pkgName=$(echo $kreFullName | sed "s/\([^.]*\).*/\1/")
-        local pkgVersion=$(echo $kreFullName | sed "s/[^.]*.\(.*\)/\1/")
-        local pkgPlatform=$(echo "$pkgName" | sed "s/KRE-\([^.-]*\).*/\1/")
-    else
-        local pkgVersion=$versionOrAlias
-        local pkgPlatform="Mono"
+        echo "KRE-$pkgPlatform.$pkgVersion"
     fi
-
-    echo "KRE-$pkgPlatform.$pkgVersion"
 }
 
 # This will be more relevant if we support global installs
@@ -165,10 +171,10 @@ kvm()
             echo "-p -persistent    set installed version as default"
             echo "add KRE bin to path of current command line"
             echo ""
-            echo "kvm use <semver>|<alias>|none [-p -persistent]"
-            echo "<semver>|<alias>  add KRE bin to path of current command line   "
-            echo "none              remove KRE bin from path of current command line"
-            echo "-p -persistent    set selected version as default"
+            echo "kvm use <semver>|<alias>|<package>|none [-p -persistent]"
+            echo "<semver>|<alias>|<package>  add KRE bin to path of current command line   "
+            echo "none                        remove KRE bin from path of current command line"
+            echo "-p -persistent              set selected version as default"
             echo ""
             echo "kvm list"
             echo "list KRE versions installed "
@@ -179,9 +185,9 @@ kvm()
             echo "kvm alias <alias>"
             echo "display value of the specified alias"
             echo ""
-            echo "kvm alias <alias> <semver>"
-            echo "<alias>            The name of the alias to set"
-            echo "<semver>|<alias>   The KRE version to set the alias to. Alternatively use the version of the specified alias"
+            echo "kvm alias <alias> <semver>|<alias>|<package>"
+            echo "<alias>                      the name of the alias to set"
+            echo "<semver>|<alias>|<package>   the KRE version to set the alias to. Alternatively use the version of the specified alias"
             echo ""
             echo "kvm unalias <alias>"
             echo "remove the specified alias"
