@@ -408,7 +408,10 @@ filter List-Parts {
   }
   $active = $false
   foreach($portion in $env:Path.Split(';')) {
-    if ($portion.StartsWith($_.FullName)) {
+    # Append \ to the end because otherwise you might see
+    # multiple active versions if the folders have the same
+    # name prefix (like 1.0-beta and 1.0)
+    if ($portion.StartsWith($_.FullName + "\")) {
       $active = $true
     }
   }
