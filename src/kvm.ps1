@@ -373,7 +373,7 @@ param(
     }
     else {
       Console-Write "Compiling native images for $kreFullName to improve startup performance..."
-      Start-Process "K" -ArgumentList "crossgen" -Wait
+      Start-Process "k-crossgen" -Wait
       Console-Write "Finished native image compilation."
     }
   }
