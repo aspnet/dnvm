@@ -332,7 +332,7 @@ kvm()
             local action="Setting"
             [[ -e "$KRE_USER_HOME/alias/$name.alias" ]] && action="Updating"
             echo "$action alias '$name' to '$kreFullName'"
-            echo "$kreFullName" > "$KRE_USER_HOME/alias/$name.alias"
+            echo "$kreFullName" >| "$KRE_USER_HOME/alias/$name.alias"
         ;;
 
         "unalias" )
