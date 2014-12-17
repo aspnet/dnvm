@@ -1,3 +1,7 @@
+# Pester PowerShell Unit Test Framework is fetched from Git when needed
+.pester/
+.testwork/
+
 [Oo]bj/
 [Bb]in/
 TestResults/
