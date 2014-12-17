@@ -551,6 +551,7 @@ param(
   $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
   if (!(Test-Path $aliasFilePath)) {
     Console-Write "Alias '$name' does not exist"
+    $script:exitCode = 1 # Return non-zero exit code for scripting
   } else {
     $aliasValue = (Get-Content ($userKrePath + "\alias\" + $name + ".txt"))
     Console-Write "Alias '$name' is set to $aliasValue" 
@@ -820,7 +821,7 @@ param(
   }
 }
 
-$exitCode = 0
+$script:exitCode = 0
 try {
   Validate-And-Santitize-Switches
   if ($Global) {
@@ -851,7 +852,7 @@ try {
 catch {
   Console-Write-Error $_
   Console-Write "Type 'kvm help' for help on how to use kvm."
-  $exitCode = -1
+  $script:exitCode = -1
 }
 if ($Wait) {
   Console-Write "Press any key to continue ..."
@@ -863,4 +864,4 @@ if($OutputVariable) {
   Set-Variable $OutputVariable $script:capturedOut -Scope 1
 }
 
-exit $exitCode
+exit $script:exitCode

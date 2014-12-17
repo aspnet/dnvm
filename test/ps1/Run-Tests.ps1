@@ -24,7 +24,6 @@ param(
     [Alias("Tags")][string]$Tag = $null,
     [switch]$Strict,
     [switch]$Quiet,
-    [switch]$Fast,
     [switch]$Debug,
     [switch]$TeamCity)
 
