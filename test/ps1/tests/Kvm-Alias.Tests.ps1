@@ -61,3 +61,25 @@ Describe "kvm alias" -Tag "kvm-alias" {
         }
     }
 }
+
+Describe "kvm unalias" -Tag "kvm-alias" {
+    Context "When removing an alias that does not exist" {
+        runkvm unalias $bogusAlias
+
+        It "outputs an error" {
+            $kvmout[0] | Should Be "Cannot remove alias, '$bogusAlias' is not a valid alias name"
+        }
+
+        It "returns a non-zero exit code" {
+            $kvmexit | Should Not Be 0
+        }
+    }
+
+    Context "When removing an alias that does exist" {
+        runkvm unalias $testAlias
+
+        It "removes the alias file" {
+            "$env:USER_KRE_PATH\alias\$testAlias.txt" | Should Not Exist
+        }
+    }
+}
