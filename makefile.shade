@@ -1,6 +1,7 @@
 use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 use import="Environment"
+use import="BuildEnv"
 
 var PRODUCT_VERSION = '1.0.0'
 var AUTHORS='Microsoft Open Technologies, Inc.'
@@ -9,6 +10,7 @@ use-standard-lifecycle
 
 var ROOT = '${Directory.GetCurrentDirectory()}'
 var SOURCE_DIR = '${Path.Combine(ROOT, "src")}'
+var TEST_DIR = '${Path.Combine(ROOT, "test")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 
 #copy-kvm target='compile'
@@ -21,3 +23,6 @@ var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
     update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.sh")}' @{
         updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
     }
+
+#run-ps1-tests target='test' if='!IsLinux'
+	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity ? "-TeamCity" : "-Fast"}'
