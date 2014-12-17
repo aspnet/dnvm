@@ -1,17 +1,4 @@
 #Requires -Version 3
-<#
-.SYNOPSIS
-    Runs the tests for kvm
-
-.PARAMETER PesterPath
-    The path to the root of the Pester (https://github.com/pester/Pester) module
-
-.PARAMETER PesterRef
-    A git ref (branch, tag or commit id) to check out in the pester repo
-
-.PARAMETER PesterRepo
-    The repository to clone Pester from (defaults to https://github.com/pester/Pester)
-#>
 param(
     [string]$PesterPath = $null,
     [string]$PesterRef = "anurse/teamcity",
@@ -24,10 +11,11 @@ param(
     [Alias("Tags")][string]$Tag = $null,
     [switch]$Strict,
     [switch]$Quiet,
-    [switch]$Fast,
     [switch]$Debug,
-    [switch]$RunningInNewPowershell,
-    [switch]$TeamCity)
+    [switch]$TeamCity,
+
+    # Cheap and relatively effective way to scare users away from running this script themselves
+    [switch]$RunningInNewPowershell)
 
 if(!$RunningInNewPowershell) {
     throw "Don't use this script to run the tests! Use Run-Tests.ps1, it sets up a new powershell instance in which to run the tests!"
@@ -46,6 +34,7 @@ if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
 if(!$KvmPath) { $KvmPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot ".testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
+$TestKreVersion = "1.0.0-beta1"
 
 # Check that Pester is present
 Write-Banner "Ensuring Pester is at $PesterRef"
@@ -103,23 +92,20 @@ mkdir $env:GLOBAL_KRE_PATH | Out-Null
 
 $env:KRE_NUGET_API_URL = "https://www.myget.org/F/aspnetmaster/api/v2"
 
-$TestKind = "all"
-if($Fast) {
-    $TestKind = "fast"
-}
-
 $kvmout = $null
+$kvmexit = $null
 function runkvm {
     $kvmout = $null
     & $kvm -AssumeElevated -OutputVariable kvmout -Quiet @args
-    $LASTEXITCODE | Should Be 0
-
+    $kvmexit = $LASTEXITCODE
+    
     if($Debug) {
         $kvmout | Write-CommandOutput kvm
     }
 
-    # Push the value up a scope
+    # Push the values up a scope
     Set-Variable kvmout $kvmout -Scope 1
+    Set-Variable kvmexit $kvmexit -Scope 1
 }
 
 Write-Banner "Fetching test prerequisites"
@@ -134,7 +120,7 @@ if(!(Test-Path $specificNupkgPath)) {
     Invoke-WebRequest $specificNupkgUrl -OutFile $specificNupkgPath
 }
 
-Write-Banner "Running $TestKind Pester Tests in $TestsPath"
+Write-Banner "Running all Pester Tests in $TestsPath"
 $result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -TeamCity:$TeamCity -PassThru
 
 $host.SetShouldExit($result.FailedCount)

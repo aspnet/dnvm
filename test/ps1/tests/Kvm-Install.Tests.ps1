@@ -1,15 +1,6 @@
-$testVer = "1.0.0-beta1"
-$archs=@("x86", "amd64")    # List of architectures to test
-$clrs=@("CLR", "CoreCLR")   # List of runtimes to test
 $crossgenned=@("mscorlib")  # List of assemblies to check native images for on CoreCLR
 
-# We can't put Tags on "Context" in Pester, only "Describe" so use this $Fast variable to skip other archs/clrs
-if($Fast) {
-    $archs=@("x86")
-    $clrs=@("CLR")
-}
-
-function DefineInstallTests($clr, $arch, [switch]$global) {
+function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
     $kreHome = $env:USER_KRE_PATH
     $contextName = "for user"
     $alias = "install_test_$arch_$clr"
@@ -29,22 +20,38 @@ function DefineInstallTests($clr, $arch, [switch]$global) {
     $kreName = GetKreName $clr $arch
     $kreRoot = "$kreHome\packages\$kreName"
 
-    Context "When installing $clr on $arch $contextName" {
+    $nativeText = ""
+    if($noNative) {
+        $nativeText = " (without building native images)"
+    }
+
+    Context "When installing $clr on $arch $contextName$nativeText" {
         It "downloads and unpacks a KRE" {
             if($global) {
-                runkvm install $testVer -arch $arch -r $clr -a $alias -global
+                runkvm install $TestKreVersion -arch $arch -r $clr -a $alias -global
+            } elseif($noNative) {
+                runkvm install $TestKreVersion -arch $arch -r $clr -a $alias -nonative    
             } else {
-                runkvm install $testVer -arch $arch -r $clr -a $alias
+                runkvm install $TestKreVersion -arch $arch -r $clr -a $alias
             }
         }
+        
         It "installs the KRE into the user directory" {
             $kreRoot | Should Exist
         }
+        
         if($clr -eq "CoreCLR") {
-            It "crossgenned native assemblies" {
-                $crossgenned | ForEach-Object { "$kreRoot\bin\$_.ni.dll" } | Should Exist
+            if($noNative) {
+                It "did not crossgen native assemblies" {
+                    $crossgenned | ForEach-Object { "$kreRoot\bin\$_.ni.dll" } | Should Not Exist
+                }
+            } else {
+                It "crossgenned native assemblies" {
+                    $crossgenned | ForEach-Object { "$kreRoot\bin\$_.ni.dll" } | Should Exist
+                }
             }
         }
+
         It "can restore packages for the HelloK sample" {
             pushd "$TestAppsDir\HelloK"
             try {
@@ -53,6 +60,7 @@ function DefineInstallTests($clr, $arch, [switch]$global) {
                 popd
             }
         }
+        
         It "can run the HelloK sample" {
             pushd "$TestAppsDir\HelloK"
             try {
@@ -66,25 +74,24 @@ function DefineInstallTests($clr, $arch, [switch]$global) {
                 popd
             }
         }
+
         It "assigned the requested alias" {
             "$env:USER_KRE_PATH\alias\$alias.txt" | Should Exist
             "$env:USER_KRE_PATH\alias\$alias.txt" | Should ContainExactly $kreName
         }
+        
         It "uses the new KRE" {
             GetActiveKreName $kreHome | Should Be "$kreName"
         }
     }
 }
 
-Describe "Kvm-Install" {
-    $archs | ForEach-Object {
-        $arch = $_
-        $clrs | ForEach-Object {
-            $clr = $_
-            DefineInstallTests $clr $arch
-            DefineInstallTests $clr $arch -global
-        }
-    }
+Describe "kvm install" -Tag "kvm-install" {
+    DefineInstallTests "CLR" "x86"
+    DefineInstallTests "CLR" "amd64"
+    DefineInstallTests "CoreCLR" "x86" -noNative
+    DefineInstallTests "CoreCLR" "amd64"
+    DefineInstallTests "CLR" "x86" -global
 
     Context "When installing latest" {
         $previous = @(dir "$env:USER_KRE_PATH\packages" | select -ExpandProperty Name)
@@ -101,7 +108,7 @@ Describe "Kvm-Install" {
         $kreName = GetKreName $clrs[0] $archs[0]
         $krePath = "$env:USER_KRE_PATH\packages\$kreName"
         It "ensures the KRE is installed" {
-            runkvm install $testVer -arch $archs[0] -r $clrs[0]
+            runkvm install $TestKreVersion -arch $archs[0] -r $clrs[0]
             $kvmout[0] | Should Match "$kreName already installed"
             $krePath | Should Exist
         }

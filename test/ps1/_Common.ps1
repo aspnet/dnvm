@@ -51,6 +51,6 @@ function GetActiveKreName {
 }
 
 function GetKreName {
-    param($clr, $arch, $ver = $testVer)
-    "KRE-$clr-$arch.$testVer"
+    param($clr, $arch, $ver = $TestKreVersion)
+    "KRE-$clr-$arch.$ver"
 }
