@@ -581,6 +581,7 @@ param(
       Remove-Item -literalPath $aliasPath
   } else {
       Console-Write "Cannot remove alias, '$name' is not a valid alias name"
+      $script:exitCode = 1 # Return non-zero exit code for scripting
   }
 }
 
