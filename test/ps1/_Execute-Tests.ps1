@@ -126,4 +126,9 @@ if(!(Test-Path $specificNupkgPath)) {
 }
 
 Write-Banner "Running $TestKind Pester Tests in $TestsPath"
-Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet
+$result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -PassThru
+
+$result.TestResult | ForEach-Object {
+    Write-Host "TODO: Teamcity formatting for this!"
+    "$($_.Describe) $($_.Context) $($_.Name) - $($_.Result)"
+}
