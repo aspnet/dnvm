@@ -14,8 +14,8 @@
 #>
 param(
     [string]$PesterPath = $null,
-    [string]$PesterRef = "3.2.0",
-    [string]$PesterRepo = "https://github.com/pester/Pester",
+    [string]$PesterRef = "anurse/teamcity",
+    [string]$PesterRepo = "https://github.com/anurse/Pester",
     [string]$TestsPath = $null,
     [string]$KvmPath = $null,
     [string]$TestName = $null,
@@ -26,7 +26,8 @@ param(
     [switch]$Quiet,
     [switch]$Fast,
     [switch]$Debug,
-    [switch]$RunningInNewPowershell)
+    [switch]$RunningInNewPowershell,
+    [switch]$TeamCity)
 
 if(!$RunningInNewPowershell) {
     throw "Don't use this script to run the tests! Use Run-Tests.ps1, it sets up a new powershell instance in which to run the tests!"
@@ -67,7 +68,8 @@ if(Test-Path "$TestWorkingDir\kre") {
     Write-Banner "Wiping old test working area"
     del -rec -for "$TestWorkingDir\kre"
 }
-else {
+
+if(!(Test-Path $TestWorkingDir)) {
     mkdir $TestWorkingDir | Out-Null
 }
 
@@ -126,9 +128,6 @@ if(!(Test-Path $specificNupkgPath)) {
 }
 
 Write-Banner "Running $TestKind Pester Tests in $TestsPath"
-$result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -PassThru
+$result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -TeamCity:$TeamCity -PassThru
 
-$result.TestResult | ForEach-Object {
-    Write-Host "TODO: Teamcity formatting for this!"
-    "$($_.Describe) $($_.Context) $($_.Name) - $($_.Result)"
-}
+$host.SetShouldExit($result.FailedCount)

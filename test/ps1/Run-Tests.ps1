@@ -25,7 +25,8 @@ param(
     [switch]$Strict,
     [switch]$Quiet,
     [switch]$Fast,
-    [switch]$Debug)
+    [switch]$Debug,
+    [switch]$TeamCity)
 
 . "$PSScriptRoot\_Common.ps1"
 
@@ -45,4 +46,6 @@ $PSBoundParameters.Keys | ForEach-Object {
     }
 }
 
-& powershell -NoProfile -NoLogo -File "$PSScriptRoot\_Execute-Tests.ps1" @childArgs -RunningInNewPowershell
+& powershell -NoProfile -NoLogo -Command "& `"$PSScriptRoot\_Execute-Tests.ps1`" $childArgs -RunningInNewPowershell"
+
+exit $LASTEXITCODE
