@@ -81,12 +81,19 @@ if($Debug) {
     $DebugPreference = "Continue"
 }
 
+function Remove-EnvVar($var) {
+    $path = "Env:\$var"
+    if(Test-Path $path) {
+        del $path
+    }
+}
+
 # Unset KRE_HOME for the test
 $oldKreHome = $env:KRE_HOME
-del env:\KRE_HOME
+Remove-EnvVar KRE_HOME
 
 # Unset KRE_TRACE for the test
-del env:\KRE_TRACE
+Remove-EnvVar KRE_TRACE
 
 $env:USER_KRE_PATH = "$TestWorkingDir\kre\user"
 mkdir $env:USER_KRE_PATH | Out-Null
