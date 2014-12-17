@@ -1,0 +1,22 @@
+{
+    "version": "0.0.1-*",
+    "description": "Quick app to exercise a few K things",
+    "dependencies": {
+        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" }
+    },
+    "commands": {
+        "run": "run"
+    },
+    "frameworks": {
+        "aspnet50": { },
+        "aspnetcore50": {
+            "dependencies": {
+                "System.Console": "4.0.0-*",
+                "System.Collections": "4.0.10-*",
+                "System.Diagnostics.Process": "4.0.0-*",
+                "System.Linq": "4.0.0-*"
+            }
+        }
+    }
+}

@@ -7,6 +7,7 @@ param(
   [alias("p")][switch] $Persistent = $false,
   [alias("f")][switch] $Force = $false,
   [alias("r")][string] $Runtime,
+  [alias("arch")][string] $Architecture,
   [switch] $X86 = $false,
   [switch] $Amd64 = $false,
   #deprecated
@@ -20,16 +21,25 @@ param(
   [string] $Alias = $null,
   [switch] $NoNative = $false,
   [parameter(Position=1, ValueFromRemainingArguments=$true)]
-  [string[]]$Args=@()
+  [string[]]$Args=@(),
+  [switch] $Quiet,
+  [string] $OutputVariable,
+  [switch] $AssumeElevated
 )
 
 $selectedArch=$null;
 $defaultArch="x86"
 $selectedRuntime=$null
 $defaultRuntime="CLR"
-$userKrePath = $env:USERPROFILE + "\.kre"
+
+# Get or calculate userKrePath
+$userKrePath = $env:USER_KRE_PATH
+if(!$userKrePath) { $userKrePath = $env:USERPROFILE + "\.kre" }
 $userKrePackages = $userKrePath + "\packages"
-$globalKrePath = $env:ProgramFiles + "\KRE"
+
+# Get or calculate globalKrePath
+$globalKrePath = $env:GLOBAL_KRE_PATH
+if(!$globalKrePath) { $globalKrePath = $env:ProgramFiles + "\KRE" }
 $globalKrePackages = $globalKrePath + "\packages"
 $feed = $env:KRE_FEED
 
@@ -44,6 +54,8 @@ if (!$feed)
 {
     $feed = "https://www.myget.org/F/aspnetvnext/api/v2";
 }
+
+$feed = $feed.TrimEnd("/")
 
 $scriptPath = $myInvocation.MyCommand.Definition
 
@@ -185,6 +197,7 @@ param(
 
   $wc = New-Object System.Net.WebClient
   Add-Proxy-If-Specified($wc)
+  Write-Debug "DownloadString: $url"
   [xml]$xml = $wc.DownloadString($url)
 
   $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
@@ -231,6 +244,7 @@ param(
 
   $wc = New-Object System.Net.WebClient
   Add-Proxy-If-Specified($wc)
+  Write-Debug "DownloadFile: $url, $tempKreFile"
   $wc.DownloadFile($url, $tempKreFile)
 
   Do-Kvm-Unpack $tempKreFile $kreTempDownload
@@ -686,6 +700,10 @@ SET "PATH=$newPath"
 }
 
 function Needs-Elevation() {
+  if($AssumeElevated) {
+    return $false
+  }
+
   $user = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
   $elevated = $user.IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
   return -NOT $elevated
@@ -725,33 +743,52 @@ function Validate-And-Santitize-Switches()
     Set-Variable -Name "selectedRuntime" -Value "svrc50" -Scope Script
   }
 
-  if ($X64) {
-    Console-Write "Warning: -x64 is deprecated, use -amd64 for new packages."
-    Set-Variable -Name "selectedArch" -Value "x64" -Scope Script
-  } elseif ($Amd64) {
-    Set-Variable -Name "selectedArch" -Value "amd64" -Scope Script
-  } elseif ($X86) {
-    Set-Variable -Name "selectedArch" -Value "x86" -Scope Script
+  if($Architecture) {
+    $validArchitectures = "amd64", "x86"
+    $match = $validArchitectures | ? { $_ -like $Architecture } | Select -First 1
+    if(!$match) {throw "'$architecture' is not a valid architecture"}
+    Set-Variable -Name "selectedArch" -Value $match -Scope Script
   }
+  else {
+    if ($X64) {
+      Console-Write "Warning: -x64 is deprecated, use -amd64 for new packages."
+      Set-Variable -Name "selectedArch" -Value "x64" -Scope Script
+    } elseif ($Amd64) {
+      Set-Variable -Name "selectedArch" -Value "amd64" -Scope Script
+    } elseif ($X86) {
+      Set-Variable -Name "selectedArch" -Value "x86" -Scope Script
+    }
+  }
+
+  Write-Debug "Runtime=$selectedRuntime"
+  Write-Debug "Arch=$selectedArch"
 }
 
+$script:capturedOut = @()
 function Console-Write() {
 param(
   [Parameter(ValueFromPipeline=$true)]
   [string] $message
 )
-  if ($useHostOutputMethods) {
-    try {
-      Write-Host $message
-    }
-    catch {
-      $script:useHostOutputMethods = $false
-      Console-Write $message
-    }
+  if($OutputVariable) {
+    # Update the capture output
+    $script:capturedOut += @($message)
   }
-  else {
-    [Console]::WriteLine($message)
-  }  
+
+  if(!$Quiet) {
+    if ($useHostOutputMethods) {
+      try {
+        Write-Host $message
+      }
+      catch {
+        $script:useHostOutputMethods = $false
+        Console-Write $message
+      }
+    }
+    else {
+      [Console]::WriteLine($message)
+    }  
+  }
 }
 
 function Console-Write-Error() {
@@ -819,6 +856,11 @@ catch {
 if ($Wait) {
   Console-Write "Press any key to continue ..."
   $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown,AllowCtrlC")
+}
+
+# If the user specified an output variable, push the value up to the parent scope
+if($OutputVariable) {
+  Set-Variable $OutputVariable $script:capturedOut -Scope 1
 }
 
 exit $exitCode
