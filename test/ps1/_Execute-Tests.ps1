@@ -23,11 +23,6 @@ if(!$RunningInNewPowershell) {
 
 . "$PSScriptRoot\_Common.ps1"
 
-Write-Banner "In child shell"
-
-# Check for necessary commands
-if(!(Get-Command git -ErrorAction SilentlyContinue)) { throw "Need git to run tests!" }
-
 # Set defaults
 if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
 if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
@@ -35,17 +30,6 @@ if(!$KvmPath) { $KvmPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot ".testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
 $TestKreVersion = "1.0.0-beta1"
-
-# Check that Pester is present
-Write-Banner "Ensuring Pester is at $PesterRef"
-if(!(Test-Path $PesterPath)) {
-    git clone $PesterRepo $PesterPath 2>&1 | Write-CommandOutput "git"
-}
-
-# Get the right tag checked out
-pushd $PesterPath
-git checkout $PesterRef 2>&1 | Write-CommandOutput "git"
-popd
 
 # Set up context
 $kvm = $KvmPath
