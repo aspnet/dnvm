@@ -84,6 +84,9 @@ Remove-EnvVar KRE_HOME
 # Unset KRE_TRACE for the test
 Remove-EnvVar KRE_TRACE
 
+# Unset PATH ... gulp
+Remove-EnvVar PATH
+
 $env:USER_KRE_PATH = "$TestWorkingDir\kre\user"
 mkdir $env:USER_KRE_PATH | Out-Null
 
@@ -96,7 +99,7 @@ $kvmout = $null
 $kvmexit = $null
 function runkvm {
     $kvmout = $null
-    & $kvm -AssumeElevated -OutputVariable kvmout -Quiet @args
+    & $kvm -AssumeElevated -OutputVariable kvmout -Quiet @args -ErrorVariable kvmerr -ErrorAction SilentlyContinue
     $kvmexit = $LASTEXITCODE
     
     if($Debug) {
@@ -106,6 +109,7 @@ function runkvm {
     # Push the values up a scope
     Set-Variable kvmout $kvmout -Scope 1
     Set-Variable kvmexit $kvmexit -Scope 1
+    Set-Variable kvmerr $kvmerr -Scope 1
 }
 
 Write-Banner "Fetching test prerequisites"
@@ -120,7 +124,7 @@ if(!(Test-Path $specificNupkgPath)) {
     Invoke-WebRequest $specificNupkgUrl -OutFile $specificNupkgPath
 }
 
-Write-Banner "Running all Pester Tests in $TestsPath"
+Write-Banner "Running Pester Tests in $TestsPath"
 $result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -TeamCity:$TeamCity -PassThru
 
 $host.SetShouldExit($result.FailedCount)

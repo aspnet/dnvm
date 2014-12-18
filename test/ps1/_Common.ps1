@@ -31,7 +31,13 @@ function GetKresOnPath {
     if(!$kreHome) {
         $kreHome = $env:USER_KRE_PATH
     }
-    @(($env:PATH).Split(";") | Where { $_.StartsWith("$kreHome\packages") })
+
+    if($env:PATH) {
+        $paths = $env:PATH.Split(";")
+        if($paths) {
+            @($paths | Where { $_.StartsWith("$kreHome\packages") })
+        }
+    }
 }
 
 function GetActiveKrePath {

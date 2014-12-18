@@ -9,7 +9,7 @@ $notRealKreName = GetKreName "CLR" "x86" $notRealKreVersion
 $testAlias = "alias_test_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "alias_notReal_" + [Guid]::NewGuid().ToString("N")
 $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
-        
+
 Describe "kvm alias" -Tag "kvm-alias" {
     Context "When defining an alias for a KRE that exists" {
         runkvm alias $testAlias $TestKreVersion -x86 -r CLR
