@@ -49,6 +49,8 @@ param(
     [string]$TestWorkingDir = $null,
     [string]$TestAppsDir = $null,
     [Alias("Tags")][string]$Tag = $null,
+    [string]$OutputFile = $null,
+    [string]$OutputFormat = $null,
     [switch]$Quiet,
     [switch]$Debug,
     [switch]$TeamCity)
