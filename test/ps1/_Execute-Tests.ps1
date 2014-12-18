@@ -29,7 +29,15 @@ if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
 if(!$KvmPath) { $KvmPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot ".testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
+
+# Configure the KREs we're going to use in testing. The actual KRE doesn't matter since we're only testing
+# that KVM can find it, download it and unpack it successfully. We do run an app in the KRE to do that sanity
+# test, but all we care about in these tests is that the app executes.
+$env:KRE_NUGET_API_URL = "https://www.myget.org/F/aspnetmaster/api/v2"
 $TestKreVersion = "1.0.0-beta1"
+$specificNupkgUrl = "https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-CLR-x86/1.0.0-alpha4"
+$specificNupkgName = "KRE-CLR-x86.1.0.0-alpha4.nupkg"
+$specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
 # Set up context
 $kvm = $KvmPath
@@ -70,9 +78,6 @@ mkdir $env:USER_KRE_PATH | Out-Null
 $env:GLOBAL_KRE_PATH = "$TestWorkingDir\kre\global"
 mkdir $env:GLOBAL_KRE_PATH | Out-Null
 
-# Configure the NuGet feed URL
-$env:KRE_NUGET_API_URL = "https://www.myget.org/F/aspnetmaster/api/v2"
-
 # Helper function to run kvm and capture stuff.
 $kvmout = $null
 $kvmexit = $null
@@ -93,9 +98,6 @@ function runkvm {
 
 # Fetch a nupkg to use for the 'kvm install <path to nupkg>' scenario
 Write-Banner "Fetching test prerequisites"
-$specificNupkgUrl = "https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-CLR-x86/1.0.0-alpha4"
-$specificNupkgName = "KRE-CLR-x86.1.0.0-alpha4.nupkg"
-$specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
 $downloadDir = Join-Path $TestWorkingDir "downloads"
 if(!(Test-Path $downloadDir)) { mkdir $downloadDir | Out-Null }

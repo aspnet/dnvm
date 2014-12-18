@@ -7,6 +7,7 @@ $kreName = GetKreName "CLR" "x86"
 $notRealKreName = GetKreName "CLR" "x86" $notRealKreVersion
 
 $testAlias = "alias_test_" + [Guid]::NewGuid().ToString("N")
+$testDefaultAlias = "alias_testDefault_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "alias_notReal_" + [Guid]::NewGuid().ToString("N")
 $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
 
@@ -17,6 +18,15 @@ Describe "kvm alias" -Tag "kvm-alias" {
         It "writes the alias file" {
             "$env:USER_KRE_PATH\alias\$testAlias.txt" | Should Exist
             "$env:USER_KRE_PATH\alias\$testAlias.txt" | Should ContainExactly $kreName
+        }
+    }
+
+    Context "When defining an alias for a KRE with no arch or clr parameters" {
+        runkvm alias $testDefaultAlias $TestKreVersion
+
+        It "writes the x86/CLR variant to the alias file" {
+            "$env:USER_KRE_PATH\alias\$testDefaultAlias.txt" | Should Exist
+            "$env:USER_KRE_PATH\alias\$testDefaultAlias.txt" | Should ContainExactly $kreName   
         }
     }
 
