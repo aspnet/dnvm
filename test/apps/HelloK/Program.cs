@@ -10,45 +10,6 @@ namespace HelloK {
             _env = env;
         }
 
-        private string GetUnameValue(string arg) {
-            var psi = new ProcessStartInfo("uname", "-" + arg);
-            psi.UseShellExecute = false;
-            psi.RedirectStandardOutput = true;
-            var p = Process.Start(psi);
-            var ret = p.StandardOutput.ReadToEnd().Trim();
-            p.WaitForExit();
-            return ret;
-        }
-
-        private string GetSwVersValue(string arg) {
-            var psi = new ProcessStartInfo("sw_vers", "-" + arg);
-            psi.UseShellExecute = false;
-            psi.RedirectStandardOutput = true;
-            var p = Process.Start(psi);
-            var ret = p.StandardOutput.ReadToEnd().Trim();
-            p.WaitForExit();
-            return ret;
-        }
-
-#if !ASPNETCORE50
-        private string GetPlatform() {
-            if(Environment.OSVersion.Platform == PlatformID.Unix) {
-                var kern = GetUnameValue("s");
-                var kernVer = GetUnameValue("r");
-                if(string.Equals(kern, "Darwin", StringComparison.OrdinalIgnoreCase)) {
-                    var name = GetSwVersValue("productName");
-                    var ver = GetSwVersValue("productVersion");
-                    var build = GetSwVersValue("buildVersion");
-                    return name + " " + ver + " Build " + build + " (" + kern + " " + kernVer + ")";
-                } else {
-                    return kern + " " + kernVer;
-                }
-            } else {
-                return Environment.OSVersion.VersionString;
-            }
-        }
-#endif
-
         public int Main(string[] args) {
             var art =
                 "\x1b[33m   ___   _______  \x1b[34m  _  ____________" + Environment.NewLine +
@@ -98,5 +59,45 @@ namespace HelloK {
 
             return 0;
         }
+
+        private string GetUnameValue(string arg) {
+            var psi = new ProcessStartInfo("uname", "-" + arg);
+            psi.UseShellExecute = false;
+            psi.RedirectStandardOutput = true;
+            var p = Process.Start(psi);
+            var ret = p.StandardOutput.ReadToEnd().Trim();
+            p.WaitForExit();
+            return ret;
+        }
+
+        private string GetSwVersValue(string arg) {
+            var psi = new ProcessStartInfo("sw_vers", "-" + arg);
+            psi.UseShellExecute = false;
+            psi.RedirectStandardOutput = true;
+            var p = Process.Start(psi);
+            var ret = p.StandardOutput.ReadToEnd().Trim();
+            p.WaitForExit();
+            return ret;
+        }
+
+#if !ASPNETCORE50
+        private string GetPlatform() {
+            if(Environment.OSVersion.Platform == PlatformID.Unix) {
+                var kern = GetUnameValue("s");
+                var kernVer = GetUnameValue("r");
+                if(string.Equals(kern, "Darwin", StringComparison.OrdinalIgnoreCase)) {
+                    var name = GetSwVersValue("productName");
+                    var ver = GetSwVersValue("productVersion");
+                    var build = GetSwVersValue("buildVersion");
+                    return name + " " + ver + " Build " + build + " (" + kern + " " + kernVer + ")";
+                } else {
+                    return kern + " " + kernVer;
+                }
+            } else {
+                return Environment.OSVersion.VersionString;
+            }
+        }
+#endif
+       
     }
 }

@@ -71,6 +71,8 @@ pushd $PesterPath
 git checkout $PesterRef 2>&1 | Write-CommandOutput "git"
 popd
 
+Write-Banner "Starting child shell to run"
+
 # Crappy that we have to duplicate things here...
 # Build a string that should basically match the argument string used to call us
 $childArgs = @()
@@ -87,7 +89,6 @@ $PSBoundParameters.Keys | ForEach-Object {
 }
 
 # Launch the script that will actually run the tests in a new shell
-Write-Banner "Starting new shell to run tests"
 & powershell -NoProfile -NoLogo -Command "& `"$PSScriptRoot\_Execute-Tests.ps1`" $childArgs -RunningInNewPowershell"
 
 exit $LASTEXITCODE

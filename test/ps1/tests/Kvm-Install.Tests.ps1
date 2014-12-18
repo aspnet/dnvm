@@ -94,6 +94,18 @@ Describe "kvm install" -Tag "kvm-install" {
         DefineInstallTests "CoreCLR" "amd64"
         DefineInstallTests "CLR" "x86" -global
 
+        Context "When installing a non-existant KRE version" {
+            runkvm install "0.0.1-thisisnotarealKRE"
+
+            It "returns a non-zero exit code" {
+                $kvmexit | Should Not Be 0
+            }
+
+            It "throws a 404 error" {
+                $kvmerr[0].Exception.Message | Should Be 'Exception calling "DownloadFile" with "2" argument(s): "The remote server returned an error: (404) Not Found."'
+            }
+        }
+
         Context "When no architecture is specified" {
             runkvm install $TestKreVersion -r CLR
             $kreName = GetKreName -clr CLR -arch x86
@@ -110,6 +122,15 @@ Describe "kvm install" -Tag "kvm-install" {
             It "uses CLR" {
                 $kvmout[0] | Should Be "$kreName already installed."
             }
+        }
+
+        Context "When neither architecture no runtime is specified" {
+            runkvm install $TestKreVersion
+            $kreName = GetKreName -clr CLR -arch x86
+
+            It "uses x86/CLR" {
+                $kvmout[0] | Should Be "$kreName already installed."
+            }   
         }
 
         Context "When installing latest" {

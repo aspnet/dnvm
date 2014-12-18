@@ -11,21 +11,6 @@ filter Write-CommandOutput {
     Write-Host $_
 }
 
-$KreVersionRegex = [regex]"(?<ver>\d+\.\d+.\d+)(\-(?<tag>.+))?"
-function Parse-KreVersion {
-    param($Version)
-
-    $m = $KreVersionRegex.Match($Version)
-    if(!$m.Success) {
-        throw "Invalid Version: $Version"
-    }
-
-    New-Object PSObject -Prop @{
-        "Version" = (New-Object Version $m.Groups["ver"].Value)
-        "Tag" = $m.Groups["tag"].Value
-    }
-}
-
 function Remove-EnvVar($var) {
     $path = "Env:\$var"
     if(Test-Path $path) {
