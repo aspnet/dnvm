@@ -41,8 +41,8 @@
 #>
 param(
     [string]$PesterPath = $null,
-    [string]$PesterRef = "3.2.0",
-    [string]$PesterRepo = "https://github.com/pester/Pester",
+    [string]$PesterRef = "anurse/teamcity",
+    [string]$PesterRepo = "https://github.com/anurse/Pester",
     [string]$TestsPath = $null,
     [string]$KvmPath = $null,
     [string]$TestName = $null,
@@ -55,7 +55,21 @@ param(
 
 . "$PSScriptRoot\_Common.ps1"
 
-Write-Banner "Starting child shell"
+# Check for necessary commands
+if(!(Get-Command git -ErrorAction SilentlyContinue)) { throw "Need git to run tests!" }
+
+if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
+
+# Check that Pester is present
+Write-Banner "Ensuring Pester is at $PesterRef"
+if(!(Test-Path $PesterPath)) {
+    git clone $PesterRepo $PesterPath 2>&1 | Write-CommandOutput "git"
+}
+
+# Get the right tag checked out
+pushd $PesterPath
+git checkout $PesterRef 2>&1 | Write-CommandOutput "git"
+popd
 
 # Crappy that we have to duplicate things here...
 # Build a string that should basically match the argument string used to call us
@@ -73,6 +87,7 @@ $PSBoundParameters.Keys | ForEach-Object {
 }
 
 # Launch the script that will actually run the tests in a new shell
+Write-Banner "Starting new shell to run tests"
 & powershell -NoProfile -NoLogo -Command "& `"$PSScriptRoot\_Execute-Tests.ps1`" $childArgs -RunningInNewPowershell"
 
 exit $LASTEXITCODE
