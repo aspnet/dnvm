@@ -11,7 +11,7 @@ $testDefaultAlias = "alias_testDefault_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "alias_notReal_" + [Guid]::NewGuid().ToString("N")
 $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
 
-Describe "kvm.ps1 alias" -Tag "kvm-alias" {
+Describe "kvm-ps1 alias" -Tag "kvm-alias" {
     Context "When defining an alias for a KRE that exists" {
         runkvm alias $testAlias $TestKreVersion -x86 -r CLR
         
@@ -66,13 +66,14 @@ Describe "kvm.ps1 alias" -Tag "kvm-alias" {
                 $alias = [Regex]::Escape([IO.Path]::GetFileNameWithoutExtension($_.Name))
                 $val = [Regex]::Escape((Get-Content $_))
 
-                $allAliases | Should Match ".*$alias\s+$val.*"
+                # On some consoles, the value of the alias gets cut off, so don't require it in the assertion.
+                $allAliases | Should Match ".*$alias.*"
             }
         }
     }
 }
 
-Describe "kvm.ps1 unalias" -Tag "kvm-alias" {
+Describe "kvm-ps1 unalias" -Tag "kvm-alias" {
     Context "When removing an alias that does not exist" {
         runkvm unalias $bogusAlias
 

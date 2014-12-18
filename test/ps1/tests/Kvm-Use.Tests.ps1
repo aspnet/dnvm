@@ -13,7 +13,7 @@ $bogusAlias = "use_bogus_" + [Guid]::NewGuid().ToString("N")
 runkvm alias $testAlias $TestKreVersion -arch "x86" -r "CLR"
 runkvm use none
         
-Describe "kvm.ps1 use" -Tag "kvm-use" {
+Describe "kvm-ps1 use" -Tag "kvm-use" {
     Context "When use-ing without a runtime or architecture" {
         runkvm use $TestKreVersion
         $kreName = GetKreName -clr CLR -arch x86

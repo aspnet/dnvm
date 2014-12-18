@@ -86,7 +86,7 @@ function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
     }
 }
 
-Describe "kvm.ps1 install" -Tag "kvm-install" {
+Describe "kvm-ps1 install" -Tag "kvm-install" {
     try {
         DefineInstallTests "CLR" "x86"
         DefineInstallTests "CLR" "amd64"
