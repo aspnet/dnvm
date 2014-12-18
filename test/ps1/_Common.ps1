@@ -26,6 +26,13 @@ function Parse-KreVersion {
     }
 }
 
+function Remove-EnvVar($var) {
+    $path = "Env:\$var"
+    if(Test-Path $path) {
+        del $path
+    }
+}
+
 function GetKresOnPath {
     param($kreHome)
     if(!$kreHome) {

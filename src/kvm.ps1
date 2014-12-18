@@ -197,7 +197,6 @@ param(
 
   $wc = New-Object System.Net.WebClient
   Add-Proxy-If-Specified($wc)
-  Write-Debug "DownloadString: $url"
   [xml]$xml = $wc.DownloadString($url)
 
   $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
@@ -244,7 +243,6 @@ param(
 
   $wc = New-Object System.Net.WebClient
   Add-Proxy-If-Specified($wc)
-  Write-Debug "DownloadFile: $url, $tempKreFile"
   $wc.DownloadFile($url, $tempKreFile)
 
   Do-Kvm-Unpack $tempKreFile $kreTempDownload
@@ -762,8 +760,6 @@ function Validate-And-Santitize-Switches()
     }
   }
 
-  Write-Debug "Runtime=$selectedRuntime"
-  Write-Debug "Arch=$selectedArch"
 }
 
 $script:capturedOut = @()
