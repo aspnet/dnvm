@@ -9,6 +9,8 @@ param(
     [string]$TestWorkingDir = $null,
     [string]$TestAppsDir = $null,
     [Alias("Tags")][string]$Tag = $null,
+    [string]$OutputFile = $null,
+    [string]$OutputFormat = $null,
     [switch]$Strict,
     [switch]$Quiet,
     [switch]$Debug,
@@ -109,7 +111,15 @@ if(!(Test-Path $specificNupkgPath)) {
 # Run the tests!
 
 Write-Banner "Running Pester Tests in $TestsPath"
-$result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -TeamCity:$TeamCity -PassThru
+$result = Invoke-Pester `
+    -Path $TestsPath `
+    -TestName $TestName `
+    -Tag $Tag `
+    -Strict:$Strict `
+    -Quiet:$Quiet `
+    -OutputFile $OutputFile `
+    -OutputFormat $OutputFormat `
+    -PassThru
 
 # Set the exit code!
 

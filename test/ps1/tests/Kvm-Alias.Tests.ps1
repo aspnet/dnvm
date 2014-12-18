@@ -11,7 +11,7 @@ $testDefaultAlias = "alias_testDefault_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "alias_notReal_" + [Guid]::NewGuid().ToString("N")
 $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
 
-Describe "kvm alias" -Tag "kvm-alias" {
+Describe "kvm.ps1 alias" -Tag "kvm-alias" {
     Context "When defining an alias for a KRE that exists" {
         runkvm alias $testAlias $TestKreVersion -x86 -r CLR
         
@@ -72,7 +72,7 @@ Describe "kvm alias" -Tag "kvm-alias" {
     }
 }
 
-Describe "kvm unalias" -Tag "kvm-alias" {
+Describe "kvm.ps1 unalias" -Tag "kvm-alias" {
     Context "When removing an alias that does not exist" {
         runkvm unalias $bogusAlias
 
