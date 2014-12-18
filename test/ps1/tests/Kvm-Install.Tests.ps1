@@ -87,49 +87,73 @@ function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
 }
 
 Describe "kvm install" -Tag "kvm-install" {
-    DefineInstallTests "CLR" "x86"
-    DefineInstallTests "CLR" "amd64"
-    DefineInstallTests "CoreCLR" "x86" -noNative
-    DefineInstallTests "CoreCLR" "amd64"
-    DefineInstallTests "CLR" "x86" -global
+    try {
+        DefineInstallTests "CLR" "x86"
+        DefineInstallTests "CLR" "amd64"
+        DefineInstallTests "CoreCLR" "x86" -noNative
+        DefineInstallTests "CoreCLR" "amd64"
+        DefineInstallTests "CLR" "x86" -global
 
-    Context "When installing latest" {
-        $previous = @(dir "$env:USER_KRE_PATH\packages" | select -ExpandProperty Name)
-        It "downloads a KRE" {
-            runkvm install latest -arch x86 -r CLR
-        }
-        # TODO: Check that it actually installed the latest?
-    }
+        Context "When no architecture is specified" {
+            runkvm install $TestKreVersion -r CLR
+            $kreName = GetKreName -clr CLR -arch x86
 
-    Context "When installing an already-installed KRE" {
-        # Clear active KRE
-        runkvm use none
-
-        $kreName = GetKreName $clrs[0] $archs[0]
-        $krePath = "$env:USER_KRE_PATH\packages\$kreName"
-        It "ensures the KRE is installed" {
-            runkvm install $TestKreVersion -arch $archs[0] -r $clrs[0]
-            $kvmout[0] | Should Match "$kreName already installed"
-            $krePath | Should Exist
-        }
-    }
-
-    Context "When installing a specific nupkg" {
-        $name = [IO.Path]::GetFileNameWithoutExtension($specificNupkgName)
-        $kreRoot = "$env:USER_KRE_PATH\packages\$name"
-
-        It "unpacks the KRE" {
-            runkvm install $specificNupkgPath
-        }
-        
-        It "installs the KRE into the user directory" {
-            $kreRoot | Should Exist
-        }
-
-        It "did not assign an alias" {
-            dir "$env:USER_KRE_PATH\alias\*.txt" | ForEach-Object {
-                $_ | Should Not Contain $name
+            It "uses x86" {
+                $kvmout[0] | Should Be "$kreName already installed."
             }
         }
+
+        Context "When no runtime is specified" {
+            runkvm install $TestKreVersion -arch x86
+            $kreName = GetKreName -clr CLR -arch x86
+
+            It "uses CLR" {
+                $kvmout[0] | Should Be "$kreName already installed."
+            }
+        }
+
+        Context "When installing latest" {
+            $previous = @(dir "$env:USER_KRE_PATH\packages" | select -ExpandProperty Name)
+            It "downloads a KRE" {
+                runkvm install latest -arch x86 -r CLR
+            }
+            # TODO: Check that it actually installed the latest?
+        }
+
+        Context "When installing an already-installed KRE" {
+            # Clear active KRE
+            runkvm use none
+
+            $kreName = GetKreName "CLR" "x86"
+            $krePath = "$env:USER_KRE_PATH\packages\$kreName"
+            It "ensures the KRE is installed" {
+                runkvm install $TestKreVersion -x86 -r "CLR"
+                $kvmout[0] | Should Match "$kreName already installed"
+                $krePath | Should Exist
+            }
+        }
+
+        Context "When installing a specific nupkg" {
+            $name = [IO.Path]::GetFileNameWithoutExtension($specificNupkgName)
+            $kreRoot = "$env:USER_KRE_PATH\packages\$name"
+
+            It "unpacks the KRE" {
+                runkvm install $specificNupkgPath
+            }
+            
+            It "installs the KRE into the user directory" {
+                $kreRoot | Should Exist
+            }
+
+            It "did not assign an alias" {
+                dir "$env:USER_KRE_PATH\alias\*.txt" | ForEach-Object {
+                    $_ | Should Not Contain $name
+                }
+            }
+        }
+    }
+    finally {
+        # Clean the global directory
+        del -rec -for $env:GLOBAL_KRE_PATH
     }
 }
