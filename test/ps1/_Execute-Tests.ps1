@@ -25,7 +25,7 @@ if(!$RunningInNewPowershell) {
 
 Write-Banner "In child shell"
 
-# Check for commands
+# Check for necessary commands
 if(!(Get-Command git -ErrorAction SilentlyContinue)) { throw "Need git to run tests!" }
 
 # Set defaults
@@ -50,9 +50,7 @@ popd
 # Set up context
 $kvm = $KvmPath
 
-Write-Host "Using kvm: $kvm"
-
-# Create test area
+# Create test working directory
 if(Test-Path "$TestWorkingDir\kre") {
     Write-Banner "Wiping old test working area"
     del -rec -for "$TestWorkingDir\kre"
@@ -65,16 +63,10 @@ if(!(Test-Path $TestWorkingDir)) {
 # Import the module and set up test environment
 Import-Module "$PesterPath\Pester.psm1"
 
+# Turn on Debug logging if requested
 if($Debug) {
     $oldDebugPreference = $DebugPreference
     $DebugPreference = "Continue"
-}
-
-function Remove-EnvVar($var) {
-    $path = "Env:\$var"
-    if(Test-Path $path) {
-        del $path
-    }
 }
 
 # Unset KRE_HOME for the test
@@ -84,17 +76,20 @@ Remove-EnvVar KRE_HOME
 # Unset KRE_TRACE for the test
 Remove-EnvVar KRE_TRACE
 
-# Unset PATH ... gulp
+# Unset PATH for the test
 Remove-EnvVar PATH
 
+# Set up the user/global install directories to be inside the test work area
 $env:USER_KRE_PATH = "$TestWorkingDir\kre\user"
 mkdir $env:USER_KRE_PATH | Out-Null
 
 $env:GLOBAL_KRE_PATH = "$TestWorkingDir\kre\global"
 mkdir $env:GLOBAL_KRE_PATH | Out-Null
 
+# Configure the NuGet feed URL
 $env:KRE_NUGET_API_URL = "https://www.myget.org/F/aspnetmaster/api/v2"
 
+# Helper function to run kvm and capture stuff.
 $kvmout = $null
 $kvmexit = $null
 function runkvm {
@@ -112,6 +107,7 @@ function runkvm {
     Set-Variable kvmerr $kvmerr -Scope 1
 }
 
+# Fetch a nupkg to use for the 'kvm install <path to nupkg>' scenario
 Write-Banner "Fetching test prerequisites"
 $specificNupkgUrl = "https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-CLR-x86/1.0.0-alpha4"
 $specificNupkgName = "KRE-CLR-x86.1.0.0-alpha4.nupkg"
@@ -124,7 +120,11 @@ if(!(Test-Path $specificNupkgPath)) {
     Invoke-WebRequest $specificNupkgUrl -OutFile $specificNupkgPath
 }
 
+# Run the tests!
+
 Write-Banner "Running Pester Tests in $TestsPath"
 $result = Invoke-Pester -Path $TestsPath -TestName $TestName -Tag $Tag -Strict:$Strict -Quiet:$Quiet -TeamCity:$TeamCity -PassThru
+
+# Set the exit code!
 
 $host.SetShouldExit($result.FailedCount)
