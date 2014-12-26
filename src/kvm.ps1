@@ -194,7 +194,6 @@ param(
   $url = "$feed/GetUpdates()?packageIds=%27KRE-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
   $wc = New-Object System.Net.WebClient
-  $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
   Add-Proxy-If-Specified($wc)
   [xml]$xml = $wc.DownloadString($url)
 
@@ -241,7 +240,6 @@ param(
   }
 
   $wc = New-Object System.Net.WebClient
-  $wc.Credentials = new-object System.Net.NetworkCredential("aspnetreadonly", "4d8a2d9c-7b80-4162-9978-47e918c9658c")
   Add-Proxy-If-Specified($wc)
   $wc.DownloadFile($url, $tempKreFile)
 
