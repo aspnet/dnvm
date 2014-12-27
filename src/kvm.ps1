@@ -31,7 +31,7 @@ $userKrePath = $env:USERPROFILE + "\.kre"
 $userKrePackages = $userKrePath + "\packages"
 $globalKrePath = $env:ProgramFiles + "\KRE"
 $globalKrePackages = $globalKrePath + "\packages"
-$feed = $env:KRE_NUGET_API_URL
+$feed = $env:KRE_FEED
 
 # In some environments, like Azure Websites, the Write-* cmdlets don't work
 $useHostOutputMethods = $true
