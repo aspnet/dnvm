@@ -714,7 +714,7 @@ function Requested-Switches() {
   return $arguments
 }
 
-function Validate-And-Santitise-Switches()
+function Validate-And-Santitize-Switches()
 {
   if ($Svr50 -and $Runtime) {throw "You cannot select both the -runtime switch and the -svr50 runtimes"}
   if ($Svrc50 -and $Runtime) {throw "You cannot select both the -runtime switch and the -svrc50 runtimes"}
@@ -795,7 +795,7 @@ param(
 
 $exitCode = 0
 try {
-  Validate-And-Santitise-Switches
+  Validate-And-Santitize-Switches
   if ($Global) {
     switch -wildcard ($Command + " " + $Args.Count) {
       "setup 0"           {Kvm-Global-Setup}
