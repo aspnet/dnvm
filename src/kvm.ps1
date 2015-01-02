@@ -149,7 +149,7 @@ function Kvm-Global-Setup {
 function Kvm-Global-Upgrade {
   $Persistent = $true
   $Alias="default"
-  $versionOrAlias = Kvm-Find-Latest $selectedRuntime $selectedArch
+  $versionOrAlias = Kvm-Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
   If (Needs-Elevation) {
     $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
@@ -259,7 +259,7 @@ param(
   Console-Write "Unpacking to $kreFolder"
 
   $compressionLib = [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
-    
+
   if($compressionLib -eq $null) {
       try {
           # Shell will not recognize nupkg as a zip and throw, so rename it to zip
