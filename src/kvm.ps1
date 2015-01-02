@@ -149,14 +149,7 @@ function Kvm-Global-Setup {
 function Kvm-Global-Upgrade {
   $Persistent = $true
   $Alias="default"
-  $versionOrAlias = Kvm-Find-Latest $selectedRuntime $selectedArch
-  If (Needs-Elevation) {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) -wait"
-    Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-    Kvm-Set-Global-Process-Path $versionOrAlias
-    break
-  }
-  Kvm-Install $versionOrAlias $true
+  Kvm-Install "latest" $true
 }
 
 function Kvm-Upgrade {
