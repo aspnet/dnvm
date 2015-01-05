@@ -146,16 +146,13 @@ function Kvm-Global-Setup {
   [Environment]::SetEnvironmentVariable("KRE_HOME", $machineKreHome, [System.EnvironmentVariableTarget]::Machine)
 }
 
-function Kvm-Global-Upgrade {
-  $Persistent = $true
-  $Alias="default"
-  Kvm-Install "latest" $true
-}
-
 function Kvm-Upgrade {
+param(
+  [boolean] $isGlobal
+)
   $Persistent = $true
   $Alias="default"
-  Kvm-Install "latest" $false
+  Kvm-Install "latest" $isGlobal
 }
 
 function Add-Proxy-If-Specified {
@@ -792,7 +789,7 @@ try {
   if ($Global) {
     switch -wildcard ($Command + " " + $Args.Count) {
       "setup 0"           {Kvm-Global-Setup}
-      "upgrade 0"         {Kvm-Global-Upgrade}
+      "upgrade 0"         {Kvm-Upgrade $true}
       "install 1"         {Kvm-Install $Args[0] $true}
       "use 1"             {Kvm-Global-Use $Args[0]}
       default             {throw "Unknown command, or global switch not supported"};
@@ -800,7 +797,7 @@ try {
   } else {
     switch -wildcard ($Command + " " + $Args.Count) {
       "setup 0"           {Kvm-Global-Setup}
-      "upgrade 0"         {Kvm-Upgrade}
+      "upgrade 0"         {Kvm-Upgrade $false}
       "install 1"         {Kvm-Install $Args[0] $false}
       "list 0"            {Kvm-List}
       "use 1"             {Kvm-Use $Args[0]}
