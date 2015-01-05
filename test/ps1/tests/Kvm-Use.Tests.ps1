@@ -31,17 +31,20 @@ Describe "kvm-ps1 use" -Tag "kvm-use" {
 
         It "puts K on the PATH" {
             $cmd = Get-Command k
-            $cmd.Source | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
+            $cmd | Should Not BeNullOrEmpty
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
             $cmd = Get-Command kpm
-            $cmd.Source | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
+            $cmd | Should Not BeNullOrEmpty
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
         }
 
         It "puts klr on the PATH" {
             $cmd = Get-Command klr
-            $cmd.Source | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
+            $cmd | Should Not BeNullOrEmpty
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
         }
 
         runkvm use none
@@ -55,17 +58,20 @@ Describe "kvm-ps1 use" -Tag "kvm-use" {
 
         It "puts K on the PATH" {
             $cmd = Get-Command k
-            $cmd.Source | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
+            $cmd | Should Not BeNullOrEmpty
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
             $cmd = Get-Command kpm
-            $cmd.Source | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
+            $cmd | Should Not BeNullOrEmpty
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
         }
 
         It "puts klr on the PATH" {
             $cmd = Get-Command klr
-            $cmd.Source | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
+            $cmd | Should Not BeNullOrEmpty
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
         }
     }
 
