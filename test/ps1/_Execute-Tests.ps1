@@ -131,17 +131,21 @@ if($OutputFile) {
         -PassThru
 }
 
+function TeamCityEscape($str) {
+    $str.Replace("|", "||").Replace("'", "|'").Replace("`n", "|n").Replace("`r", "|r").Replace("[", "|[").Replace("]", "|]")
+}
+
 # Generate TeamCity Output
 if($TeamCity) {
     $result.TestResult | Group-Object Describe | ForEach-Object {
-        $describe = $_.Name
+        $describe = TeamCityEscape $_.Name
         Write-Host "##teamcity[testSuiteStarted name='$describe']"
         $_.Group | Group-Object Context | ForEach-Object {
-            $context = $_.Name
+            $context = TeamCityEscape $_.Name
             Write-Host "##teamcity[testSuiteStarted name='$context']"
             $_.Group | ForEach-Object {
-                $name = "It $($_.Name)"
-                $message = $_.FailureMessage
+                $name = "It $(TeamCityEscape $_.Name)"
+                $message = TeamCityEscape $_.FailureMessage
                 Write-Host "##teamcity[testStarted name='$name']"
                 switch ($_.Result) {
                     Skipped
@@ -154,7 +158,7 @@ if($TeamCity) {
                     }
                     Failed
                     {
-                        Write-Host "##teamcity[testFailed name='$name' message='$message' details='$($_.StackTrace)']"
+                        Write-Host "##teamcity[testFailed name='$name' message='$message' details='$(TeamCityEscape $_.StackTrace)']"
                     }
                 }
                 Write-Host "##teamcity[testFinished name='$name']"
