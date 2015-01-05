@@ -35,7 +35,7 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 # Configure the KREs we're going to use in testing. The actual KRE doesn't matter since we're only testing
 # that KVM can find it, download it and unpack it successfully. We do run an app in the KRE to do that sanity
 # test, but all we care about in these tests is that the app executes.
-$env:KRE_NUGET_API_URL = "https://www.myget.org/F/aspnetmaster/api/v2"
+$env:KRE_FEED = "https://www.myget.org/F/aspnetmaster/api/v2"
 $TestKreVersion = "1.0.0-beta1"
 $specificNupkgUrl = "https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-CLR-x86/1.0.0-alpha4"
 $specificNupkgName = "KRE-CLR-x86.1.0.0-alpha4.nupkg"
@@ -109,17 +109,61 @@ if(!(Test-Path $specificNupkgPath)) {
 }
 
 # Run the tests!
-
+# Powershell complains if we pass null in for -OutputFile :(
 Write-Banner "Running Pester Tests in $TestsPath"
-$result = Invoke-Pester `
-    -Path $TestsPath `
-    -TestName $TestName `
-    -Tag $Tag `
-    -Strict:$Strict `
-    -Quiet:$Quiet `
-    -OutputFile $OutputFile `
-    -OutputFormat $OutputFormat `
-    -PassThru
+if($OutputFile) {
+    $result = Invoke-Pester `
+        -Path $TestsPath `
+        -TestName $TestName `
+        -Tag $Tag `
+        -Strict:$Strict `
+        -Quiet:$Quiet `
+        -OutputFile $OutputFile `
+        -OutputFormat $OutputFormat `
+        -PassThru
+} else {
+    $result = Invoke-Pester `
+        -Path $TestsPath `
+        -TestName $TestName `
+        -Tag $Tag `
+        -Strict:$Strict `
+        -Quiet:$Quiet `
+        -PassThru
+}
+
+# Generate TeamCity Output
+if($TeamCity) {
+    $result.TestResult | Group-Object Describe | ForEach-Object {
+        $describe = $_.Name
+        Write-Host "##teamcity[testSuiteStarted name='$describe']"
+        $_.Group | Group-Object Context | ForEach-Object {
+            $context = $_.Name
+            Write-Host "##teamcity[testSuiteStarted name='$context']"
+            $_.Group | ForEach-Object {
+                $name = "It $($_.Name)"
+                $message = $_.FailureMessage
+                Write-Host "##teamcity[testStarted name='$name']"
+                switch ($_.Result) {
+                    Skipped
+                    {
+                        Write-Host "##teamcity[testIgnored name='$name' message='$message']"
+                    }
+                    Pending
+                    {
+                        Write-Host "##teamcity[testIgnored name='$name' message='$message']"
+                    }
+                    Failed
+                    {
+                        Write-Host "##teamcity[testFailed name='$name' message='$message' details='$($_.StackTrace)']"
+                    }
+                }
+                Write-Host "##teamcity[testFinished name='$name']"
+            }
+            Write-Host "##teamcity[testSuiteFinished name='$context']"
+        }
+        Write-Host "##teamcity[testSuiteFinished name='$describe']"
+    }
+}
 
 # Set the exit code!
 

@@ -41,8 +41,8 @@
 #>
 param(
     [string]$PesterPath = $null,
-    [string]$PesterRef = "anurse/teamcity",
-    [string]$PesterRepo = "https://github.com/anurse/Pester",
+    [string]$PesterRef = "master",
+    [string]$PesterRepo = "https://github.com/pester/Pester",
     [string]$TestsPath = $null,
     [string]$KvmPath = $null,
     [string]$TestName = $null,
