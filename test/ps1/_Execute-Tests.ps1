@@ -132,7 +132,9 @@ if($OutputFile) {
 }
 
 function TeamCityEscape($str) {
-    $str.Replace("|", "||").Replace("'", "|'").Replace("`n", "|n").Replace("`r", "|r").Replace("[", "|[").Replace("]", "|]")
+    if($str) {
+        $str.Replace("|", "||").Replace("'", "|'").Replace("`n", "|n").Replace("`r", "|r").Replace("[", "|[").Replace("]", "|]")
+    }
 }
 
 # Generate TeamCity Output
