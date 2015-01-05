@@ -25,4 +25,4 @@ var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
     }
 
 #run-ps1-tests target='test' if='!IsLinux'
-	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} -OutputFile ${Path.Combine(ARTIFACTS_DIR, "ps1tests.nunit.xml")} -OutputFormat NUnitXml ${IsTeamCity?"-TeamCity":""}'
+	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
