@@ -1,7 +1,0 @@
-Running tests at 2015-01-06T16:29:39
-Installing from a nupkg unpacks the nupkg into the packages dir passed
-Installing latest with no arguments installs Mono x86 CLR passed
-Installing puts selected KRE on PATH passed
-Installing with alias switch creates specified alias passed
-Installing with persistant switch creates default alias passed
-Sourcing kvm.sh adds kvm command passed

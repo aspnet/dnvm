@@ -101,10 +101,6 @@ recurse() {
     fi
     exit_code="$?"
 
-    # Write out teamcity status right away to get the most accurate timing possible
-    [ $exit_code -ne 0 ] && teamcity "testFailed name='$TEST_NAME'"
-    teamcity "testFinished name='$TEST_NAME'"
-    
     run_setup_teardown "teardown" "$stdout_file"
     
     indent $indent_level
@@ -123,7 +119,10 @@ recurse() {
       printf '\033[31m' # Print output captured from failed test in red.
       cat "$stdout_file"
       printf '\033[0m'
+      teamcity "testFailed name='$TEST_NAME'"
     fi
+
+    teamcity "testFinished name='$TEST_NAME'"
   fi
   
   
