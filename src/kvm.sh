@@ -365,10 +365,12 @@ kvm()
             # Z shell array-index starts at one.
             local i=1
             local format="%-20s %s\n"
-            for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
-                arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
-                let i+=1
-            done
+            if [ -d "$KRE_USER_HOME/alias" ]; then
+                for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
+                    arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
+                    let i+=1
+                done
+            fi
 
             local formatString="%-6s %-20s %-7s %-20s %s\n"
             printf "$formatString" "Active" "Version" "Runtime" "Location" "Alias"

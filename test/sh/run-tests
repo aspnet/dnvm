@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Determine my directory
+SCRIPT_DIR=$(dirname $0)
+pushd $SCRIPT_DIR > /dev/null
+SCRIPT_DIR=$(pwd)
+popd > /dev/null
+
+# Default variable values
+[ -z "$TEST_WORK_DIR" ] 	&& export TEST_WORK_DIR="$(pwd)/testwork"
+[ -z "$TEST_SHELLS" ]		&& export TEST_SHELLS="sh bash zsh"
+[ -z "$TEST_DIR" ]			&& export TEST_DIR="./tests"
+[ -z "$URCHIN" ]			&& export URCHIN="$SCRIPT_DIR/urchin.sh"
+[ -z "$KRE_FEED" ]			&& export KRE_FEED="https://www.myget.org/F/aspnetmaster/api/v2"
+
+# Load helper functions
+export COMMON_HELPERS="$SCRIPT_DIR/common.sh"
+source $COMMON_HELPERS
+
+requires node
+requires npm
+requires curl
+
+verbose "Running in $SCRIPT_DIR"
+
+# Set up a test environment
+info "Using Working Directory path: $TEST_WORK_DIR"
+
+if [ -e "$TEST_WORK_DIR" ]; then
+	if [ ! -d "$TEST_WORK_DIR" ]; then
+		die "Working directory path exists and is not a directory!"
+	else
+		warn "Working directory path exists. Cleaning..."
+		rm -Rf "$TEST_WORK_DIR"
+	fi
+fi
+
+info "Creating working directory."
+mkdir -p "$TEST_WORK_DIR"
+
+# Set up useful variables for the test
+pushd "$SCRIPT_DIR/../../src" > /dev/null
+export KVM=$(pwd)/kvm.sh
+popd > /dev/null
+
+if [ ! -e $KVM ]; then
+	die "Couldn't find KVM at $KVM"
+elif [ ! -f $KVM ]; then
+	die "KVM at $KVM is not a file?!"
+fi
+
+info "Using KVM at $KVM"
+
+# Make any tests that aren't executable yet, executable
+chmod -R +x $TEST_DIR
+
+# Run urchin in each test shell
+FAILED=
+SUCCEEDED=
+for shell in $TEST_SHELLS; do
+	[ "$TEAMCITY" == "1" ] && echo "##teamcity[testSuiteStarted name='$shell']"
+	info "Testing kvm.sh in $shell"
+	
+	export KRE_USER_HOME="$TEST_WORK_DIR/$shell"
+	[ -d $KRE_USER_HOME ] || mkdir $KRE_USER_HOME
+
+	TEAMCITY=$TEAMCITY VERBOSE=$VERBOSE $URCHIN -s $shell $TEST_DIR
+
+	unset KRE_USER_HOME
+
+	if [ $? -eq 0 ]; then
+		SUCCEEDED="$SUCCEEDED $shell"
+	else
+		FAILED="$FAILED $shell"
+	fi
+	info "Tests completed in $shell"
+	[ "$TEAMCITY" == "1" ] && echo "##teamcity[testSuiteFinished name='$shell']"
+done
+
+FAILED_COUNT=$(echo $FAILED | wc -w | tr -d ' ' | tr -d '\r' | tr -d '\n')
+SUCCEEDED_COUNT=$(echo $SUCCEEDED | wc -w | tr -d ' ' | tr -d '\r' | tr -d '\n')
+
+if [ -z "$FAILED" ]; then
+	exit 0
+else
+	exit 1
+fi

@@ -30,7 +30,7 @@ if(!$RunningInNewPowershell) {
 if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
 if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
 if(!$KvmPath) { $KvmPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
-if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot ".testwork" }
+if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot "testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
 
 # Configure the KREs we're going to use in testing. The actual KRE doesn't matter since we're only testing
@@ -162,6 +162,7 @@ function TeamCityEscape($str) {
 
 # Generate TeamCity Output
 if($TeamCity) {
+    Write-Host "##teamcity[testSuiteStarted name='ps1']"
     $result.TestResult | Group-Object Describe | ForEach-Object {
         $describe = TeamCityEscape $_.Name
         Write-Host "##teamcity[testSuiteStarted name='$describe']"
@@ -192,6 +193,7 @@ if($TeamCity) {
         }
         Write-Host "##teamcity[testSuiteFinished name='$describe']"
     }
+    Write-Host "##teamcity[testSuiteFinished name='ps1']"
 }
 
 # Set the exit code!
