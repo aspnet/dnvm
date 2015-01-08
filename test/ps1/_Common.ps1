@@ -52,3 +52,25 @@ function GetKreName {
     param($clr, $arch, $ver = $TestKreVersion)
     "KRE-$clr-$arch.$ver"
 }
+
+# Borrowed from kvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)
+# Modified slightly to take in a Proxy value so that it can be defined separately from the Proxy parameter
+function Add-Proxy-If-Specified {
+param(
+  [System.Net.WebClient] $wc,
+  [string] $Proxy
+)
+  if(!$Proxy) {
+    $Proxy = $env:http_proxy
+  }
+  if ($Proxy) {
+    $wp = New-Object System.Net.WebProxy($Proxy)
+    $pb = New-Object UriBuilder($Proxy)
+    if (!$pb.UserName) {
+        $wp.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+    } else {
+        $wp.Credentials = New-Object System.Net.NetworkCredential($pb.UserName, $pb.Password)
+    }
+    $wc.Proxy = $wp
+  }
+}

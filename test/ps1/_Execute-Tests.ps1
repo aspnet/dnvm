@@ -11,6 +11,7 @@ param(
     [Alias("Tags")][string]$Tag = $null,
     [string]$OutputFile = $null,
     [string]$OutputFormat = $null,
+    [string]$Proxy = $null,
     [switch]$Strict,
     [switch]$Quiet,
     [switch]$Debug,
@@ -86,7 +87,7 @@ $kvmout = $null
 $kvmexit = $null
 function runkvm {
     $kvmout = $null
-    & $kvm -AssumeElevated -OutputVariable kvmout -Quiet @args -ErrorVariable kvmerr -ErrorAction SilentlyContinue
+    & $kvm -Proxy:$Proxy -AssumeElevated -OutputVariable kvmout -Quiet @args -ErrorVariable kvmerr -ErrorAction SilentlyContinue
     $kvmexit = $LASTEXITCODE
     
     if($Debug) {
@@ -119,7 +120,9 @@ if(Test-Path $specificNupkgPath) {
 # Check if the the test package exists again (since we might have deleted it above)
 if(!(Test-Path $specificNupkgPath)) {
     # It doesn't, redownload it
-    Invoke-WebRequest $specificNupkgUrl -OutFile $specificNupkgPath
+    $wc = New-Object System.Net.WebClient
+    Add-Proxy-If-Specified $wc $Proxy
+    $wc.DownloadFile($specificNupkgUrl, $specificNupkgPath)
 
     # Test it against the expected hash
     if((Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash -ne $specificNupkgHash) {
