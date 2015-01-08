@@ -13,6 +13,10 @@ var SOURCE_DIR = '${Path.Combine(ROOT, "src")}'
 var TEST_DIR = '${Path.Combine(ROOT, "test")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 
+default HOME_REPO="${Environment.GetEnvironmentVariable("HOME_REPO")}"
+default HOME_BRANCH="${Environment.GetEnvironmentVariable("HOME_BRANCH")}"
+default PUSH_KVM="${Environment.GetEnvironmentVariable("PUSH_KVM")}"
+
 #copy-kvm target='compile'
     copy sourceDir='${SOURCE_DIR}' outputDir='${ARTIFACTS_DIR}' include='*.*' overwrite='${true}'
     
@@ -26,3 +30,6 @@ var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 
 #run-ps1-tests target='test' if='!IsLinux'
 	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
+
+#push-kvm-ps1
+	push-kvm repo="https://github.com/anurse/Home" branch="dev" files="kvm.cmd;kvm.ps1" baseMessage="Updated kvm.ps1"

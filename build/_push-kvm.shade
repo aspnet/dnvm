@@ -1,0 +1,48 @@
+default repo="https://github.com/aspnet/Home"
+default branch="dev"
+default baseMessage="Updated kvm"
+default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushkvm")}"
+
+-// Clean up the checkout directory
+-// Need to use robocopy-delete because of git's permissions
+robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
+
+-// Figure out the current commit hash
+@{
+    var psi = new ProcessStartInfo {
+        UseShellExecute = false,
+        RedirectStandardOutput = true,
+        WorkingDirectory = Directory.GetCurrentDirectory(),
+        FileName = "git",
+        Arguments = "rev-parse HEAD"
+    };
+
+    var p = Process.Start(psi);
+    var commit = p.StandardOutput.ReadToEnd().Trim();
+    p.WaitForExit();
+    if (p.ExitCode != 0)
+    {
+        throw new Exception(string.Format("Exit code {0} from git", p.ExitCode));
+    }
+}
+
+-// Clone the Home repository into the temp directory
+git gitCommand='clone ${repo} ${workdir} --branch="${branch}"'
+
+@{
+	// Copy the file across
+	// Spark tries to be too helpful and converts ' to ", 
+	// so there's no way to get a Char literal, hence the ToCharArray weirdness
+	foreach(var file in files.Split(";".ToCharArray()))
+	{
+		File.Copy(
+			sourceFileName: Path.Combine(ARTIFACTS_DIR, file),
+			destFileName: Path.Combine(workdir, file),
+			overwrite: true);
+	}
+}
+
+-// Add everything! (":/" refers to the repo root, "-A" is add all recursively)
+git gitCommand='add -A :/' gitFolder='${workdir}'
+git gitCommand='commit -m"${baseMessage} (from kvm commit ${commit})"' gitFolder='${workdir}'
+git gitCommand='push ${repo} ${branch}:${branch}' gitFolder='${workdir}'

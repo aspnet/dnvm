@@ -30,19 +30,19 @@ Describe "kvm-ps1 use" -Tag "kvm-use" {
         $kreName = GetKreName -clr CLR -arch x86
 
         It "puts K on the PATH" {
-            $cmd = Get-Command k
+            $cmd = Get-Command k -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
-            $cmd = Get-Command kpm
+            $cmd = Get-Command kpm -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
         }
 
         It "puts klr on the PATH" {
-            $cmd = Get-Command klr
+            $cmd = Get-Command klr -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
         }
@@ -57,19 +57,19 @@ Describe "kvm-ps1 use" -Tag "kvm-use" {
         runkvm use $testAlias
 
         It "puts K on the PATH" {
-            $cmd = Get-Command k
+            $cmd = Get-Command k -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
-            $cmd = Get-Command kpm
+            $cmd = Get-Command kpm -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
         }
 
         It "puts klr on the PATH" {
-            $cmd = Get-Command klr
+            $cmd = Get-Command klr -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
         }
