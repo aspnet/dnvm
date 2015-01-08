@@ -13,8 +13,8 @@ var SOURCE_DIR = '${Path.Combine(ROOT, "src")}'
 var TEST_DIR = '${Path.Combine(ROOT, "test")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 
-default HOME_REPO="${Environment.GetEnvironmentVariable("HOME_REPO")}"
-default HOME_BRANCH="${Environment.GetEnvironmentVariable("HOME_BRANCH")}"
+default KVM_DEPLOY_REPO="${Environment.GetEnvironmentVariable("KVM_DEPLOY_REPO")}"
+default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRANCH")}"
 
 #copy-kvm target='compile'
     copy sourceDir='${SOURCE_DIR}' outputDir='${ARTIFACTS_DIR}' include='*.*' overwrite='${true}'
@@ -30,5 +30,5 @@ default HOME_BRANCH="${Environment.GetEnvironmentVariable("HOME_BRANCH")}"
 #run-ps1-tests target='test' if='!IsLinux'
 	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
 
-#push-kvm-ps1 target='deploy' if='!String.IsNullOrEmpty(HOME_REPO) && !String.IsNullOrEmpty(HOME_BRANCH)'
-	push-kvm repo="${HOME_REPO}" branch="${HOME_BRANCH}" files="kvm.cmd;kvm.ps1" baseMessage="Updated kvm.ps1"
+#push-kvm-ps1 target='deploy' if='!String.IsNullOrEmpty(KVM_DEPLOY_REPO) && !String.IsNullOrEmpty(KVM_DEPLOY_BRANCH)'
+	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="kvm.cmd;kvm.ps1" baseMessage="Updated kvm.ps1"
