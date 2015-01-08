@@ -3,7 +3,7 @@ default branch="dev"
 default baseMessage="Updated kvm"
 default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushkvm")}"
 
--// Clean up the checkout directory
+-// Clean up the checkout directory if it's still here from last time
 -// Need to use robocopy-delete because of git's permissions
 robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
 
@@ -46,3 +46,6 @@ git gitCommand='clone ${repo} ${workdir} --branch="${branch}"'
 git gitCommand='add -A :/' gitFolder='${workdir}'
 git gitCommand='commit -m"${baseMessage} (from kvm commit ${commit})"' gitFolder='${workdir}'
 git gitCommand='push ${repo} ${branch}:${branch}' gitFolder='${workdir}'
+
+-// Clean up!
+robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
