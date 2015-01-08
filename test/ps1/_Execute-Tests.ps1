@@ -38,6 +38,7 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 $env:KRE_FEED = "https://www.myget.org/F/aspnetmaster/api/v2"
 $TestKreVersion = "1.0.0-beta1"
 $specificNupkgUrl = "https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-CLR-x86/1.0.0-alpha4"
+$specificNupkgHash = "B84347C335A5AFD24B2A08F031BF7CBEC58581D407C82D4C208AA2FD633B066C"
 $specificNupkgName = "KRE-CLR-x86.1.0.0-alpha4.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
@@ -104,8 +105,27 @@ Write-Banner "Fetching test prerequisites"
 $downloadDir = Join-Path $TestWorkingDir "downloads"
 if(!(Test-Path $downloadDir)) { mkdir $downloadDir | Out-Null }
 $specificNupkgPath = Join-Path $downloadDir $specificNupkgName
+
+# If the test package exists
+if(Test-Path $specificNupkgPath) {
+    # Test it against the expected hash
+    if((Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash -ne $specificNupkgHash) {
+        # Failed to match, kill it with fire!
+        Write-Host "Test prerequisites are corrupt, redownloading."
+        rm -for $specificNupkgPath
+    }
+}
+
+# Check if the the test package exists again (since we might have deleted it above)
 if(!(Test-Path $specificNupkgPath)) {
+    # It doesn't, redownload it
     Invoke-WebRequest $specificNupkgUrl -OutFile $specificNupkgPath
+
+    # Test it against the expected hash
+    if((Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash -ne $specificNupkgHash) {
+        # Failed to match, we downloaded a corrupt package??
+        throw "Test prerequisite $specificNupkgUrl failed to download. The file was corrupted."
+    }
 }
 
 # Run the tests!
