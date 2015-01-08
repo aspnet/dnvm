@@ -5,6 +5,14 @@ _kvm_has() {
     return $?
 }
 
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
 if _kvm_has "unsetopt"; then
     unsetopt nomatch 2>/dev/null
 fi
@@ -114,6 +122,11 @@ _kvm_unpack() {
     #Set shell commands as executable
     find "$kreFolder/bin/" -type f \
         -exec sh -c "head -c 11 {} | grep '/bin/bash' > /dev/null"  \; -print | xargs chmod 775
+
+    if [ -f "$DIR/mono" ]; then
+        echo "Linking $kreFolder/bin/mono to $DIR/mono"
+        rm -f "$kreFolder/bin/mono" && ln -s "$DIR/mono" "$kreFolder/bin/mono"
+    fi
 }
 
 _kvm_requested_version_or_alias() {
@@ -294,6 +307,9 @@ kvm()
             if [[ -n $persistent ]]; then
                 local kreVersion=$(_kvm_package_version "$kreFullName")
                 kvm alias default "$kreVersion"
+
+                echo "Linking $DIR/current to $kreBin"
+                rm -f "$DIR/current" && ln -s "$kreBin" "$DIR/current"
             fi
         ;;
 
