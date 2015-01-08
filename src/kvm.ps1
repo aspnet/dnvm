@@ -311,7 +311,7 @@ param(
     if (Needs-Elevation) {
       $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' install '$versionOrAlias' -global $(Requested-Switches) -wait"
       Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-      Kvm-Set-Global-Process-Path $versionOrAlias
+      Kvm-Use $kreFullName
       break
     }
     $packageFolder = $globalKrePackages
@@ -447,11 +447,11 @@ param(
   If (Needs-Elevation) {
     $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' use '$versionOrAlias' -global $(Requested-Switches) -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-    Kvm-Set-Global-Process-Path $versionOrAlias
+    Kvm-Use $versionOrAlias
     break
   }
 
-  Kvm-Set-Global-Process-Path "$versionOrAlias"
+  Kvm-Use "$versionOrAlias"
 
   if ($versionOrAlias -eq "none") {
     if ($Persistent) {
@@ -475,27 +475,6 @@ param(
     $machinePath = Change-Path $machinePath $kreBin ($globalKrePackages, $userKrePackages)
     [Environment]::SetEnvironmentVariable("Path", $machinePath, [System.EnvironmentVariableTarget]::Machine)
   }
-}
-
-function Kvm-Set-Global-Process-Path {
-param(
-  [string] $versionOrAlias
-)
-  if ($versionOrAlias -eq "none") {
-    Console-Write "Removing KRE from process PATH"
-    Set-Path (Change-Path $env:Path "" ($globalKrePackages, $userKrePackages))
-    return
-  }
-
-  $kreFullName = Requested-VersionOrAlias $versionOrAlias
-  $kreBin = Locate-KreBinFromFullName $kreFullName
-  if ($kreBin -eq $null) {
-    Console-Write "Cannot find $kreFullName, do you need to run 'kvm install $versionOrAlias'?"
-    return
-  }
-
-  Console-Write "Adding $kreBin to process PATH"
-  Set-Path (Change-Path $env:Path $kreBin ($globalKrePackages, $userKrePackages))
 }
 
 function Kvm-Use {
