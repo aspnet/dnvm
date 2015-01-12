@@ -1,7 +1,7 @@
 default repo="https://github.com/aspnet/Home"
 default branch="dev"
 default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushkvm")}"
-default author="ASP.Net Push Bot <noemail@noemail>"
+default author="ASP.NET Push Bot <noemail@noemail>"
 
 -// Borrowing commit message style from atom: https://github.com/atom/atom/blob/master/CONTRIBUTING.md#git-commit-messages
 default baseMessage=":arrow_up: kvm"
