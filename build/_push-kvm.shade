@@ -1,7 +1,10 @@
 default repo="https://github.com/aspnet/Home"
 default branch="dev"
-default baseMessage="Updated kvm"
 default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushkvm")}"
+
+-// Borrowing commit message style from atom: https://github.com/atom/atom/blob/master/CONTRIBUTING.md#git-commit-messages
+default baseMessage=":arrow_up: kvm"
+
 
 -// Clean up the checkout directory if it's still here from last time
 -// Need to use robocopy-delete because of git's permissions
@@ -44,7 +47,10 @@ git gitCommand='clone ${repo} ${workdir} --branch="${branch}"'
 
 -// Add everything! (":/" refers to the repo root, "-A" is add all recursively)
 git gitCommand='add -A :/' gitFolder='${workdir}'
-git gitCommand='commit -m"${baseMessage} (from kvm commit ${commit})"' gitFolder='${workdir}'
+
+-// Multiple '-m' parameters to commit are added as separate paragraphs, so no need for newline escaping! Nice feature :)
+git gitCommand='commit -m"${baseMessage}" -m"Source: ${repo} commit ${commit}"' gitFolder='${workdir}'
+
 git gitCommand='push ${repo} ${branch}:${branch}' gitFolder='${workdir}'
 
 -// Clean up!

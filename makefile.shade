@@ -31,4 +31,4 @@ default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRAN
 	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
 
 #push-kvm-ps1 target='deploy' if='!String.IsNullOrEmpty(KVM_DEPLOY_REPO) && !String.IsNullOrEmpty(KVM_DEPLOY_BRANCH)'
-	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="kvm.cmd;kvm.ps1" baseMessage="Updated kvm.ps1"
+	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="kvm.cmd;kvm.ps1" baseMessage=":arrow_up: kvm.ps1, kvm.cmd"
