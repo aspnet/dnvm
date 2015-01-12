@@ -3,6 +3,8 @@ default branch="dev"
 default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushkvm")}"
 default author="ASP.NET Push Bot <noemail@noemail>"
 
+default sourceRepoUrl="${Environment.GetEnvironmentVariable("REPO_URL")}"
+
 -// Borrowing commit message style from atom: https://github.com/atom/atom/blob/master/CONTRIBUTING.md#git-commit-messages
 default baseMessage=":arrow_up: kvm"
 
@@ -11,7 +13,7 @@ default baseMessage=":arrow_up: kvm"
 -// Need to use robocopy-delete because of git's permissions
 robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
 
--// Figure out the current commit hash
+-// Figure out the current commit hash and GitHub info
 @{
     var psi = new ProcessStartInfo {
         UseShellExecute = false,
@@ -27,6 +29,21 @@ robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
     if (p.ExitCode != 0)
     {
         throw new Exception(string.Format("Exit code {0} from git", p.ExitCode));
+    }
+
+    var sourceMessage = String.Empty;
+    if(!String.IsNullOrEmpty(commit)) {
+        sourceMessage = "Source: kvm commit " + commit;
+        if(!String.IsNullOrEmpty(sourceRepoUrl)) {
+            var ghMatch = Regex.Match(sourceRepoUrl, @"git@github.com:(?<owner>[^/]+)/(?<repo>.+)");
+            if(!ghMatch.Success) {
+                ghMatch = Regex.Match(sourceRepoUrl, @"https?://(www\.)?github\.com/(?<owner>[^/]+)/(?<repo>.+)");
+            }
+            if(ghMatch.Success) {
+                // It's GitHub! Extract the data to create fancy markdowny links and make one
+                sourceMessage = "Source: " + ghMatch.Groups["owner"].Value + "/" + ghMatch.Groups["repo"].Value + "@" + commit;
+            }
+        }
     }
 }
 
@@ -49,10 +66,26 @@ git gitCommand='clone ${repo} ${workdir} --branch="${branch}"'
 -// Add everything! (":/" refers to the repo root, "-A" is add all recursively)
 git gitCommand='add -A :/' gitFolder='${workdir}'
 
--// Multiple '-m' parameters to commit are added as separate paragraphs, so no need for newline escaping! Nice feature :)
-git gitCommand='commit --author="${author}" -m"${baseMessage}" -m"Source: ${repo} commit ${commit}"' gitFolder='${workdir}'
+@{
+    // We don't want a failure to fail the build, just to complete this task
+    psi = new ProcessStartInfo {
+        UseShellExecute = false,
+        WorkingDirectory = workdir,
+        FileName = "git",
 
-git gitCommand='push ${repo} ${branch}:${branch}' gitFolder='${workdir}'
+        // Multiple '-m' parameters to commit are added as separate paragraphs, so no need for newline escaping! Nice feature :)
+        Arguments = "commit -q --author=\"" + author + "\" -m\"" + baseMessage + "\" -m\"" + sourceMessage + "\""
+    };
+
+    p = Process.Start(psi);
+    p.WaitForExit();
+    bool doPush = p.ExitCode == 0;
+    if(!doPush) {
+        Log.Info("No changes to kvm detected, so nothing to push.");
+    }
+}
+
+git gitCommand='push -q ${repo} ${branch}:${branch}' gitFolder='${workdir}' if='doPush'
 
 -// Clean up!
 robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
