@@ -35,7 +35,7 @@ robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
     if(!String.IsNullOrEmpty(commit)) {
         sourceMessage = "Source: kvm commit " + commit;
         if(!String.IsNullOrEmpty(sourceRepoUrl)) {
-            var ghMatch = Regex.Match(sourceRepoUrl, @"git@github.com:(?<owner>[^/]+)/(?<repo>.+)");
+            var ghMatch = Regex.Match(sourceRepoUrl, @"git@github.com:(?<owner>[^/]+)/(?<repo>[^\.]+)(\.git)?");
             if(!ghMatch.Success) {
                 ghMatch = Regex.Match(sourceRepoUrl, @"https?://(www\.)?github\.com/(?<owner>[^/]+)/(?<repo>.+)");
             }
