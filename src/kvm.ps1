@@ -397,7 +397,7 @@ function Kvm-List {
     }
   }
 
-  $items | Sort-Object Version, Runtime, Architecture, Alias | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Version", "Runtime", "Architecture", "Location", "Alias"
+  $items | Sort-Object Version, Runtime, Architecture, Alias | Format-Table -AutoSize -Property @{name="Active";expression={$_.Active};alignment="center"}, "Alias", "Version", "Runtime", "Architecture", "Location"
 }
 
 filter List-Parts {
@@ -431,11 +431,11 @@ filter List-Parts {
   $parts2 = $parts1[0].Split('-', 3)
   return New-Object PSObject -Property @{
     Active = if ($active) { "*" } else { "" }
+    Alias = $fullAlias
     Version = $parts1[1]
     Runtime = $parts2[1]
     Architecture = $parts2[2]
     Location = $_.Parent.FullName
-    Alias = $fullAlias
   }
 }
 
