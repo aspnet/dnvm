@@ -1,8 +1,13 @@
 source $COMMON_HELPERS
 source $KVM
 
-kvm install "$KRE_TEST_VERSION"
+# Clear the path
+kvm use none
 
+# Use the installed KRE
+kvm use default
+
+# Check paths
 EXPECTED_ROOT="$KRE_USER_HOME/packages/KRE-Mono.$KRE_TEST_VERSION/bin"
 
 [ $(path_of k) == "$EXPECTED_ROOT/k" ] || die "'k' was not available at the expected path!"

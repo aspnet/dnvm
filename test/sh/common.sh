@@ -47,6 +47,6 @@ has() {
 
 requires() {
 	if ! has $1; then
-		die 2 "Missing required command: $1"
+		die "Missing required command: $1"
 	fi
 }

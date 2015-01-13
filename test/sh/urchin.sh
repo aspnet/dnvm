@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Our fork of urchin to add some useful stuff for teamcity. We'll contribute it back eventually :).
 # Used under the BSD license: https://github.com/tlevine/urchin/blob/f01869fb97687794cc415bc7a5357b03a2afc467/LICENCE
@@ -10,7 +10,7 @@ unset CDPATH
 [ -z "$verbose" ] && verbose=0
 
 teamcity() {
-  [ "$TEAMCITY" == "1" ] && echo "##teamcity[$@]"
+  [ "$TEAMCITY" = "1" ] && echo "##teamcity[$@]"
 }
 
 fullpath() {
@@ -53,7 +53,7 @@ recurse() {
 
   [ $indent_level -eq 0 ] && : > "$stdout_file"
 
-  TEST_NAME=$(echo $potential_test | sed -e 's|^\./||g' -e 's|\.sh$||g')
+  local TEST_NAME=$(echo $(basename "$potential_test") | sed -e 's|^\./||g' -e 's|\.sh$||g')
       
   if [ -d "$potential_test" ]
     then
@@ -114,7 +114,7 @@ recurse() {
     else
       # On fail, print a red '✗'
       printf '\033[31m✗ \033[0m'
-      printf '%s\n' "${TEST_NAME} (${duration}ms)"
+      printf '%s\n' "${TEST_NAME}"
       printf '%s\n' "${TEST_NAME} failed" >> "$logfile"
       printf '\033[31m' # Print output captured from failed test in red.
       cat "$stdout_file"
@@ -123,6 +123,12 @@ recurse() {
     fi
 
     teamcity "testFinished name='$TEST_NAME'"
+  else
+    # Probably meant to be a test...
+
+    indent $indent_level
+    printf '\033[33m? \033[0m'
+    printf '%s\n' "${potential_test}"
   fi
   
   
