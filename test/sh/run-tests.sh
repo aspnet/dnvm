@@ -15,7 +15,7 @@ popd > /dev/null
 [ -z "$TEST_WORK_DIR" ]     && export TEST_WORK_DIR="$(pwd)/testwork"
 [ -z "$TEST_SHELLS" ]       && export TEST_SHELLS="bash zsh"
 [ -z "$TEST_DIR" ]          && export TEST_DIR="$SCRIPT_DIR/tests"
-[ -z "$URCHIN" ]            && export URCHIN="$SCRIPT_DIR/urchin.sh"
+[ -z "$CHESTER" ]           && export CHESTER="$SCRIPT_DIR/chester"
 [ -z "$KRE_FEED" ]          && export KRE_FEED="https://www.myget.org/F/aspnetmaster/api/v2" # doesn't really matter what the feed is, just that it is a feed
 [ -z "$TEST_APPS_DIR" ]     && export TEST_APPS_DIR="$REPO_ROOT/test/apps"
 
@@ -36,59 +36,32 @@ requires bash
 requires zsh
 requires awk
 
-USAGE="usage: $0 [<options>] <test directory>"
-
-runtests_help() {
-    cat <<EOF
-
-$USAGE
-
--t          Writes TeamCity status messages to the output.
--v          Write stdout for tests that succeed.
--h          This help.
-
-EOF
-}
-
-# Read arguments
-while [ $# -gt 0 ]
-do
-    case "$1" in
-        -t) TEAMCITY=1;;
-        -v) VERBOSE=1;;
-        -h|--help) runtests_help
-          exit 0;;
-        -*) runtests_help >&2
-            exit 1;;
-        *)  break;;
-    esac
-    shift
-done
-
-verbose "Running in $SCRIPT_DIR"
-
 # Set up a test environment
 info "Using Working Directory path: $TEST_WORK_DIR"
 
-if [ -e "$TEST_WORK_DIR" ]; then
-    if [ ! -d "$TEST_WORK_DIR" ]; then
-        die "Working directory path exists and is not a directory!"
+if [ ! -e "$TEST_WORK_DIR" ]; then
+    info "Creating working directory."
+    mkdir -p "$TEST_WORK_DIR"
+fi
+
+if [ -f "$KRE_NUPKG_FILE" ]; then
+    # Remove the file if it doesn't match the expected hash
+    if [ $(shasum $KRE_NUPKG_FILE | awk '{ print $1 }') = "$KRE_NUPKG_HASH" ]; then
+        info "Test package already exists and matches expected hash"
     else
-        warn "Working directory path exists. Cleaning..."
-        rm -Rf "$TEST_WORK_DIR"
+        warn "Test package does not match expected hash, removing and redownloading."
+        rm "$KRE_NUPKG_FILE"
     fi
 fi
 
-info "Creating working directory."
-mkdir -p "$TEST_WORK_DIR"
+if [ ! -f "$KRE_NUPKG_FILE" ]; then
+    # Fetch the nupkg we use for testing
+    info "Fetching test dependencies..."
 
-# Fetch the nupkg we use for testing
-info "Fetching test dependencies..."
-[ ! -e $KRE_NUPKG_FILE ] || rm $KRE_NUPKG_FILE
-
-curl -L -o $KRE_NUPKG_FILE $KRE_NUPKG_URL
-[ -e $KRE_NUPKG_FILE ] || die "failed to fetch test nupkg"
-[ $(shasum $KRE_NUPKG_FILE | awk '{ print $1 }') = "$KRE_NUPKG_HASH" ] || die "downloaded nupkg does not match expected file"
+    curl -L -o $KRE_NUPKG_FILE $KRE_NUPKG_URL >/dev/null 2>&1
+    [ -e $KRE_NUPKG_FILE ] || die "failed to fetch test nupkg"
+    [ $(shasum $KRE_NUPKG_FILE | awk '{ print $1 }') = "$KRE_NUPKG_HASH" ] || die "downloaded nupkg does not match expected file"
+fi
 
 # Set up useful variables for the test
 pushd "$SCRIPT_DIR/../../src" > /dev/null
@@ -103,34 +76,39 @@ fi
 
 info "Using KVM at $KVM"
 
-# Run urchin in each test shell
-FAILED=
-SUCCEEDED=
+# Run the test runner in each test shell
+FAILED=()
+SUCCEEDED=()
 for shell in $TEST_SHELLS; do
-    [ "$TEAMCITY" == "1" ] && echo "##teamcity[testSuiteStarted name='$shell']"
     info "Testing kvm.sh in $shell"
+
+    if [ -e "$TEST_WORK_DIR/$shell" ]; then
+        if [ ! -d "$TEST_WORK_DIR/$shell" ]; then
+            die "Working directory path exists and is not a directory!"
+        else
+            warn "Working directory path exists. Cleaning..."
+            rm -Rf "$TEST_WORK_DIR/$shell"
+        fi
+    fi
+    mkdir "$TEST_WORK_DIR/$shell"
     
     export KRE_USER_HOME="$TEST_WORK_DIR/$shell"
     [ -d $KRE_USER_HOME ] || mkdir $KRE_USER_HOME
 
-    TEAMCITY=$TEAMCITY VERBOSE=$VERBOSE $URCHIN -s $shell $TEST_DIR
+    pushd tests >/dev/null 2>&1
+    $CHESTER $@ -s $shell -n $shell "*"
+    err_code="$?"
+    popd >/dev/null 2>&1
 
     unset KRE_USER_HOME
 
-    if [ $? -eq 0 ]; then
-        SUCCEEDED="$SUCCEEDED $shell"
+    if [ "$err_code" -eq 0 ]; then
+        SUCCEEDED+=("$shell")
+        info "Tests completed in $shell"
     else
-        FAILED="$FAILED $shell"
+        FAILED+=("$shell")
+        error "Tests failed in $shell"
     fi
-    info "Tests completed in $shell"
-    [ "$TEAMCITY" == "1" ] && echo "##teamcity[testSuiteFinished name='$shell']"
 done
 
-FAILED_COUNT=$(echo $FAILED | wc -w | tr -d ' ' | tr -d '\r' | tr -d '\n')
-SUCCEEDED_COUNT=$(echo $SUCCEEDED | wc -w | tr -d ' ' | tr -d '\r' | tr -d '\n')
-
-if [ -z "$FAILED" ]; then
-    exit 0
-else
-    exit 1
-fi
+exit "${#FAILED[@]}"
