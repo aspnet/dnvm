@@ -310,9 +310,9 @@ kvm()
                 printf "$format" "Alias" "Name"
                 printf "$format" "-----" "----"
                 for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
-                    local alias="$(basename $_kvm_file | sed 's/\.alias//')"
+                    local aliasname="$(basename $_kvm_file | sed 's/\.alias//')"
                     local name="$(cat $_kvm_file)"
-                    printf "$format" "$alias" "$name"
+                    printf "$format" "$aliasname" "$name"
                 done
                 echo ""
                 return
@@ -369,7 +369,7 @@ kvm()
             local format="%-20s %s\n"
             if [ -d "$KRE_USER_HOME/alias" ]; then
                 for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
-                    arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
+                    arr[$i]="$(basename $_kvm_file | sed 's/\.alias//')/$(cat $_kvm_file)"
                     let i+=1
                 done
             fi
