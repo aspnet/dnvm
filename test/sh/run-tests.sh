@@ -31,10 +31,11 @@ export COMMON_HELPERS="$SCRIPT_DIR/common.sh"
 source $COMMON_HELPERS
 
 requires curl
-requires sh
-requires bash
-requires zsh
 requires awk
+
+for shell in $TEST_SHELLS; do
+    requires $shell
+done
 
 # Set up a test environment
 info "Using Working Directory path: $TEST_WORK_DIR"
