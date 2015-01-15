@@ -202,12 +202,12 @@ kvm()
         "install" )
             [ $# -lt 2 ] && kvm help && return
             shift
-            local persistant=
+            local persistent=
             local versionOrAlias=
             local alias=
             while [ $# -ne 0 ]
             do
-                if [[ $1 == "-p" || $1 == "-persistant" ]]; then
+                if [[ $1 == "-p" || $1 == "-persistent" ]]; then
                     local persistent="-p"
                 elif [[ $1 == "-a" || $1 == "-alias" ]]; then
                     local alias=$2
