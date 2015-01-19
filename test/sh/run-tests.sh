@@ -22,8 +22,8 @@ popd > /dev/null
 # This is a KRE to use for testing various commands. It doesn't matter what version it is
 [ -z "$DOTNET_TEST_VERSION"]   && export DOTNET_TEST_VERSION="1.0.0-beta1"
 [ -z "$DOTNET_NUPKG_HASH" ]    && export DOTNET_NUPKG_HASH="5fb3d472166f89898631f2a996f79de727f5815f"
-[ -z "$DOTNET_NUPKG_URL" ]     && export DOTNET_NUPKG_URL="https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-Mono/$DOTNET_TEST_VERSION"
-[ -z "$DOTNET_NUPKG_NAME" ]    && export DOTNET_NUPKG_NAME="KRE-Mono.$DOTNET_TEST_VERSION"
+[ -z "$DOTNET_NUPKG_URL" ]     && export DOTNET_NUPKG_URL="https://www.myget.org/F/aspnetmaster/api/v2/package/dotnet-mono/$DOTNET_TEST_VERSION"
+[ -z "$DOTNET_NUPKG_NAME" ]    && export DOTNET_NUPKG_NAME="dotnet-mono.$DOTNET_TEST_VERSION"
 [ -z "$DOTNET_NUPKG_FILE" ]    && export DOTNET_NUPKG_FILE="$TEST_WORK_DIR/${DOTNET_NUPKG_NAME}.nupkg"
 
 # Load helper functions

@@ -1,2 +1,2 @@
-@"%~dp0kvm.cmd" setup
+@"%~dp0dotnetsdk.cmd" setup
 pause

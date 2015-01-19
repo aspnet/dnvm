@@ -13,18 +13,18 @@ var SOURCE_DIR = '${Path.Combine(ROOT, "src")}'
 var TEST_DIR = '${Path.Combine(ROOT, "test")}'
 var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
 
-default DEPLOY_KVM="${Environment.GetEnvironmentVariable("DEPLOY_KVM")}"
-default KVM_DEPLOY_REPO="${Environment.GetEnvironmentVariable("KVM_DEPLOY_REPO")}"
-default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRANCH")}"
+default DEPLOY_DOTNETSDK="${Environment.GetEnvironmentVariable("DEPLOY_DOTNETSDK")}"
+default DOTNETSDK_DEPLOY_REPO="${Environment.GetEnvironmentVariable("DOTNETSDK_DEPLOY_REPO")}"
+default DOTNETSDK_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("DOTNETSDK_DEPLOY_BRANCH")}"
 
-#copy-kvm target='compile'
+#copy-dotnetsdk target='compile'
     copy sourceDir='${SOURCE_DIR}' outputDir='${ARTIFACTS_DIR}' include='*.*' overwrite='${true}'
 
-    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.ps1")}' @{
+    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "dotnetsdk.ps1")}' @{
         updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
     }
 
-    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.sh")}' @{
+    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "dotnetsdk.sh")}' @{
         updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
     }
 
@@ -34,5 +34,5 @@ default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRAN
 #run-sh-tests target='test' if='IsLinux'
     exec program='/bin/bash' commandline="${Path.Combine(TEST_DIR, "sh", "run-tests.sh")} ${IsTeamCity?"-t ":""}-v" workingdir="${Path.Combine(TEST_DIR, "sh")}"
 
-#push-kvm-ps1 target='deploy' if='DEPLOY_KVM == "1" && !String.IsNullOrEmpty(KVM_DEPLOY_REPO) && !String.IsNullOrEmpty(KVM_DEPLOY_BRANCH)'
-	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="kvm.cmd;kvm.ps1;kvm.sh" baseMessage=":arrow_up: kvm.ps1, kvm.cmd, kvm.sh"
+#push-dotnetsdk target='deploy' if='DEPLOY_DOTNETSDK == "1" && !String.IsNullOrEmpty(DOTNETSDK_DEPLOY_REPO) && !String.IsNullOrEmpty(DOTNETSDK_DEPLOY_BRANCH)'
+	push-dotnetsdk repo="${DOTNETSDK_DEPLOY_REPO}" branch="${DOTNETSDK_DEPLOY_BRANCH}" files="dotnetsdk.cmd;dotnetsdk.ps1;dotnetsdk.sh" baseMessage=":arrow_up: dotnetsdk.ps1, dotnetsdk.cmd, dotnetsdk.sh"
