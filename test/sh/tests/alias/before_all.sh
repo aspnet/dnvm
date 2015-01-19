@@ -1,5 +1,5 @@
 source $COMMON_HELPERS
-source $KVM
+source $dotnetsdk
 
-# Get a KRE to use during these tests
-kvm install "$KRE_TEST_VERSION"
+# Get a runtime to use during these tests
+dotnetsdk install "$DOTNET_TEST_VERSION"

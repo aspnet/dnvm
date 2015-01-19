@@ -1,9 +1,9 @@
 source $COMMON_HELPERS
-source $KVM
+source $dotnetsdk
 
-# Install a KRE
-kvm install 1.0.0-beta1 || die "failed initial install of KRE"
+# Install a runtime
+dotnetsdk install 1.0.0-beta1 || die "failed initial install of runtime"
 
 # Install it again and ensure it reports the message we expect
-OUTPUT=$(kvm install 1.0.0-beta1 || die "failed second attempt at installing KRE")
+OUTPUT=$(dotnetsdk install 1.0.0-beta1 || die "failed second attempt at installing runtime")
 echo $OUTPUT | grep 'KRE-Mono.1.0.0-beta1 already installed' || die "expected message was not reported"

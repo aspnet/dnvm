@@ -1,7 +1,7 @@
 source $COMMON_HELPERS
-source $KVM
+source $dotnetsdk
 
-kvm install "$KRE_TEST_VERSION" -a test
+dotnetsdk install "$DOTNET_TEST_VERSION" -a test
 
-[ -f "$KRE_USER_HOME/alias/test.alias" ] || die "test alias was not created"
-[ $(cat "$KRE_USER_HOME/alias/test.alias") == "KRE-Mono.$KRE_TEST_VERSION" ] || die "test alias was not set to expected value"
+[ -f "$DOTNET_USER_HOME/alias/test.alias" ] || die "test alias was not created"
+[ $(cat "$DOTNET_USER_HOME/alias/test.alias") == "DotNet-Mono.$DOTNET_TEST_VERSION" ] || die "test alias was not set to expected value"

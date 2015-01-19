@@ -1,14 +1,14 @@
 source $COMMON_HELPERS
-source $KVM
+source $dotnetsdk
 
 # Clear the path
-kvm use none
+dotnetsdk use none
 
 # Use the installed KRE
-kvm use "$KRE_TEST_VERSION"
+dotnetsdk use "$DOTNET_TEST_VERSION"
 
 # Check paths
-EXPECTED_ROOT="$KRE_USER_HOME/packages/KRE-Mono.$KRE_TEST_VERSION/bin"
+EXPECTED_ROOT="$DOTNET_USER_HOME/runtimes/DotNet-Mono.$DOTNET_TEST_VERSION/bin"
 
 [ $(path_of k) == "$EXPECTED_ROOT/k" ] || die "'k' was not available at the expected path!"
 [ $(path_of klr) == "$EXPECTED_ROOT/klr" ] || die "'klr' was not available at the expected path!"
