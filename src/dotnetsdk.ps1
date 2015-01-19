@@ -400,8 +400,8 @@ function DotNetSdk-List {
   $items = @()
   foreach($portion in $dotnetHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
-    if (Test-Path("$path\packages")) {
-      $items += Get-ChildItem ("$path\packages\KRE-*") | List-Parts $aliases
+    if (Test-Path("$path\runtimes")) {
+      $items += Get-ChildItem ("$path\runtimes\dotnet-*") | List-Parts $aliases
     }
   }
 
