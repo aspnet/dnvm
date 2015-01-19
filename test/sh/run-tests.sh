@@ -16,13 +16,13 @@ popd > /dev/null
 [ -z "$TEST_SHELLS" ]       && export TEST_SHELLS="bash zsh"
 [ -z "$TEST_DIR" ]          && export TEST_DIR="$SCRIPT_DIR/tests"
 [ -z "$CHESTER" ]           && export CHESTER="$SCRIPT_DIR/chester"
-[ -z "$DOTNET_FEED" ]       && export DOTNET_FEED="https://www.myget.org/F/aspnetmaster/api/v2" # doesn't really matter what the feed is, just that it is a feed
+[ -z "$DOTNET_FEED" ]       && export DOTNET_FEED="https://www.myget.org/F/aspnetvnext/api/v2" # doesn't really matter what the feed is, just that it is a feed
 [ -z "$TEST_APPS_DIR" ]     && export TEST_APPS_DIR="$REPO_ROOT/test/apps"
 
 # This is a KRE to use for testing various commands. It doesn't matter what version it is
 [ -z "$DOTNET_TEST_VERSION"]   && export DOTNET_TEST_VERSION="1.0.0-beta1"
 [ -z "$DOTNET_NUPKG_HASH" ]    && export DOTNET_NUPKG_HASH="5fb3d472166f89898631f2a996f79de727f5815f"
-[ -z "$DOTNET_NUPKG_URL" ]     && export DOTNET_NUPKG_URL="https://www.myget.org/F/aspnetmaster/api/v2/package/dotnet-mono/$DOTNET_TEST_VERSION"
+[ -z "$DOTNET_NUPKG_URL" ]     && export DOTNET_NUPKG_URL="https://www.myget.org/F/aspnetvnext/api/v2/package/dotnet-mono/$DOTNET_TEST_VERSION"
 [ -z "$DOTNET_NUPKG_NAME" ]    && export DOTNET_NUPKG_NAME="dotnet-mono.$DOTNET_TEST_VERSION"
 [ -z "$DOTNET_NUPKG_FILE" ]    && export DOTNET_NUPKG_FILE="$TEST_WORK_DIR/${DOTNET_NUPKG_NAME}.nupkg"
 
@@ -92,7 +92,7 @@ for shell in $TEST_SHELLS; do
         fi
     fi
     mkdir "$TEST_WORK_DIR/$shell"
-    
+
     export DOTNET_USER_HOME="$TEST_WORK_DIR/$shell"
     [ -d $DOTNET_USER_HOME ] || mkdir $DOTNET_USER_HOME
 

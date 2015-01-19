@@ -11,7 +11,7 @@ if _dotnetsdk_has "unsetopt"; then
 fi
 
 if [ -z "$DOTNET_USER_HOME" ]; then
-    eval DOTNET_USER_HOME=~/.kre
+    eval DOTNET_USER_HOME=~/.dotnet
 fi
 
 DOTNET_USER_PACKAGES="$DOTNET_USER_HOME/runtimes"
@@ -20,14 +20,14 @@ if [ -z "$DOTNET_FEED" ]; then
 fi
 
 _dotnetsdk_find_latest() {
-    local platform="Mono"
+    local platform="mono"
 
     if ! _dotnetsdk_has "curl"; then
         echo 'dotnetsdk needs curl to proceed.' >&2;
         return 1
     fi
 
-    local url="$DOTNET_FEED/GetUpdates()?packageIds=%27DotNet-$platform%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+    local url="$DOTNET_FEED/GetUpdates()?packageIds=%27dotnet-$platform%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
     xml="$(curl $url 2>/dev/null)"
     echo $xml | grep \<[a-zA-Z]:Version\>* >> /dev/null || return 1
     version="$(echo $xml | sed 's/.*<[a-zA-Z]:Version>\([^<]*\).*/\1/')"
@@ -119,8 +119,8 @@ _dotnetsdk_unpack() {
 
 _dotnetsdk_requested_version_or_alias() {
     local versionOrAlias="$1"
-    local runtimeBin=$(_dotnetsdk_locate_kre_bin_from_full_name "$versionOrAlias")
-	
+    local runtimeBin=$(_dotnetsdk_locate_runtime_bin_from_full_name "$versionOrAlias")
+
 	# If the name specified is an existing package, just use it as is
 	if [ -n "$runtimeBin" ]; then
 	    echo "$versionOrAlias"
@@ -129,18 +129,18 @@ _dotnetsdk_requested_version_or_alias() {
            local runtimeFullName=$(cat "$DOTNET_USER_HOME/alias/$versionOrAlias.alias")
            local pkgName=$(echo $runtimeFullName | sed "s/\([^.]*\).*/\1/")
            local pkgVersion=$(echo $runtimeFullName | sed "s/[^.]*.\(.*\)/\1/")
-           local pkgPlatform=$(echo "$pkgName" | sed "s/DotNet-\([^.-]*\).*/\1/")
+           local pkgPlatform=$(echo "$pkgName" | sed "s/dotnet-\([^.-]*\).*/\1/")
         else
             local pkgVersion=$versionOrAlias
-            local pkgPlatform="Mono"
+            local pkgPlatform="mono"
         fi
 
-        echo "DotNet-$pkgPlatform.$pkgVersion"
+        echo "dotnet-$pkgPlatform.$pkgVersion"
     fi
 }
 
 # This will be more relevant if we support global installs
-_dotnetsdk_locate_kre_bin_from_full_name() {
+_dotnetsdk_locate_runtime_bin_from_full_name() {
     local runtimeFullName=$1
     [ -e "$DOTNET_USER_PACKAGES/$runtimeFullName/bin" ] && echo "$DOTNET_USER_PACKAGES/$runtimeFullName/bin" && return
 }
@@ -280,7 +280,7 @@ dotnetsdk()
             fi
 
             local runtimeFullName=$(_dotnetsdk_requested_version_or_alias "$versionOrAlias")
-            local runtimeBin=$(_dotnetsdk_locate_kre_bin_from_full_name "$runtimeFullName")
+            local runtimeBin=$(_dotnetsdk_locate_runtime_bin_from_full_name "$runtimeFullName")
 
             if [[ -z $runtimeBin ]]; then
                 echo "Cannot find $runtimeFullName, do you need to run 'dotnetsdk install $versionOrAlias'?"
@@ -351,7 +351,7 @@ dotnetsdk()
 
             [[ ! -d $DOTNET_USER_PACKAGES ]] && echo ".NET Runtime is not installed." && return 1
 
-            local searchGlob="DotNet-*"
+            local searchGlob="dotnet-*"
             if [ $# == 2 ]; then
                 local versionOrAlias=$2
                 local searchGlob=$(_dotnetsdk_requested_version_or_alias "$versionOrAlias")
@@ -385,8 +385,8 @@ dotnetsdk()
                 local alias=""
                 local delim=""
                 for i in "${arr[@]}"; do
-                    temp="DotNet-$pkgName.$pkgVersion"
-                    temp2="DotNet-$pkgName-x86.$pkgVersion"
+                    temp="dotnet-$pkgName.$pkgVersion"
+                    temp2="dotnet-$pkgName-x86.$pkgVersion"
                     if [[ ${i#*/} == $temp || ${i#*/} == $temp2 ]]; then
                         alias+="$delim${i%/*}"
                         delim=", "
