@@ -30,7 +30,7 @@ param(
 # "Constants" (in as much as PowerShell will allow)
 $RuntimePackageName = "DotNet"
 $RuntimeFriendlyName = ".NET Runtime"
-$RuntimeProgramFilesName = ".NET Cross-Platform Runtime"
+$RuntimeProgramFilesName = "Microsoft .NET Cross-Platform Runtime"
 $RuntimeFolderName = ".dotnet"
 $DefaultFeed = "https://www.myget.org/F/aspnetvnext/api/v2"
 $CrossGenCommand = "k-crossgen"
