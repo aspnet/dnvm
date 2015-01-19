@@ -1,5 +1,6 @@
 # "Constants"
-$packageManagerName = "kpm"
+$PackageManagerName = "kpm"
+$RuntimeExecutableName = "k"
 
 function Write-Banner {
     param($Message)
@@ -51,7 +52,7 @@ function GetActiveRuntimeName {
     }
 }
 
-function GetKreName {
+function GetRuntimeName {
     param($clr, $arch, $ver = $TestKreVersion)
     "DotNet-$clr-$arch.$ver"
 }

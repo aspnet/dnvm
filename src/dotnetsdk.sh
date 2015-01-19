@@ -81,8 +81,7 @@ _kvm_download() {
         return 1
     fi
 
-    [ -e "$KRE_USER_PACKAGES" ] || mkdir "$KRE_USER_PACKAGES" > /dev/null 2>&1
-    mkdir "$kreFolder" > /dev/null 2>&1
+    mkdir -p "$kreFolder" > /dev/null 2>&1
 
     local httpResult=$(curl -L -D - "$url" -o "$kreFile" 2>/dev/null | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
@@ -234,7 +233,6 @@ kvm()
                 if [ -e "$kreFolder" ]; then
                   echo "$kreFullName already installed"
                 else
-                  [ -e "$KRE_USER_PACKAGES" ] || mkdir "$KRE_USER_PACKAGES" > /dev/null 2>&1
                   mkdir "$kreFolder" > /dev/null 2>&1
                   cp -a "$versionOrAlias" "$kreFile"
                   _kvm_unpack "$kreFile" "$kreFolder"
@@ -310,9 +308,9 @@ kvm()
                 printf "$format" "Alias" "Name"
                 printf "$format" "-----" "----"
                 for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
-                    local aliasname="$(basename $_kvm_file | sed 's/\.alias//')"
+                    local alias="$(basename $_kvm_file | sed 's/.alias//')"
                     local name="$(cat $_kvm_file)"
-                    printf "$format" "$aliasname" "$name"
+                    printf "$format" "$alias" "$name"
                 done
                 echo ""
                 return
@@ -367,12 +365,10 @@ kvm()
             # Z shell array-index starts at one.
             local i=1
             local format="%-20s %s\n"
-            if [ -d "$KRE_USER_HOME/alias" ]; then
-                for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
-                    arr[$i]="$(basename $_kvm_file | sed 's/\.alias//')/$(cat $_kvm_file)"
-                    let i+=1
-                done
-            fi
+            for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
+                arr[$i]="$(basename $_kvm_file | sed 's/.alias//')/$(cat $_kvm_file)"
+                let i+=1
+            done
 
             local formatString="%-6s %-20s %-7s %-20s %s\n"
             printf "$formatString" "Active" "Version" "Runtime" "Location" "Alias"

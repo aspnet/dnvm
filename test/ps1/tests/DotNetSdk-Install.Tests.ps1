@@ -134,7 +134,7 @@ Describe "dotnetsdk-ps1 install" -Tag "dotnetsdk-install" {
         }
 
         Context "When installing latest" {
-            $previous = @(dir "$env:USER_DOTNET_PATH\packages" | select -ExpandProperty Name)
+            $previous = @(dir "$env:USER_DOTNET_PATH\runtimes" | select -ExpandProperty Name)
             It "downloads a runtime" {
                 rundotnetsdk install latest -arch x86 -r CLR
             }
@@ -146,7 +146,7 @@ Describe "dotnetsdk-ps1 install" -Tag "dotnetsdk-install" {
             rundotnetsdk use none
 
             $runtimeName = GetRuntimeName "CLR" "x86"
-            $runtimePath = "$env:USER_DOTNET_PATH\packages\$runtimeName"
+            $runtimePath = "$env:USER_DOTNET_PATH\runtimes\$runtimeName"
             It "ensures the runtime is installed" {
                 rundotnetsdk install $TestDotNetVersion -x86 -r "CLR"
                 $dotnetsdkout[0] | Should Match "$runtimeName already installed"
@@ -156,7 +156,7 @@ Describe "dotnetsdk-ps1 install" -Tag "dotnetsdk-install" {
 
         Context "When installing a specific nupkg" {
             $name = [IO.Path]::GetFileNameWithoutExtension($specificNupkgName)
-            $runtimeRoot = "$env:USER_DOTNET_PATH\packages\$name"
+            $runtimeRoot = "$env:USER_DOTNET_PATH\runtimes\$name"
 
             It "unpacks the runtime" {
                 rundotnetsdk install $specificNupkgPath

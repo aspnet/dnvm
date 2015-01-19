@@ -3,8 +3,8 @@ rundotnetsdk install $TestDotNetVersion -arch "x86" -r "CLR"
 
 $notRealRuntimeVersion = "0.0.1-notarealkre"
 
-$runtimeName = GetKreName "CLR" "x86"
-$notRealRuntimeName = GetKreName "CLR" "x86" $notRealRuntimeVersion
+$runtimeName = GetRuntimeName "CLR" "x86"
+$notRealRuntimeName = GetRuntimeName "CLR" "x86" $notRealRuntimeVersion
 
 $testAlias = "use_test_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "use_notReal_" + [Guid]::NewGuid().ToString("N")
@@ -16,7 +16,7 @@ rundotnetsdk use none
 Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
     Context "When use-ing without a clr or architecture" {
         rundotnetsdk use $TestDotNetVersion
-        $runtimeName = GetKreName -clr CLR -arch x86
+        $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses x86/CLR variant" {
             GetActiveKreName | Should Be $runtimeName
@@ -27,7 +27,7 @@ Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
 
     Context "When use-ing a runtime" {
         rundotnetsdk use $TestDotNetVersion
-        $runtimeName = GetKreName -clr CLR -arch x86
+        $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "puts K on the PATH" {
             $cmd = Get-Command k -ErrorAction SilentlyContinue
