@@ -15,7 +15,7 @@ function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
         $fxName = "Asp.NetCore,Version=v5.0"
     } else {
         $fxName = "Asp.Net,Version=v5.0"
-    }    
+    }
 
     $runtimeName = GetRuntimeName $clr $arch
     $runtimeRoot = "$runtimeHome\runtimes\$runtimeName"
@@ -35,11 +35,11 @@ function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
                 rundotnetsdk install $TestDotNetVersion -arch $arch -r $clr -a $alias
             }
         }
-        
+
         It "installs the KRE into the user directory" {
             $runtimeRoot | Should Exist
         }
-        
+
         if($clr -eq "CoreCLR") {
             if($noNative) {
                 It "did not crossgen native assemblies" {
@@ -60,7 +60,7 @@ function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
                 popd
             }
         }
-        
+
         It "can run the HelloK sample" {
             pushd "$TestAppsDir\TestApp"
             try {
@@ -79,7 +79,7 @@ function DefineInstallTests($clr, $arch, [switch]$global, [switch]$noNative) {
             "$env:USER_DOTNET_PATH\alias\$alias.txt" | Should Exist
             "$env:USER_DOTNET_PATH\alias\$alias.txt" | Should ContainExactly $runtimeName
         }
-        
+
         It "uses the new Runtime" {
             GetActiveRuntimeName $runtimeHome | Should Be "$runtimeName"
         }
@@ -130,7 +130,7 @@ Describe "dotnetsdk-ps1 install" -Tag "dotnetsdk-install" {
 
             It "uses x86/Desktop" {
                 $dotnetsdkout[0] | Should Be "$runtimeName already installed."
-            }   
+            }
         }
 
         Context "When installing latest" {
@@ -161,7 +161,7 @@ Describe "dotnetsdk-ps1 install" -Tag "dotnetsdk-install" {
             It "unpacks the runtime" {
                 rundotnetsdk install $specificNupkgPath
             }
-            
+
             It "installs the runtime into the user directory" {
                 $runtimeRoot | Should Exist
             }

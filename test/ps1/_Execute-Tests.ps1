@@ -78,11 +78,11 @@ Remove-EnvVar DOTNET_TRACE
 Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
-$env:USER_DOTNET_PATH = "$TestWorkingDir\.dotnet\user"
-mkdir $env:USER_DOTNET_PATH | Out-Null
+$env:DOTNET_USER_PATH = "$TestWorkingDir\.dotnet\user"
+mkdir $env:DOTNET_USER_PATH | Out-Null
 
-$env:GLOBAL_DOTNET_PATH = "$TestWorkingDir\.dotnet\global"
-mkdir $env:GLOBAL_DOTNET_PATH | Out-Null
+$env:DOTNET_GLOBAL_PATH = "$TestWorkingDir\.dotnet\global"
+mkdir $env:DOTNET_GLOBAL_PATH | Out-Null
 
 # Helper function to run dotnetsdk and capture stuff.
 $dotnetsdkout = $null
@@ -91,7 +91,7 @@ function rundotnetsdk {
     $dotnetsdkout = $null
     & $dotnetsdk -Proxy:$Proxy -AssumeElevated -OutputVariable dotnetsdkout -Quiet @args -ErrorVariable dotnetsdkerr -ErrorAction SilentlyContinue
     $dotnetsdkexit = $LASTEXITCODE
-    
+
     if($Debug) {
         $dotnetsdkout | Write-CommandOutput dotnetsdk
     }

@@ -12,7 +12,7 @@ $bogusAlias = "use_bogus_" + [Guid]::NewGuid().ToString("N")
 
 rundotnetsdk alias $testAlias $TestDotNetVersion -arch "x86" -r "CLR"
 rundotnetsdk use none
-        
+
 Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
     Context "When use-ing without a clr or architecture" {
         rundotnetsdk use $TestDotNetVersion
@@ -77,7 +77,7 @@ Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
 
     Context "When use-ing 'none'" {
         rundotnetsdk use $TestDotNetVersion
-        
+
         rundotnetsdk use none
 
         It "removes the KRE from the PATH" {

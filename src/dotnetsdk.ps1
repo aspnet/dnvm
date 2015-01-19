@@ -41,12 +41,12 @@ $selectedRuntime=$null
 $defaultRuntime="CLR"
 
 # Get or calculate userDotNetPath
-$userDotNetPath = $env:USER_DOTNET_PATH
+$userDotNetPath = $env:DOTNET_USER_PATH
 if(!$userDotNetPath) { $userDotNetPath = $env:USERPROFILE + "\$RuntimeFolderName" }
 $userDotNetRuntimesPath = $userDotNetPath + "\runtimes"
 
 # Get or calculate globalDotNetPath
-$globalDotNetPath = $env:GLOBAL_DOTNET_PATH
+$globalDotNetPath = $env:DOTNET_GLOBAL_PATH
 if(!$globalDotNetPath) { $globalDotNetPath = $env:ProgramFiles + "\$RuntimeProgramFilesName" }
 $globalDotNetRuntimesPath = $globalDotNetPath + "\runtimes"
 $feed = $env:DOTNET_FEED
