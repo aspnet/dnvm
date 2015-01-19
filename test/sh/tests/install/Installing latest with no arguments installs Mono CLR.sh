@@ -3,9 +3,9 @@ source $dotnetsdk
 
 dotnetsdk install latest
 
-ls $DOTNET_USER_HOME/packages/DotNet-Mono.* 2>/dev/null 1>/dev/null || die "unable to find installed runtime"
+ls $DOTNET_USER_HOME/runtimes/dotnet-mono.* 2>/dev/null 1>/dev/null || die "unable to find installed runtime"
 
-pushd $DOTNET_USER_HOME/packages/DotNet-Mono.* 2>/dev/null 1>/dev/null
+pushd $DOTNET_USER_HOME/runtimes/dotnet-mono.* 2>/dev/null 1>/dev/null
 [ -f bin/k ] || die "dotnetsdk did not include 'k' command!"
 [ -f bin/klr ] || die "dotnetsdk did not include 'klr' command!"
 [ -f bin/kpm ] || die "dotnetsdk did not include 'kpm' command!"

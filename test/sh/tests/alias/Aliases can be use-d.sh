@@ -11,7 +11,7 @@ dotnetsdk use none
 dotnetsdk use test_alias_use
 
 # Check that the path now has that Runtime on it
-EXPECTED_ROOT="$DOTNET_USER_HOME/runtimes/DotNet-Mono.$DOTNET_TEST_VERSION/bin"
+EXPECTED_ROOT="$DOTNET_USER_HOME/runtimes/dotnet-mono.$DOTNET_TEST_VERSION/bin"
 
 [ $(path_of k) == "$EXPECTED_ROOT/k" ] || die "'k' was not available at the expected path!"
 [ $(path_of klr) == "$EXPECTED_ROOT/klr" ] || die "'klr' was not available at the expected path!"

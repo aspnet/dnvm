@@ -14,7 +14,7 @@ LIST=$(dotnetsdk alias)
 ESCAPED_VER=$(echo $DOTNET_TEST_VERSION | sed 's,\.,\\.,g')
 echo $ESCAPED_VER
 
-echo $LIST | grep -E "test_alias_list_0\s+DotNet-Mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
-echo $LIST | grep -E "test_alias_list_1\s+DotNet-Mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
-echo $LIST | grep -E "test_alias_list_2\s+DotNet-Mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
-echo $LIST | grep -E "test_alias_list_3\s+DotNet-Mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
+echo $LIST | grep -E "test_alias_list_0\s+dotnet-mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
+echo $LIST | grep -E "test_alias_list_1\s+dotnet-mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
+echo $LIST | grep -E "test_alias_list_2\s+dotnet-mono\.$ESCAPED_VER" || die 'list did not include expected aliases'
+echo $LIST | grep -E "test_alias_list_3\s+dotnet-mono\.$ESCAPED_VER" || die 'list did not include expected aliases'

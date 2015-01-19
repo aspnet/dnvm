@@ -6,4 +6,4 @@ dotnetsdk install 1.0.0-beta1 || die "failed initial install of runtime"
 
 # Install it again and ensure it reports the message we expect
 OUTPUT=$(dotnetsdk install 1.0.0-beta1 || die "failed second attempt at installing runtime")
-echo $OUTPUT | grep 'KRE-Mono.1.0.0-beta1 already installed' || die "expected message was not reported"
+echo $OUTPUT | grep 'dotnet-mono.1.0.0-beta1 already installed' || die "expected message was not reported"
