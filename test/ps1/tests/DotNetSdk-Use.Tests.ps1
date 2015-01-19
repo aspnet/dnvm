@@ -1,87 +1,87 @@
 # Ensure some KREs have been installed (if the other tests ran first, we're good)
-runkvm install $TestKreVersion -arch "x86" -r "CLR"
+rundotnetsdk install $TestDotNetVersion -arch "x86" -r "CLR"
 
-$notRealKreVersion = "0.0.1-notarealkre"
+$notRealRuntimeVersion = "0.0.1-notarealkre"
 
-$kreName = GetKreName "CLR" "x86"
-$notRealKreName = GetKreName "CLR" "x86" $notRealKreVersion
+$runtimeName = GetKreName "CLR" "x86"
+$notRealRuntimeName = GetKreName "CLR" "x86" $notRealRuntimeVersion
 
 $testAlias = "use_test_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "use_notReal_" + [Guid]::NewGuid().ToString("N")
 $bogusAlias = "use_bogus_" + [Guid]::NewGuid().ToString("N")
 
-runkvm alias $testAlias $TestKreVersion -arch "x86" -r "CLR"
-runkvm use none
+rundotnetsdk alias $testAlias $TestDotNetVersion -arch "x86" -r "CLR"
+rundotnetsdk use none
         
-Describe "kvm-ps1 use" -Tag "kvm-use" {
-    Context "When use-ing without a runtime or architecture" {
-        runkvm use $TestKreVersion
-        $kreName = GetKreName -clr CLR -arch x86
+Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
+    Context "When use-ing without a clr or architecture" {
+        rundotnetsdk use $TestDotNetVersion
+        $runtimeName = GetKreName -clr CLR -arch x86
 
         It "uses x86/CLR variant" {
-            GetActiveKreName | Should Be $kreName
+            GetActiveKreName | Should Be $runtimeName
         }
 
-        runkvm use none
+        rundotnetsdk use none
     }
 
-    Context "When use-ing a KRE" {
-        runkvm use $TestKreVersion
-        $kreName = GetKreName -clr CLR -arch x86
+    Context "When use-ing a runtime" {
+        rundotnetsdk use $TestDotNetVersion
+        $runtimeName = GetKreName -clr CLR -arch x86
 
         It "puts K on the PATH" {
             $cmd = Get-Command k -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
             $cmd = Get-Command kpm -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\kpm.cmd")
         }
 
         It "puts klr on the PATH" {
             $cmd = Get-Command klr -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\klr.exe")
         }
 
-        runkvm use none
+        rundotnetsdk use none
     }
 
     Context "When use-ing an alias" {
         # Sanity check assumptions
         Get-Command k -ErrorAction SilentlyContinue | Should BeNullOrEmpty
 
-        runkvm use $testAlias
+        rundotnetsdk use $testAlias
 
         It "puts K on the PATH" {
             $cmd = Get-Command k -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\k.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
             $cmd = Get-Command kpm -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\kpm.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\kpm.cmd")
         }
 
         It "puts klr on the PATH" {
             $cmd = Get-Command klr -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$kreName\bin\klr.exe")
+            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\klr.exe")
         }
     }
 
     Context "When use-ing 'none'" {
-        runkvm use $TestKreVersion
+        rundotnetsdk use $TestDotNetVersion
         
-        runkvm use none
+        rundotnetsdk use none
 
         It "removes the KRE from the PATH" {
-            GetKresOnPath | Should BeNullOrEmpty
+            GetRuntimesOnPath | Should BeNullOrEmpty
         }
 
         It "removes K from the PATH" {
@@ -99,15 +99,15 @@ Describe "kvm-ps1 use" -Tag "kvm-use" {
 
     Context "When use-ing a non-existant version" {
         It "should throw an error" {
-            runkvm use $notRealKreVersion
-            $kvmerr[0].Exception.Message | Should Be "Cannot find $notRealKreName, do you need to run 'kvm install $notRealKreVersion'?"
+            rundotnetsdk use $notRealRuntimeVersion
+            $dotnetsdkerr[0].Exception.Message | Should Be "Cannot find $notRealRuntimeName, do you need to run 'dotnetsdk install $notRealRuntimeVersion'?"
         }
     }
 
     Context "When use-ing a non-existant alias" {
         It "should throw an error" {
-            runkvm use "bogus_alias_that_does_not_exist"
-            $kvmerr[0].Exception.Message | Should Be "Cannot find KRE-CLR-x86.bogus_alias_that_does_not_exist, do you need to run 'kvm install bogus_alias_that_does_not_exist'?"
+            rundotnetsdk use "bogus_alias_that_does_not_exist"
+            $dotnetsdkerr[0].Exception.Message | Should Be "Cannot find DotNet-CLR-x86.bogus_alias_that_does_not_exist, do you need to run 'dotnetsdk install bogus_alias_that_does_not_exist'?"
         }
     }
 }

@@ -18,7 +18,7 @@ namespace HelloK {
                 "\x1b[33m/_/ |_/___/_/  \x1b[37m(_)\x1b[34m_/|_/___/ /_/    \x1b[39m";
 
             AnsiConsole.Output.WriteLine(art);
-            AnsiConsole.Output.WriteLine("K is sane!");
+            AnsiConsole.Output.WriteLine("Runtime is sane!");
             AnsiConsole.Output.WriteLine("\x1b[30mRuntime Framework:    \x1b[39m " + _env.RuntimeFramework.ToString());
 #if ASPNETCORE50
             AnsiConsole.Output.WriteLine("\x1b[30mRuntime:              \x1b[39m Microsoft CoreCLR");

@@ -1,3 +1,6 @@
+# "Constants"
+$packageManagerName = "kpm"
+
 function Write-Banner {
     param($Message)
 
@@ -18,39 +21,39 @@ function Remove-EnvVar($var) {
     }
 }
 
-function GetKresOnPath {
-    param($kreHome)
-    if(!$kreHome) {
-        $kreHome = $env:USER_KRE_PATH
+function GetRuntimesOnPath {
+    param($dotnetHome)
+    if(!$dotnetHome) {
+        $dotnetHome = $env:USER_DOTNET_PATH
     }
 
     if($env:PATH) {
         $paths = $env:PATH.Split(";")
         if($paths) {
-            @($paths | Where { $_.StartsWith("$kreHome\packages") })
+            @($paths | Where { $_.StartsWith("$dotnetHome\packages") })
         }
     }
 }
 
-function GetActiveKrePath {
-    param($kreHome)
-    GetKresOnPath $kreHome | Select -First 1
+function GetActiveRuntimePath {
+    param($dotnetHome)
+    GetRuntimesOnPath $dotnetHome | Select -First 1
 }
 
-function GetActiveKreName {
-    param($kreHome)
-    if(!$kreHome) {
-        $kreHome = $env:USER_KRE_PATH
+function GetActiveRuntimeName {
+    param($dotnetHome)
+    if(!$dotnetHome) {
+        $dotnetHome = $env:USER_DOTNET_PATH
     }
-    $activeKre = GetActiveKrePath $kreHome
+    $activeKre = GetActiveRuntimePath $dotnetHome
     if($activeKre) {
-        $activeKre.Replace("$kreHome\packages\", "").Replace("\bin", "")
+        $activeKre.Replace("$dotnetHome\packages\", "").Replace("\bin", "")
     }
 }
 
 function GetKreName {
     param($clr, $arch, $ver = $TestKreVersion)
-    "KRE-$clr-$arch.$ver"
+    "DotNet-$clr-$arch.$ver"
 }
 
 # Borrowed from kvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)
