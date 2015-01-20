@@ -79,7 +79,7 @@ dotnetsdk upgrade [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR] [-g|-Global] [-f|-For
   add KRE bin to user PATH environment variable
   -g|-Global        install to machine-wide location
   -f|-Force         upgrade even if latest is already installed
-  -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. http://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
+  -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. https://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
 dotnetsdk install <semver>|<alias>|<nupkg>|latest [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR] [-a|-Alias <alias>] [-g|-Global] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
@@ -91,7 +91,7 @@ dotnetsdk install <semver>|<alias>|<nupkg>|latest [-X86][-Amd64] [-r|-Runtime CL
   -a|-Alias <alias> set alias <alias> for requested .NET Runtime on install
   -g|-Global        install to machine-wide location
   -f|-Force         install even if specified version is already installed
-  -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. http://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
+  -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. https://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
 dotnetsdk use <semver>|<alias>|<package>|none [-X86][-Amd64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent] [-g|-Global]
