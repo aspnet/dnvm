@@ -1,7 +1,6 @@
 source $COMMON_HELPERS
-source $KVM
+source $dotnetsdk
 
-# Use the installed KRE
-if kvm use bogus_kre; then
-	die "kvm didn't fail to use bogus kre alias"
+if dotnetsdk use bogus_alias; then
+	die "dotnetsdk didn't fail to use bogus alias"
 fi
