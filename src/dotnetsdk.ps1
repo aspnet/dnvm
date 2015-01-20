@@ -627,11 +627,13 @@ param(
 
   If (Test-Path ($userDotNetPath + "\alias\" + $versionOrAlias + ".txt")) {
     $aliasValue = Get-Content ($userDotNetPath + "\alias\" + $versionOrAlias + ".txt")
+    # Split dotnet-coreclr-win-x86.1.0.0-beta3-10922 into version and name sections
     $parts = $aliasValue.Split('.', 2)
     $pkgVersion = $parts[1]
-    $parts =$parts[0].Split('-', 3)
+    # dotnet-coreclr-win-x86
+    $parts = $parts[0].Split('-', 4)
     $pkgPlatform = Requested-Platform $parts[1]
-    $pkgArchitecture = Requested-Architecture $parts[2]
+    $pkgArchitecture = Requested-Architecture $parts[3]
   } else {
     $pkgVersion = $versionOrAlias
     $pkgPlatform = Requested-Platform $defaultRuntime
