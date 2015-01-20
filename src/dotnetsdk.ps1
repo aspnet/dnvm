@@ -28,7 +28,7 @@ param(
 )
 
 # "Constants" (in as much as PowerShell will allow)
-$RuntimePackageName = "DotNet"
+$RuntimePackageName = "dotnet"
 $RuntimeFriendlyName = ".NET Runtime"
 $RuntimeProgramFilesName = "Microsoft .NET Cross-Platform Runtime"
 $RuntimeFolderName = ".dotnet"
@@ -38,7 +38,7 @@ $CrossGenCommand = "k-crossgen"
 $selectedArch=$null;
 $defaultArch="x86"
 $selectedRuntime=$null
-$defaultRuntime="CLR"
+$defaultRuntime="clr"
 
 # Get or calculate userDotNetPath
 $userDotNetPath = $env:DOTNET_USER_PATH
@@ -202,7 +202,7 @@ param(
 )
   Console-Write "Determining latest version"
 
-  $url = "$feed/GetUpdates()?packageIds=%27$RuntimePackageName-$platform-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
+  $url = "$feed/GetUpdates()?packageIds=%27$RuntimePackageName-$platform-win-$architecture%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
 
   $wc = New-Object System.Net.WebClient
   Add-Proxy-If-Specified($wc)
@@ -436,12 +436,13 @@ filter List-Parts {
   }
 
   $parts1 = $_.Name.Split('.', 2)
-  $parts2 = $parts1[0].Split('-', 3)
+  $parts2 = $parts1[0].Split('-', 4)
   return New-Object PSObject -Property @{
     Active = if ($active) { "*" } else { "" }
     Version = $parts1[1]
     Runtime = $parts2[1]
-    Architecture = $parts2[2]
+    OperatingSystem = $parts2[2]
+    Architecture = $parts2[3]
     Location = $_.Parent.FullName
     Alias = $fullAlias
   }
@@ -581,7 +582,7 @@ param(
   }
   foreach($portion in $dotnetHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
-    $runtimeBin = "$path\packages\$runtimeFullName\bin"
+    $runtimeBin = "$path\runtimes\$runtimeFullName\bin"
     if (Test-Path "$runtimeBin") {
       return $runtimeBin
     }
@@ -636,7 +637,7 @@ param(
     $pkgPlatform = Requested-Platform $defaultRuntime
     $pkgArchitecture = Requested-Architecture $defaultArch
   }
-  return $RuntimePackageName + "-" + $pkgPlatform + "-" + $pkgArchitecture + "." + $pkgVersion
+  return $RuntimePackageName + "-" + $pkgPlatform + "-win-" + $pkgArchitecture + "." + $pkgVersion
 }
 
 function Requested-Platform() {
@@ -722,7 +723,7 @@ function Validate-And-Santitize-Switches()
     $validRuntimes = "CoreCLR", "CLR", "svr50", "svrc50"
     $match = $validRuntimes | ? { $_ -like $Runtime } | Select -First 1
     if (!$match) {throw "'$runtime' is not a valid runtime"}
-    Set-Variable -Name "selectedRuntime" -Value $match -Scope Script
+    Set-Variable -Name "selectedRuntime" -Value $match.ToLowerInvariant() -Scope Script
   } elseif ($Svr50) {
     Console-Write "Warning: -svr50 is deprecated, use -runtime CLR for new packages."
     Set-Variable -Name "selectedRuntime" -Value "svr50" -Scope Script
@@ -735,7 +736,7 @@ function Validate-And-Santitize-Switches()
     $validArchitectures = "amd64", "x86"
     $match = $validArchitectures | ? { $_ -like $Architecture } | Select -First 1
     if(!$match) {throw "'$architecture' is not a valid architecture"}
-    Set-Variable -Name "selectedArch" -Value $match -Scope Script
+    Set-Variable -Name "selectedArch" -Value $match.ToLowerInvariant() -Scope Script
   }
   else {
     if ($X64) {
@@ -800,7 +801,7 @@ function Validate-Full-Package-Name-Arguments-Combination() {
 param(
 	[string] $versionOrAlias
 )
-	if ($versionOrAlias -like "KRE-*" -and
+	if ($versionOrAlias -like "dotnet-*" -and
 	    ($selectedArch -or $selectedRuntime)) {
 		throw "Runtime or architecture cannot be specified when using the full package name."
   }
