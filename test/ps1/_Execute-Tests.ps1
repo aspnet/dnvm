@@ -39,7 +39,7 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 $env:DOTNET_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
 $TestDotNetVersion = "1.0.0-beta3-10924"
 $specificNupkgUrl = "$($env:DOTNET_FEED)/package/dotnet-coreclr-win-x64/$TestDotNetVersion"
-$specificNupkgHash = "BA7835E9EA4390BB43F413E40648E733C67C8583BF5E8C2726D91EC5CB6CAA25"
+$specificNupkgHash = "355BD8849AE1A36AEC7614DDD7F9751B3BA612718382C1C775F634802B6D9D5D"
 $specificNupkgName = "dotnet-coreclr-win-x64.$TestDotNetVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
