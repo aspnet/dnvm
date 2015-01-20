@@ -361,7 +361,7 @@ param(
     }
 
     $packageVersion = Package-Version $runtimeFullName
-
+    
     DotNetSdk-Use $packageVersion
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
         DotNetSdk-Alias-Set $Alias $packageVersion
@@ -601,14 +601,14 @@ function Package-Platform() {
 param(
   [string] $runtimeFullName
 )
-  return $runtimeFullName -replace 'KRE-([^-]*).*', '$1'
+  return $runtimeFullName -replace 'dotnet-([^-]*).*', '$1'
 }
 
 function Package-Arch() {
 param(
   [string] $runtimeFullName
 )
-  return $runtimeFullName -replace 'KRE-[^-]*-([^.]*).*', '$1'
+  return $runtimeFullName -replace 'dotnet-[^-]*-[^-]*-([^.]*).*', '$1'
 }
 
 
