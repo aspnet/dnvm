@@ -1,5 +1,5 @@
 # Ensure a Runtime has been installed (if the other tests ran first, we're good)
-rundotnetsdk install $TestKreVersion -arch "x86" -r "CLR"
+rundotnetsdk install $TestDotNetVersion -arch "x86" -r "CLR"
 
 $notRealRuntimeVersion = "0.0.1-notarealruntime"
 
@@ -13,20 +13,20 @@ $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
 
 Describe "dotnetsdk-ps1 alias" -Tag "dotnetsdk-alias" {
     Context "When defining an alias for a Runtime that exists" {
-        rundotnetsdk alias $testAlias $TestKreVersion -x86 -r CLR
+        rundotnetsdk alias $testAlias $TestDotNetVersion -x86 -r CLR
 
         It "writes the alias file" {
-            "$env:USER_DOTNET_PATH\alias\$testAlias.txt" | Should Exist
-            "$env:USER_DOTNET_PATH\alias\$testAlias.txt" | Should ContainExactly $kreName
+            "$env:DOTNET_USER_PATH\alias\$testAlias.txt" | Should Exist
+            "$env:DOTNET_USER_PATH\alias\$testAlias.txt" | Should ContainExactly $kreName
         }
     }
 
     Context "When defining an alias for a Runtime with no arch or clr parameters" {
-        rundotnetsdk alias $testDefaultAlias $TestKreVersion
+        rundotnetsdk alias $testDefaultAlias $TestDotNetVersion
 
         It "writes the x86/CLR variant to the alias file" {
-            "$env:USER_DOTNET_PATH\alias\$testDefaultAlias.txt" | Should Exist
-            "$env:USER_DOTNET_PATH\alias\$testDefaultAlias.txt" | Should ContainExactly $kreName   
+            "$env:DOTNET_USER_PATH\alias\$testDefaultAlias.txt" | Should Exist
+            "$env:DOTNET_USER_PATH\alias\$testDefaultAlias.txt" | Should ContainExactly $kreName   
         }
     }
 
@@ -34,8 +34,8 @@ Describe "dotnetsdk-ps1 alias" -Tag "dotnetsdk-alias" {
         rundotnetsdk alias $notRealAlias $notRealRuntimeVersion -x86 -r CLR
 
         It "writes the alias file" {
-            "$env:USER_DOTNET_PATH\alias\$notRealAlias.txt" | Should Exist
-            "$env:USER_DOTNET_PATH\alias\$notRealAlias.txt" | Should ContainExactly $notRealKreName   
+            "$env:DOTNET_USER_PATH\alias\$notRealAlias.txt" | Should Exist
+            "$env:DOTNET_USER_PATH\alias\$notRealAlias.txt" | Should ContainExactly $notRealKreName   
         }
     }
 
@@ -62,7 +62,7 @@ Describe "dotnetsdk-ps1 alias" -Tag "dotnetsdk-alias" {
         $allAliases = rundotnetsdk alias | Out-String
 
         It "lists all aliases in the alias files" {
-            dir "$env:USER_DOTNET_PATH\alias\*.txt" | ForEach-Object {
+            dir "$env:DOTNET_USER_PATH\alias\*.txt" | ForEach-Object {
                 $alias = [Regex]::Escape([IO.Path]::GetFileNameWithoutExtension($_.Name))
                 $val = [Regex]::Escape((Get-Content $_))
 
@@ -90,7 +90,7 @@ Describe "dotnetsdk-ps1 unalias" -Tag "dotnetsdk-alias" {
         rundotnetsdk unalias $testAlias
 
         It "removes the alias file" {
-            "$env:USER_DOTNET_PATH\alias\$testAlias.txt" | Should Not Exist
+            "$env:DOTNET_USER_PATH\alias\$testAlias.txt" | Should Not Exist
         }
     }
 }

@@ -36,13 +36,11 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
 # that dotnetsdk can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
-#
-# Yes, some of these still refer to "KRE" packages. That is by design for now.
-$env:DOTNET_FEED = "https://www.myget.org/F/aspnetmaster/api/v2"
-$TestDotNetVersion = "1.0.0-beta1"
-$specificNupkgUrl = "https://www.myget.org/F/aspnetmaster/api/v2/package/KRE-CLR-x86/1.0.0-alpha4"
-$specificNupkgHash = "B84347C335A5AFD24B2A08F031BF7CBEC58581D407C82D4C208AA2FD633B066C"
-$specificNupkgName = "KRE-CLR-x86.1.0.0-alpha4.nupkg"
+$env:DOTNET_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
+$TestDotNetVersion = "1.0.0-beta3-10924"
+$specificNupkgUrl = "$($env:DOTNET_FEED)/package/dotnet-coreclr-win-x64/$TestDotNetVersion"
+$specificNupkgHash = "BA7835E9EA4390BB43F413E40648E733C67C8583BF5E8C2726D91EC5CB6CAA25"
+$specificNupkgName = "dotnet-coreclr-win-x64.$TestDotNetVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
 # Set up context
@@ -62,9 +60,9 @@ if(!(Test-Path $TestWorkingDir)) {
 Import-Module "$PesterPath\Pester.psm1"
 
 # Turn on Debug logging if requested
-if($Debug) {
-    $oldDebugPreference = $DebugPreference
+if($Debug -or ($env:PS1_DEBUG -eq "1")) {
     $DebugPreference = "Continue"
+    $VerbosePreference = "Continue"
 }
 
 # Unset DOTNET_HOME for the test
@@ -80,9 +78,6 @@ Remove-EnvVar PATH
 # Set up the user/global install directories to be inside the test work area
 $env:DOTNET_USER_PATH = "$TestWorkingDir\.dotnet\user"
 mkdir $env:DOTNET_USER_PATH | Out-Null
-
-$env:DOTNET_GLOBAL_PATH = "$TestWorkingDir\.dotnet\global"
-mkdir $env:DOTNET_GLOBAL_PATH | Out-Null
 
 # Helper function to run dotnetsdk and capture stuff.
 $dotnetsdkout = $null
@@ -127,9 +122,10 @@ if(!(Test-Path $specificNupkgPath)) {
     $wc.DownloadFile($specificNupkgUrl, $specificNupkgPath)
 
     # Test it against the expected hash
-    if((Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash -ne $specificNupkgHash) {
+    $actualHash = (Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash
+    if($actualHash -ne $specificNupkgHash) {
         # Failed to match, we downloaded a corrupt package??
-        throw "Test prerequisite $specificNupkgUrl failed to download. The file was corrupted."
+        throw "Test prerequisite $specificNupkgUrl failed to download. The hash '$actualHash' does not match the expected value."
     }
 }
 

@@ -19,7 +19,7 @@ Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses x86/CLR variant" {
-            GetActiveKreName | Should Be $runtimeName
+            GetActiveRuntimeName | Should Be $runtimeName
         }
 
         rundotnetsdk use none
@@ -29,49 +29,48 @@ Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
         rundotnetsdk use $TestDotNetVersion
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
+        # 'k.cmd' still exists, for now.
         It "puts K on the PATH" {
             $cmd = Get-Command k -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\k.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:DOTNET_USER_PATH\runtimes\$runtimeName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
             $cmd = Get-Command kpm -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\kpm.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:DOTNET_USER_PATH\runtimes\$runtimeName\bin\kpm.cmd")
         }
 
-        It "puts klr on the PATH" {
-            $cmd = Get-Command klr -ErrorAction SilentlyContinue
+        It "puts dotnet on the PATH" {
+            $cmd = Get-Command dotnet -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\klr.exe")
+            $cmd.Definition | Should Be (Convert-Path "$env:DOTNET_USER_PATH\runtimes\$runtimeName\bin\dotnet.exe")
         }
 
         rundotnetsdk use none
     }
 
     Context "When use-ing an alias" {
-        # Sanity check assumptions
-        Get-Command k -ErrorAction SilentlyContinue | Should BeNullOrEmpty
-
         rundotnetsdk use $testAlias
 
+        # 'k.cmd' still exists, for now.
         It "puts K on the PATH" {
             $cmd = Get-Command k -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\k.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:DOTNET_USER_PATH\runtimes\$runtimeName\bin\k.cmd")
         }
 
         It "puts kpm on the PATH" {
             $cmd = Get-Command kpm -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\kpm.cmd")
+            $cmd.Definition | Should Be (Convert-Path "$env:DOTNET_USER_PATH\runtimes\$runtimeName\bin\kpm.cmd")
         }
 
-        It "puts klr on the PATH" {
-            $cmd = Get-Command klr -ErrorAction SilentlyContinue
+        It "puts dotnet on the PATH" {
+            $cmd = Get-Command dotnet -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$env:USER_KRE_PATH\packages\$runtimeName\bin\klr.exe")
+            $cmd.Definition | Should Be (Convert-Path "$env:DOTNET_USER_PATH\runtimes\$runtimeName\bin\dotnet.exe")
         }
     }
 
@@ -85,15 +84,15 @@ Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
         }
 
         It "removes K from the PATH" {
-            (Get-Command k -ErrorAction SilentlyContinue) | Should BeNullOrEmpty
+            $cmd = (Get-Command k -ErrorAction SilentlyContinue)
         }
 
         It "removes kpm from the PATH" {
             (Get-Command kpm -ErrorAction SilentlyContinue) | Should BeNullOrEmpty
         }
 
-        It "removes klr from the PATH" {
-            (Get-Command klr -ErrorAction SilentlyContinue) | Should BeNullOrEmpty
+        It "removes dotnet from the PATH" {
+            (Get-Command dotnet -ErrorAction SilentlyContinue) | Should BeNullOrEmpty
         }
     }
 
@@ -107,7 +106,7 @@ Describe "dotnetsdk-ps1 use" -Tag "dotnetsdk-use" {
     Context "When use-ing a non-existant alias" {
         It "should throw an error" {
             rundotnetsdk use "bogus_alias_that_does_not_exist"
-            $dotnetsdkerr[0].Exception.Message | Should Be "Cannot find DotNet-CLR-x86.bogus_alias_that_does_not_exist, do you need to run 'dotnetsdk install bogus_alias_that_does_not_exist'?"
+            $dotnetsdkerr[0].Exception.Message | Should Be "Cannot find dotnet-clr-win-x86.bogus_alias_that_does_not_exist, do you need to run 'dotnetsdk install bogus_alias_that_does_not_exist'?"
         }
     }
 }

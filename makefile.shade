@@ -28,8 +28,8 @@ default DOTNETSDK_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("DOTNETSDK
         updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
     }
 
--//#run-ps1-tests target='test' if='!IsLinux'
--//	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
+#run-ps1-tests target='test' if='!IsLinux'
+	exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
 
 -//#run-sh-tests target='test' if='IsLinux'
 -//    exec program='/bin/bash' commandline="${Path.Combine(TEST_DIR, "sh", "run-tests.sh")} ${IsTeamCity?"-t ":""}-v" workingdir="${Path.Combine(TEST_DIR, "sh")}"

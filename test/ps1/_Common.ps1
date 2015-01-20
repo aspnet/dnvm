@@ -25,13 +25,13 @@ function Remove-EnvVar($var) {
 function GetRuntimesOnPath {
     param($dotnetHome)
     if(!$dotnetHome) {
-        $dotnetHome = $env:USER_DOTNET_PATH
+        $dotnetHome = $env:DOTNET_USER_PATH
     }
 
     if($env:PATH) {
         $paths = $env:PATH.Split(";")
         if($paths) {
-            @($paths | Where { $_.StartsWith("$dotnetHome\packages") })
+            @($paths | Where { $_.StartsWith("$dotnetHome\runtimes") })
         }
     }
 }
@@ -44,17 +44,17 @@ function GetActiveRuntimePath {
 function GetActiveRuntimeName {
     param($dotnetHome)
     if(!$dotnetHome) {
-        $dotnetHome = $env:USER_DOTNET_PATH
+        $dotnetHome = $env:DOTNET_USER_PATH
     }
-    $activeKre = GetActiveRuntimePath $dotnetHome
-    if($activeKre) {
-        $activeKre.Replace("$dotnetHome\packages\", "").Replace("\bin", "")
+    $activeRuntime = GetActiveRuntimePath $dotnetHome
+    if($activeRuntime) {
+        $activeRuntime.Replace("$dotnetHome\runtimes\", "").Replace("\bin", "")
     }
 }
 
 function GetRuntimeName {
-    param($clr, $arch, $ver = $TestKreVersion)
-    "DotNet-$clr-$arch.$ver"
+    param($clr, $arch, $ver = $TestDotNetVersion)
+    "dotnet-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
 }
 
 # Borrowed from kvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)

@@ -12,14 +12,17 @@ namespace HelloK {
 
         public int Main(string[] args) {
             var art =
-                "\x1b[33m   ___   _______  \x1b[34m  _  ____________" + Environment.NewLine +
-                "\x1b[33m  / _ | / __/ _ \\ \x1b[34m / |/ / __/_  __/" + Environment.NewLine +
-                "\x1b[33m / __ |_\\ \\/ ___/ \x1b[34m/    / _/  / /   " + Environment.NewLine +
-                "\x1b[33m/_/ |_/___/_/  \x1b[37m(_)\x1b[34m_/|_/___/ /_/    \x1b[39m";
+                "\x1b[34m" +
+                "      _  ____________" + Environment.NewLine +
+                "     / |/ / __/_  __/" + Environment.NewLine +
+                "    /    / _/  / /   " + Environment.NewLine +
+                "(_)/_/|_/___/ /_/    " +
+                "\x1b[39m";
 
             AnsiConsole.Output.WriteLine(art);
             AnsiConsole.Output.WriteLine("Runtime is sane!");
             AnsiConsole.Output.WriteLine("\x1b[30mRuntime Framework:    \x1b[39m " + _env.RuntimeFramework.ToString());
+            AnsiConsole.Output.WriteLine("\x1b[30mBitness:              \x1b[39m " + ((IntPtr.Size == 8) ? "64-bit" : "32-bit"));
 #if ASPNETCORE50
             AnsiConsole.Output.WriteLine("\x1b[30mRuntime:              \x1b[39m Microsoft CoreCLR");
 #else
