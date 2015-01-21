@@ -10,7 +10,7 @@ dotnetsdk install latest
 has k || die "dotnetsdk didn't install K :("
 has kpm || die "installed k didn't have kpm?"
 
-pushd "$TEST_APPS_DIR/HelloK"
+pushd "$TEST_APPS_DIR/TestApp"
 kpm restore || die "failed to restore packages"
 OUTPUT=$(k run || die "failed to run hello application")
 echo $OUTPUT | grep 'Runtime is sane!' || die "unexpected output from sample app: $OUTPUT"

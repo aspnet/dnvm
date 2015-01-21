@@ -8,6 +8,6 @@ dotnetsdk install $DOTNET_NUPKG_FILE
 
 pushd "$DOTNET_USER_HOME/runtimes/$DOTNET_NUPKG_NAME" 2>/dev/null 1>/dev/null
 [ -f bin/k ] || die "dotnetsdk did not include 'k' command!"
-[ -f bin/klr ] || die "dotnetsdk did not include 'klr' command!"
+[ -f bin/dotnet ] || die "dotnetsdk did not include 'dotnet' command!"
 [ -f bin/kpm ] || die "dotnetsdk did not include 'kpm' command!"
 popd 2>/dev/null 1>/dev/null

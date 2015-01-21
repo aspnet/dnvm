@@ -308,11 +308,13 @@ dotnetsdk()
                 local format="%-20s %s\n"
                 printf "$format" "Alias" "Name"
                 printf "$format" "-----" "----"
-                for _dotnetsdk_file in $(find "$DOTNET_USER_HOME/alias" -name *.alias); do
-                    local alias="$(basename $_dotnetsdk_file | sed 's/.alias//')"
-                    local name="$(cat $_dotnetsdk_file)"
-                    printf "$format" "$alias" "$name"
-                done
+                if [ -d "$DOTNET_USER_HOME/alias" ]; then
+                    for _dotnetsdk_file in $(find "$DOTNET_USER_HOME/alias" -name *.alias); do
+                        local alias="$(basename $_dotnetsdk_file | sed 's/\.alias//')"
+                        local name="$(cat $_dotnetsdk_file)"
+                        printf "$format" "$alias" "$name"
+                    done
+                fi
                 echo ""
                 return
             fi
@@ -366,10 +368,12 @@ dotnetsdk()
             # Z shell array-index starts at one.
             local i=1
             local format="%-20s %s\n"
-            for _dotnetsdk_file in $(find "$DOTNET_USER_HOME/alias" -name *.alias); do
-                arr[$i]="$(basename $_dotnetsdk_file | sed 's/.alias//')/$(cat $_dotnetsdk_file)"
-                let i+=1
-            done
+            if [ -d "$DOTNET_USER_HOME/alias" ]; then
+                for _dotnetsdk_file in $(find "$DOTNET_USER_HOME/alias" -name *.alias); do
+                    arr[$i]="$(basename $_dotnetsdk_file | sed 's/\.alias//')/$(cat $_dotnetsdk_file)"
+                    let i+=1
+                done
+            fi
 
             local formatString="%-6s %-20s %-7s %-20s %s\n"
             printf "$formatString" "Active" "Version" "Runtime" "Location" "Alias"

@@ -20,8 +20,8 @@ popd > /dev/null
 [ -z "$TEST_APPS_DIR" ]     && export TEST_APPS_DIR="$REPO_ROOT/test/apps"
 
 # This is a KRE to use for testing various commands. It doesn't matter what version it is
-[ -z "$DOTNET_TEST_VERSION"]   && export DOTNET_TEST_VERSION="1.0.0-beta1"
-[ -z "$DOTNET_NUPKG_HASH" ]    && export DOTNET_NUPKG_HASH="5fb3d472166f89898631f2a996f79de727f5815f"
+[ -z "$DOTNET_TEST_VERSION"]   && export DOTNET_TEST_VERSION="1.0.0-beta3-10935"
+[ -z "$DOTNET_NUPKG_HASH" ]    && export DOTNET_NUPKG_HASH="62951e3f3a3951e166cc28fcba00ff5716a3ddba"
 [ -z "$DOTNET_NUPKG_URL" ]     && export DOTNET_NUPKG_URL="https://www.myget.org/F/aspnetvnext/api/v2/package/dotnet-mono/$DOTNET_TEST_VERSION"
 [ -z "$DOTNET_NUPKG_NAME" ]    && export DOTNET_NUPKG_NAME="dotnet-mono.$DOTNET_TEST_VERSION"
 [ -z "$DOTNET_NUPKG_FILE" ]    && export DOTNET_NUPKG_FILE="$TEST_WORK_DIR/${DOTNET_NUPKG_NAME}.nupkg"
@@ -60,8 +60,9 @@ if [ ! -f "$DOTNET_NUPKG_FILE" ]; then
     info "Fetching test dependencies..."
 
     curl -L -o $DOTNET_NUPKG_FILE $DOTNET_NUPKG_URL >/dev/null 2>&1
+    ACTUAL_HASH=$(shasum $DOTNET_NUPKG_FILE | awk '{ print $1 }')
     [ -e $DOTNET_NUPKG_FILE ] || die "failed to fetch test nupkg"
-    [ $(shasum $DOTNET_NUPKG_FILE | awk '{ print $1 }') = "$DOTNET_NUPKG_HASH" ] || die "downloaded nupkg does not match expected file"
+    [ "$ACTUAL_HASH" = "$DOTNET_NUPKG_HASH" ] || die "downloaded nupkg hash '$ACTUAL_HASH' does not match expected value"
 fi
 
 # Set up useful variables for the test
@@ -96,7 +97,7 @@ for shell in $TEST_SHELLS; do
     export DOTNET_USER_HOME="$TEST_WORK_DIR/$shell"
     [ -d $DOTNET_USER_HOME ] || mkdir $DOTNET_USER_HOME
 
-    pushd tests >/dev/null 2>&1
+    pushd "$SCRIPT_DIR/tests" >/dev/null 2>&1
     $CHESTER $@ -s $shell -n $shell "*"
     err_code="$?"
     popd >/dev/null 2>&1

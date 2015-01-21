@@ -8,8 +8,8 @@ dotnetsdk use none
 dotnetsdk use default
 
 # Check paths
-EXPECTED_ROOT="$KRE_USER_HOME/runtimes/dotnet-mono.$KRE_TEST_VERSION/bin"
+EXPECTED_ROOT="$DOTNET_USER_HOME/runtimes/dotnet-mono.$DOTNET_TEST_VERSION/bin"
 
 [ $(path_of k) == "$EXPECTED_ROOT/k" ] || die "'k' was not available at the specified path!"
-[ $(path_of klr) == "$EXPECTED_ROOT/klr" ] || die "'klr' was not available at the specified path!"
+[ $(path_of dotnet) == "$EXPECTED_ROOT/dotnet" ] || die "'dotnet' was not available at the specified path!"
 [ $(path_of kpm) == "$EXPECTED_ROOT/kpm" ] || die "'kpm' was not available at the specified path!"

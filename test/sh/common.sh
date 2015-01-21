@@ -27,7 +27,7 @@ unindent() {
 log_lines() {
     local level="$1"
     shift
-    printf "%s" "$@" | while IFS= read -r line; do
+    echo "$@" | while IFS= read -r line; do
         log "$level" "$line"
     done
 }
