@@ -118,7 +118,7 @@ function DotNetSdk-Global-Setup {
 
   If (Needs-Elevation)
   {
-    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup -global -wait"
+    $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
     Console-Write "Adding $dotnetsdkBinPath to process PATH"
     Set-Path (Change-Path $env:Path $dotnetsdkBinPath ($dotnetsdkBinPath))
