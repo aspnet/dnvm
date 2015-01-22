@@ -1,14 +1,13 @@
 source $COMMON_HELPERS
 source $dotnetsdk
 
-dotnetsdk install latest
+dotnetsdk install $DOTNET_TEST_VERSION
 
-ls $DOTNET_USER_HOME/runtimes/dotnet-mono.* 2>/dev/null 1>/dev/null || die "unable to find installed runtime"
+# Resolve the name of the runtime directory
+RUNTIME_PATH="$DOTNET_USER_HOME/runtimes/dotnet-mono.$DOTNET_TEST_VERSION"
 
-pushd $DOTNET_USER_HOME/runtimes/dotnet-mono.* 2>/dev/null 1>/dev/null
-[ -f bin/k ] || die "dotnetsdk did not include 'k' command!"
-[ -f bin/dotnet ] || die "dotnetsdk did not include 'dotnet' command!"
-[ -f bin/kpm ] || die "dotnetsdk did not include 'kpm' command!"
-popd 2>/dev/null 1>/dev/null
+[ -f "$RUNTIME_PATH/bin/k" ] || die "dotnetsdk did not include 'k' command!"
+[ -f "$RUNTIME_PATH/bin/dotnet" ] || die "dotnetsdk did not include 'dotnet' command!"
+[ -f "$RUNTIME_PATH/bin/kpm" ] || die "dotnetsdk did not include 'kpm' command!"
 
 [ ! -f "$DOTNET_USER_HOME/alias/default.alias" ] || die "default alias was created despite not setting --persistant"
