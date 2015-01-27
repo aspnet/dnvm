@@ -6,7 +6,7 @@ param(
   [alias("p")][switch] $Persistent = $false,
   [alias("f")][switch] $Force = $false,
   [alias("r")][string] $Runtime,
-  
+
   [alias("arch")][string] $Architecture,
   [switch] $X86 = $false,
   [alias("amd64")][switch] $X64 = $false,
@@ -23,10 +23,10 @@ param(
 )
 
 # "Constants" (in as much as PowerShell will allow)
-$RuntimePackageName = "dotnet"
-$RuntimeFriendlyName = ".NET Runtime"
-$RuntimeProgramFilesName = "Microsoft .NET Cross-Platform Runtime"
-$RuntimeFolderName = ".dotnet"
+$RuntimePackageName = "kre"
+$RuntimeFriendlyName = "K Runtime"
+$RuntimeProgramFilesName = "KRE"
+$RuntimeFolderName = ".kre"
 $DefaultFeed = "https://www.myget.org/F/aspnetvnext/api/v2"
 $CrossGenCommand = "k-crossgen"
 
@@ -35,10 +35,10 @@ $defaultArch="x86"
 $selectedRuntime=$null
 $defaultRuntime="clr"
 
-# Get or calculate userDotNetPath
-$userDotNetPath = $env:DOTNET_USER_PATH
-if(!$userDotNetPath) { $userDotNetPath = $env:USERPROFILE + "\$RuntimeFolderName" }
-$userDotNetRuntimesPath = $userDotNetPath + "\runtimes"
+# Get or calculate userKrePath
+$userKrePath = $env:DOTNET_USER_PATH
+if(!$userKrePath) { $userKrePath = $env:USERPROFILE + "\$RuntimeFolderName" }
+$userDotNetRuntimesPath = $userKrePath + "\runtimes"
 
 # Get the feed from the environment variable or set it to the default value
 $feed = $env:DOTNET_FEED
@@ -57,14 +57,14 @@ function String-IsEmptyOrWhitespace([string]$str) {
 
 $scriptPath = $myInvocation.MyCommand.Definition
 
-function DotNetSdk-Help {
+function kvm-Help {
 @"
-.NET SDK Manager - Build {{BUILD_NUMBER}}
+K Version Manager - Build {{BUILD_NUMBER}}
 
-USAGE: dotnetsdk <command> [options]
+USAGE: kvm <command> [options]
 
-dotnetsdk upgrade [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-g|-Global] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
-  install latest .NET Runtime from feed
+kvm upgrade [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-g|-Global] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
+  install latest KRE from feed
   set 'default' alias to installed version
   add KRE bin to user PATH environment variable
   -g|-Global        install to machine-wide location
@@ -72,99 +72,99 @@ dotnetsdk upgrade [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-g|-Global] [-f|-Force]
   -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. https://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
-dotnetsdk install <semver>|<alias>|<nupkg>|latest [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-a|-Alias <alias>] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
-  <semver>|<alias>  install requested .NET Runtime from feed
-  <nupkg>           install requested .NET Runtime from package on local filesystem
-  latest            install latest .NET Runtime from feed
-  add .NET Runtime bin to path of current command line
-  -p|-Persistent    add .NET Runtime bin to PATH environment variables persistently
-  -a|-Alias <alias> set alias <alias> for requested .NET Runtime on install
+kvm install <semver>|<alias>|<nupkg>|latest [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-a|-Alias <alias>] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
+  <semver>|<alias>  install requested KRE from feed
+  <nupkg>           install requested KRE from package on local filesystem
+  latest            install latest KRE from feed
+  add KRE bin to path of current command line
+  -p|-Persistent    add KRE bin to PATH environment variables persistently
+  -a|-Alias <alias> set alias <alias> for requested KRE on install
   -f|-Force         install even if specified version is already installed
   -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. https://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
-dotnetsdk use <semver>|<alias>|<package>|none [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent]
-  <semver>|<alias>|<package>  add .NET Runtime bin to path of current command line
-  none                        remove .NET Runtime bin from path of current command line
-  -p|-Persistent              add .NET Runtime bin to PATH environment variable across all processes run by the current user
+kvm use <semver>|<alias>|<package>|none [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent]
+  <semver>|<alias>|<package>  add KRE bin to path of current command line
+  none                        remove KRE bin from path of current command line
+  -p|-Persistent              add KRE bin to PATH environment variable across all processes run by the current user
 
-dotnetsdk list
-  list .NET Runtime versions installed
+kvm list
+  list KRE versions installed
 
-dotnetsdk alias
-  list .NET Runtime aliases which have been defined
+kvm alias
+  list KRE aliases which have been defined
 
-dotnetsdk alias <alias>
+kvm alias <alias>
   display value of the specified alias
 
-dotnetsdk alias <alias> <semver>|<alias>|<package> [-X86|-X64] [-r|-Runtime CLR|CoreCLR]
+kvm alias <alias> <semver>|<alias>|<package> [-X86|-X64] [-r|-Runtime CLR|CoreCLR]
   <alias>                      the name of the alias to set
-  <semver>|<alias>|<package>   the .NET Runtime version to set the alias to. Alternatively use the version of the specified alias
+  <semver>|<alias>|<package>   the KRE version to set the alias to. Alternatively use the version of the specified alias
 
-dotnetsdk unalias <alias>
+kvm unalias <alias>
   remove the specified alias
 
 "@ -replace "`n","`r`n" | Console-Write
 }
 
-function DotNetSdk-Global-Setup {
-  # Sets up the 'dotnetsdk' tool and adds the user-local dotnet install directory to the DOTNET_HOME variable
+function kvm-Global-Setup {
+  # Sets up the 'kvm' tool and adds the user-local kre install directory to the KRE_HOME variable
   # Note: We no longer do global install via this tool. The MSI handles global install of runtimes AND will set
-  # the machine level DOTNET_HOME value.
+  # the machine level KRE_HOME value.
 
   # In this configuration, the user-level path will OVERRIDE the global path because it is placed first.
 
-  $dotnetsdkBinPath = "$userDotNetPath\bin"
+  $kvmBinPath = "$userKrePath\bin"
 
   If (Needs-Elevation)
   {
     $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-    Console-Write "Adding $dotnetsdkBinPath to process PATH"
-    Set-Path (Change-Path $env:Path $dotnetsdkBinPath ($dotnetsdkBinPath))
-    Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process DOTNET_HOME"
-    $envDotNetHome = $env:DOTNET_HOME
-    $envDotNetHome = Change-Path $envDotNetHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
-    $env:DOTNET_HOME = $envDotNetHome
+    Console-Write "Adding $kvmBinPath to process PATH"
+    Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
+    Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process KRE_HOME"
+    $envkreHome = $env:KRE_HOME
+    $envkreHome = Change-Path $envkreHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
+    $env:KRE_HOME = $envkreHome
     Console-Write "Setup complete"
     break
   }
 
   $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
 
-  Console-Write "Copying file $dotnetsdkBinPath\dotnetsdk.ps1"
-  md $dotnetsdkBinPath -Force | Out-Null
-  copy "$scriptFolder\dotnetsdk.ps1" "$dotnetsdkBinPath\dotnetsdk.ps1"
+  Console-Write "Copying file $kvmBinPath\kvm.ps1"
+  md $kvmBinPath -Force | Out-Null
+  copy "$scriptFolder\kvm.ps1" "$kvmBinPath\kvm.ps1"
 
-  Console-Write "Copying file $dotnetsdkBinPath\dotnetsdk.cmd"
-  copy "$scriptFolder\dotnetsdk.cmd" "$dotnetsdkBinPath\dotnetsdk.cmd"
+  Console-Write "Copying file $kvmBinPath\kvm.cmd"
+  copy "$scriptFolder\kvm.cmd" "$kvmBinPath\kvm.cmd"
 
-  Console-Write "Adding $dotnetsdkBinPath to process PATH"
-  Set-Path (Change-Path $env:Path $dotnetsdkBinPath ($dotnetsdkBinPath))
+  Console-Write "Adding $kvmBinPath to process PATH"
+  Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
 
-  Console-Write "Adding $dotnetsdkBinPath to user PATH"
+  Console-Write "Adding $kvmBinPath to user PATH"
   $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-  $userPath = Change-Path $userPath $dotnetsdkBinPath ($dotnetsdkBinPath)
+  $userPath = Change-Path $userPath $kvmBinPath ($kvmBinPath)
   [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
 
-  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process DOTNET_HOME"
-  $envDotNetHome = $env:DOTNET_HOME
-  $envDotNetHome = Change-Path $envDotNetHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
-  $env:DOTNET_HOME = $envDotNetHome
+  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process KRE_HOME"
+  $envkreHome = $env:KRE_HOME
+  $envkreHome = Change-Path $envkreHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
+  $env:KRE_HOME = $envkreHome
 
-  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to machine DOTNET_HOME"
-  $machineDotNetHome = [Environment]::GetEnvironmentVariable("DOTNET_HOME", [System.EnvironmentVariableTarget]::Machine)
-  $machineDotNetHome = Change-Path $machineDotNetHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
-  [Environment]::SetEnvironmentVariable("DOTNET_HOME", $machineDotNetHome, [System.EnvironmentVariableTarget]::Machine)
+  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to machine KRE_HOME"
+  $machinekreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
+  $machinekreHome = Change-Path $machinekreHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
+  [Environment]::SetEnvironmentVariable("KRE_HOME", $machinekreHome, [System.EnvironmentVariableTarget]::Machine)
 }
 
-function DotNetSdk-Upgrade {
+function kvm-Upgrade {
 param(
   [boolean] $isGlobal
 )
   $Persistent = $true
   $Alias="default"
-  DotNetSdk-Install "latest" $isGlobal
+  kvm-Install "latest" $isGlobal
 }
 
 function Add-Proxy-If-Specified {
@@ -186,7 +186,7 @@ param(
   }
 }
 
-function DotNetSdk-Find-Latest {
+function kvm-Find-Latest {
 param(
   [string] $platform,
   [string] $architecture
@@ -209,7 +209,7 @@ param(
   return $version
 }
 
-function Do-DotNetSdk-Download {
+function Do-kvm-Download {
 param(
   [string] $runtimeFullName,
   [string] $runtimesFolder
@@ -247,7 +247,7 @@ param(
   Write-Verbose "Downloading $url ..."
   $wc.DownloadFile($url, $tempDownloadFile)
 
-  Do-DotNetSdk-Unpack $tempDownloadFile $runtimeTempDownload
+  Do-kvm-Unpack $tempDownloadFile $runtimeTempDownload
 
   md $runtimeFolder -Force | Out-Null
   Console-Write "Installing to $runtimeFolder"
@@ -255,7 +255,7 @@ param(
   Remove-Item "$runtimeTempDownload" -Force | Out-Null
 }
 
-function Do-DotNetSdk-Unpack {
+function Do-kvm-Unpack {
 param(
   [string] $runtimeFile,
   [string] $runtimeFolder
@@ -263,7 +263,7 @@ param(
   Console-Write "Unpacking to $runtimeFolder"
 
   $compressionLib = [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
-    
+
   if($compressionLib -eq $null) {
       try {
           # Shell will not recognize nupkg as a zip and throw, so rename it to zip
@@ -294,13 +294,13 @@ param(
   }
 }
 
-function DotNetSdk-Install {
+function kvm-Install {
 param(
   [string] $versionOrAlias,
   [boolean] $isGlobal
 )
   if ($versionOrAlias -eq "latest") {
-    $versionOrAlias = DotNetSdk-Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
+    $versionOrAlias = kvm-Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
   }
 
   if ($versionOrAlias.EndsWith(".nupkg")) {
@@ -310,7 +310,7 @@ param(
   }
 
   $packageFolder = $userDotNetRuntimesPath
-  
+
   if ($versionOrAlias.EndsWith(".nupkg")) {
     Set-Variable -Name "selectedArch" -Value (Package-Arch $runtimeFullName) -Scope Script
     Set-Variable -Name "selectedRuntime" -Value (Package-Platform $runtimeFullName) -Scope Script
@@ -336,7 +336,7 @@ param(
       }
       copy $versionOrAlias $tempDownloadFile
 
-      Do-DotNetSdk-Unpack $tempDownloadFile $tempUnpackFolder
+      Do-kvm-Unpack $tempDownloadFile $tempUnpackFolder
       md $runtimeFolder -Force | Out-Null
       Console-Write "Installing to $runtimeFolder"
       mv "$tempUnpackFolder\*" $runtimeFolder
@@ -344,18 +344,18 @@ param(
     }
 
     $packageVersion = Package-Version $runtimeFullName
-    
-    DotNetSdk-Use $packageVersion
+
+    kvm-Use $packageVersion
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
-        DotNetSdk-Alias-Set $Alias $packageVersion
+        kvm-Alias-Set $Alias $packageVersion
     }
   }
   else
   {
-    Do-DotNetSdk-Download $runtimeFullName $packageFolder
-    DotNetSdk-Use $versionOrAlias
+    Do-kvm-Download $runtimeFullName $packageFolder
+    kvm-Use $versionOrAlias
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
-        DotNetSdk-Alias-Set "$Alias" $versionOrAlias
+        kvm-Alias-Set "$Alias" $versionOrAlias
     }
   }
 
@@ -371,20 +371,20 @@ param(
   }
 }
 
-function DotNetSdk-List {
-  $dotnetHome = $env:DOTNET_HOME
-  if (!$dotnetHome) {
-    $dotnetHome = "$userDotNetPath"
+function kvm-List {
+  $kreHome = $env:KRE_HOME
+  if (!$kreHome) {
+    $kreHome = "$userKrePath"
   }
 
-  md ($userDotNetPath + "\alias\") -Force | Out-Null
-  $aliases = Get-ChildItem ($userDotNetPath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}
+  md ($userKrePath + "\alias\") -Force | Out-Null
+  $aliases = Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}
 
   $items = @()
-  foreach($portion in $dotnetHome.Split(';')) {
+  foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
     if (Test-Path("$path\runtimes")) {
-      $items += Get-ChildItem ("$path\runtimes\dotnet-*") | List-Parts $aliases
+      $items += Get-ChildItem ("$path\runtimes\kre-*") | List-Parts $aliases
     }
   }
 
@@ -431,18 +431,18 @@ filter List-Parts {
   }
 }
 
-function DotNetSdk-Use {
+function kvm-Use {
 param(
   [string] $versionOrAlias
 )
   Validate-Full-Package-Name-Arguments-Combination $versionOrAlias
 
   if ($versionOrAlias -eq "none") {
-    Console-Write "Removing .NET Runtime from process PATH"
+    Console-Write "Removing KRE from process PATH"
     Set-Path (Change-Path $env:Path "" ($userDotNetRuntimesPath))
 
     if ($Persistent) {
-      Console-Write "Removing .NET Runtime from user PATH"
+      Console-Write "Removing KRE from user PATH"
       $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
       $userPath = Change-Path $userPath "" ($userDotNetRuntimesPath)
       [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
@@ -454,7 +454,7 @@ param(
 
   $runtimeBin = Locate-DotNetBinFromFullName $runtimeFullName
   if ($runtimeBin -eq $null) {
-    throw "Cannot find $runtimeFullName, do you need to run 'dotnetsdk install $versionOrAlias'?"
+    throw "Cannot find $runtimeFullName, do you need to run 'kvm install $versionOrAlias'?"
   }
 
   Console-Write "Adding $runtimeBin to process PATH"
@@ -468,45 +468,45 @@ param(
   }
 }
 
-function DotNetSdk-Alias-List {
-  md ($userDotNetPath + "\alias\") -Force | Out-Null
+function kvm-Alias-List {
+  md ($userKrePath + "\alias\") -Force | Out-Null
 
-  Get-ChildItem ($userDotNetPath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
+  Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
 }
 
-function DotNetSdk-Alias-Get {
+function kvm-Alias-Get {
 param(
   [string] $name
 )
-  md ($userDotNetPath + "\alias\") -Force | Out-Null
-  $aliasFilePath=$userDotNetPath + "\alias\" + $name + ".txt"
+  md ($userKrePath + "\alias\") -Force | Out-Null
+  $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
   if (!(Test-Path $aliasFilePath)) {
     Console-Write "Alias '$name' does not exist"
     $script:exitCode = 1 # Return non-zero exit code for scripting
   } else {
-    $aliasValue = (Get-Content ($userDotNetPath + "\alias\" + $name + ".txt"))
-    Console-Write "Alias '$name' is set to $aliasValue" 
+    $aliasValue = (Get-Content ($userKrePath + "\alias\" + $name + ".txt"))
+    Console-Write "Alias '$name' is set to $aliasValue"
   }
 }
 
-function DotNetSdk-Alias-Set {
+function kvm-Alias-Set {
 param(
   [string] $name,
   [string] $value
 )
   $runtimeFullName = Requested-VersionOrAlias $value
-  $aliasFilePath = $userDotNetPath + "\alias\" + $name + ".txt"
+  $aliasFilePath = $userKrePath + "\alias\" + $name + ".txt"
   $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
   Console-Write "$action alias '$name' to '$runtimeFullName'"
-  md ($userDotNetPath + "\alias\") -Force | Out-Null
+  md ($userKrePath + "\alias\") -Force | Out-Null
   $runtimeFullName | Out-File ($aliasFilePath) ascii
 }
 
-function DotNetSdk-Unalias {
+function kvm-Unalias {
 param(
   [string] $name
 )
-  $aliasPath=$userDotNetPath + "\alias\" + $name + ".txt"
+  $aliasPath=$userKrePath + "\alias\" + $name + ".txt"
   if (Test-Path -literalPath "$aliasPath") {
       Console-Write "Removing alias $name"
       Remove-Item -literalPath $aliasPath
@@ -520,11 +520,11 @@ function Locate-DotNetBinFromFullName() {
 param(
   [string] $runtimeFullName
 )
-  $dotnetHome = $env:DOTNET_HOME
-  if (!$dotnetHome) {
-    $dotnetHome = "$globalDotNetPath;$userDotNetPath"
+  $kreHome = $env:KRE_HOME
+  if (!$kreHome) {
+    $kreHome = "$globalDotNetPath;$userKrePath"
   }
-  foreach($portion in $dotnetHome.Split(';')) {
+  foreach($portion in $kreHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
     $runtimeBin = "$path\runtimes\$runtimeFullName\bin"
     if (Test-Path "$runtimeBin") {
@@ -545,14 +545,14 @@ function Package-Platform() {
 param(
   [string] $runtimeFullName
 )
-  return $runtimeFullName -replace 'dotnet-([^-]*).*', '$1'
+  return $runtimeFullName -replace 'kre-([^-]*).*', '$1'
 }
 
 function Package-Arch() {
 param(
   [string] $runtimeFullName
 )
-  return $runtimeFullName -replace 'dotnet-[^-]*-[^-]*-([^.]*).*', '$1'
+  return $runtimeFullName -replace 'kre-[^-]*-[^-]*-([^.]*).*', '$1'
 }
 
 
@@ -569,12 +569,12 @@ param(
     return $versionOrAlias
   }
 
-  If (Test-Path ($userDotNetPath + "\alias\" + $versionOrAlias + ".txt")) {
-    $aliasValue = Get-Content ($userDotNetPath + "\alias\" + $versionOrAlias + ".txt")
-    # Split dotnet-coreclr-win-x86.1.0.0-beta3-10922 into version and name sections
+  If (Test-Path ($userKrePath + "\alias\" + $versionOrAlias + ".txt")) {
+    $aliasValue = Get-Content ($userKrePath + "\alias\" + $versionOrAlias + ".txt")
+    # Split kre-coreclr-win-x86.1.0.0-beta3-10922 into version and name sections
     $parts = $aliasValue.Split('.', 2)
     $pkgVersion = $parts[1]
-    # dotnet-coreclr-win-x86
+    # kre-coreclr-win-x86
     $parts = $parts[0].Split('-', 4)
     $pkgPlatform = Requested-Platform $parts[1]
     $pkgArchitecture = Requested-Architecture $parts[3]
@@ -627,11 +627,11 @@ function Set-Path() {
 param(
   [string] $newPath
 )
-  md $userDotNetPath -Force | Out-Null
+  md $userKrePath -Force | Out-Null
   $env:Path = $newPath
 @"
 SET "PATH=$newPath"
-"@ | Out-File ($userDotNetPath + "\temp-set-envvars.cmd") ascii
+"@ | Out-File ($userKrePath + "\temp-set-envvars.cmd") ascii
 }
 
 function Needs-Elevation() {
@@ -658,7 +658,7 @@ function Requested-Switches() {
 function Validate-And-Santitize-Switches()
 {
   if ($X86 -and $X64) {throw "You cannot select both x86 and x64 architectures"}
-  
+
   if ($Runtime) {
     $validRuntimes = "CoreCLR", "CLR"
     $match = $validRuntimes | ? { $_ -like $Runtime } | Select -First 1
@@ -705,7 +705,7 @@ param(
     }
     else {
       [Console]::WriteLine($message)
-    }  
+    }
   }
 }
 
@@ -725,16 +725,16 @@ param(
   }
   else {
    [Console]::Error.WriteLine($message)
-  }  
+  }
 }
 
 function Validate-Full-Package-Name-Arguments-Combination() {
 param(
-	[string] $versionOrAlias
+  [string] $versionOrAlias
 )
-	if ($versionOrAlias -like "dotnet-*" -and
-	    ($selectedArch -or $selectedRuntime)) {
-		throw "Runtime or architecture cannot be specified when using the full package name."
+  if ($versionOrAlias -like "kre-*" -and
+      ($selectedArch -or $selectedRuntime)) {
+    throw "Runtime or architecture cannot be specified when using the full package name."
   }
 }
 
@@ -742,23 +742,23 @@ $script:exitCode = 0
 try {
   Validate-And-Santitize-Switches
   switch -wildcard ($Command + " " + $Args.Count) {
-    "setup 0"           {DotNetSdk-Global-Setup}
-    "upgrade 0"         {DotNetSdk-Upgrade $false}
-    "install 1"         {DotNetSdk-Install $Args[0] $false}
-    "list 0"            {DotNetSdk-List}
-    "use 1"             {DotNetSdk-Use $Args[0]}
-    "alias 0"           {DotNetSdk-Alias-List}
-    "alias 1"           {DotNetSdk-Alias-Get $Args[0]}
-    "alias 2"           {DotNetSdk-Alias-Set $Args[0] $Args[1]}
-    "unalias 1"         {DotNetSdk-Unalias $Args[0]}
-    "help 0"            {DotNetSdk-Help}
-    " 0"                {DotNetSdk-Help}
+    "setup 0"           {kvm-Global-Setup}
+    "upgrade 0"         {kvm-Upgrade $false}
+    "install 1"         {kvm-Install $Args[0] $false}
+    "list 0"            {kvm-List}
+    "use 1"             {kvm-Use $Args[0]}
+    "alias 0"           {kvm-Alias-List}
+    "alias 1"           {kvm-Alias-Get $Args[0]}
+    "alias 2"           {kvm-Alias-Set $Args[0] $Args[1]}
+    "unalias 1"         {kvm-Unalias $Args[0]}
+    "help 0"            {kvm-Help}
+    " 0"                {kvm-Help}
     default             {throw "Unknown command"};
   }
 }
 catch {
   Console-Write-Error $_
-  Console-Write "Type 'dotnetsdk help' for help on how to use dotnetsdk."
+  Console-Write "Type 'kvm help' for help on how to use kvm."
   $script:exitCode = -1
 }
 if ($Wait) {

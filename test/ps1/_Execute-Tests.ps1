@@ -4,7 +4,7 @@ param(
     [string]$PesterRef = "anurse/teamcity",
     [string]$PesterRepo = "https://github.com/anurse/Pester",
     [string]$TestsPath = $null,
-    [string]$DotNetSdkPath = $null,
+    [string]$KvmPath = $null,
     [string]$TestName = $null,
     [string]$TestWorkingDir = $null,
     [string]$TestAppsDir = $null,
@@ -29,27 +29,27 @@ if(!$RunningInNewPowershell) {
 # Set defaults
 if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
 if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
-if(!$DotNetSdkPath) { $DotNetSdkPath = Convert-Path (Join-Path $PSScriptRoot "../../src/dotnetsdk.ps1") }
+if(!$KvmPath) { $KvmPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot "testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
 
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
-# that dotnetsdk can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
+# that kvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
-$env:DOTNET_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
-$TestDotNetVersion = "1.0.0-beta3-10924"
-$specificNupkgUrl = "$($env:DOTNET_FEED)/package/dotnet-coreclr-win-x64/$TestDotNetVersion"
+$env:KVM_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
+$TestKreVersion = "1.0.0-beta3-10924"
+$specificNupkgUrl = "$($env:KVM_FEED)/package/kre-coreclr-win-x64/$TestKreVersion"
 $specificNupkgHash = "355BD8849AE1A36AEC7614DDD7F9751B3BA612718382C1C775F634802B6D9D5D"
-$specificNupkgName = "dotnet-coreclr-win-x64.$TestDotNetVersion.nupkg"
+$specificNupkgName = "kre-coreclr-win-x64.$TestKreVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
 # Set up context
-$dotnetsdk = $DotNetSdkPath
+$kvm = $KvmPath
 
 # Create test working directory
-if(Test-Path "$TestWorkingDir\.dotnet") {
+if(Test-Path "$TestWorkingDir\.k") {
     Write-Banner "Wiping old test working area"
-    del -rec -for "$TestWorkingDir\.dotnet"
+    del -rec -for "$TestWorkingDir\.k"
 }
 
 if(!(Test-Path $TestWorkingDir)) {
@@ -65,39 +65,39 @@ if($Debug -or ($env:PS1_DEBUG -eq "1")) {
     $VerbosePreference = "Continue"
 }
 
-# Unset DOTNET_HOME for the test
-$oldKreHome = $env:DOTNET_HOME
-Remove-EnvVar DOTNET_HOME
+# Unset KRE_HOME for the test
+$oldKreHome = $env:KRE_HOME
+Remove-EnvVar KRE_HOME
 
-# Unset DOTNET_TRACE for the test
-Remove-EnvVar DOTNET_TRACE
+# Unset KRE_TRACE for the test
+Remove-EnvVar KRE_TRACE
 
 # Unset PATH for the test
 Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
-$env:DOTNET_USER_PATH = "$TestWorkingDir\.dotnet\user"
-mkdir $env:DOTNET_USER_PATH | Out-Null
+$env:KVM_USER_PATH = "$TestWorkingDir\.kre\user"
+mkdir $env:KVM_USER_PATH | Out-Null
 
-# Helper function to run dotnetsdk and capture stuff.
-$dotnetsdkout = $null
-$dotnetsdkexit = $null
-function rundotnetsdk {
-    $dotnetsdkout = $null
-    & $dotnetsdk -Proxy:$Proxy -AssumeElevated -OutputVariable dotnetsdkout -Quiet @args -ErrorVariable dotnetsdkerr -ErrorAction SilentlyContinue
-    $dotnetsdkexit = $LASTEXITCODE
+# Helper function to run kvm and capture stuff.
+$kvmout = $null
+$kvmexit = $null
+function runkvm {
+    $kvmout = $null
+    & $kvm -Proxy:$Proxy -AssumeElevated -OutputVariable kvmout -Quiet @args -ErrorVariable kvmerr -ErrorAction SilentlyContinue
+    $kvmexit = $LASTEXITCODE
 
     if($Debug) {
-        $dotnetsdkout | Write-CommandOutput dotnetsdk
+        $kvmout | Write-CommandOutput kvm
     }
 
     # Push the values up a scope
-    Set-Variable dotnetsdkout $dotnetsdkout -Scope 1
-    Set-Variable dotnetsdkexit $dotnetsdkexit -Scope 1
-    Set-Variable dotnetsdkerr $dotnetsdkerr -Scope 1
+    Set-Variable kvmout $kvmout -Scope 1
+    Set-Variable kvmexit $kvmexit -Scope 1
+    Set-Variable kvmerr $kvmerr -Scope 1
 }
 
-# Fetch a nupkg to use for the 'dotnetsdk install <path to nupkg>' scenario
+# Fetch a nupkg to use for the 'kvm install <path to nupkg>' scenario
 Write-Banner "Fetching test prerequisites"
 
 $downloadDir = Join-Path $TestWorkingDir "downloads"

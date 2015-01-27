@@ -23,38 +23,38 @@ function Remove-EnvVar($var) {
 }
 
 function GetRuntimesOnPath {
-    param($dotnetHome)
-    if(!$dotnetHome) {
-        $dotnetHome = $env:DOTNET_USER_PATH
+    param($kreHome)
+    if(!$kreHome) {
+        $kreHome = $env:KVM_USER_PATH
     }
 
     if($env:PATH) {
         $paths = $env:PATH.Split(";")
         if($paths) {
-            @($paths | Where { $_.StartsWith("$dotnetHome\runtimes") })
+            @($paths | Where { $_.StartsWith("$kreHome\runtimes") })
         }
     }
 }
 
 function GetActiveRuntimePath {
-    param($dotnetHome)
-    GetRuntimesOnPath $dotnetHome | Select -First 1
+    param($kreHome)
+    GetRuntimesOnPath $kreHome | Select -First 1
 }
 
 function GetActiveRuntimeName {
-    param($dotnetHome)
-    if(!$dotnetHome) {
-        $dotnetHome = $env:DOTNET_USER_PATH
+    param($kreHome)
+    if(!$kreHome) {
+        $kreHome = $env:KVM_USER_PATH
     }
-    $activeRuntime = GetActiveRuntimePath $dotnetHome
+    $activeRuntime = GetActiveRuntimePath $kreHome
     if($activeRuntime) {
-        $activeRuntime.Replace("$dotnetHome\runtimes\", "").Replace("\bin", "")
+        $activeRuntime.Replace("$kreHome\runtimes\", "").Replace("\bin", "")
     }
 }
 
 function GetRuntimeName {
-    param($clr, $arch, $ver = $TestDotNetVersion)
-    "dotnet-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
+    param($clr, $arch, $ver = $TestKreVersion)
+    "kre-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
 }
 
 # Borrowed from kvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)

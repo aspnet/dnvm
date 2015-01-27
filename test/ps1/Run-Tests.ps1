@@ -1,7 +1,7 @@
 #Requires -Version 3
 <#
 .SYNOPSIS
-    Runs the tests for dotnetsdk
+    Runs the tests for kvm
 
 .PARAMETER PesterPath
     The path to the root of the Pester (https://github.com/pester/Pester) module (optional)
@@ -15,8 +15,8 @@
 .PARAMETER TestsPath
     The path to the folder containing Tests to run (optional)
 
-.PARAMETER DotNetSdkPath
-    The path to the dotnetsdk.ps1 script to test (optional)
+.PARAMETER KvmPath
+    The path to the kvm.ps1 script to test (optional)
 
 .PARAMETER TestName
     The name of a specific test to run (optional)
@@ -44,7 +44,7 @@ param(
     [string]$PesterRef = "master",
     [string]$PesterRepo = "https://github.com/pester/Pester",
     [string]$TestsPath = $null,
-    [string]$DotNetSdkPath = $null,
+    [string]$KvmPath = $null,
     [string]$TestName = $null,
     [string]$TestWorkingDir = $null,
     [string]$TestAppsDir = $null,

@@ -11,15 +11,6 @@ namespace HelloK {
         }
 
         public int Main(string[] args) {
-            var art =
-                "\x1b[34m" +
-                "      _  ____________" + Environment.NewLine +
-                "     / |/ / __/_  __/" + Environment.NewLine +
-                "    /    / _/  / /   " + Environment.NewLine +
-                "(_)/_/|_/___/ /_/    " +
-                "\x1b[39m";
-
-            AnsiConsole.Output.WriteLine(art);
             AnsiConsole.Output.WriteLine("Runtime is sane!");
             AnsiConsole.Output.WriteLine("\x1b[30mRuntime Framework:    \x1b[39m " + _env.RuntimeFramework.ToString());
             AnsiConsole.Output.WriteLine("\x1b[30mBitness:              \x1b[39m " + ((IntPtr.Size == 8) ? "64-bit" : "32-bit"));

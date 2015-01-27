@@ -1,5 +1,5 @@
 # Ensure a Runtime has been installed (if the other tests ran first, we're good)
-rundotnetsdk install $TestDotNetVersion -arch "x86" -r "CLR"
+runkvm install $TestKreVersion -arch "x86" -r "CLR"
 
 $notRealRuntimeVersion = "0.0.1-notarealruntime"
 
@@ -11,58 +11,58 @@ $testDefaultAlias = "alias_testDefault_" + [Guid]::NewGuid().ToString("N")
 $notRealAlias = "alias_notReal_" + [Guid]::NewGuid().ToString("N")
 $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
 
-Describe "dotnetsdk-ps1 alias" -Tag "dotnetsdk-alias" {
+Describe "kvm-ps1 alias" -Tag "kvm-alias" {
     Context "When defining an alias for a Runtime that exists" {
-        rundotnetsdk alias $testAlias $TestDotNetVersion -x86 -r CLR
+        runkvm alias $testAlias $TestKreVersion -x86 -r CLR
 
         It "writes the alias file" {
-            "$env:DOTNET_USER_PATH\alias\$testAlias.txt" | Should Exist
-            "$env:DOTNET_USER_PATH\alias\$testAlias.txt" | Should ContainExactly $kreName
+            "$env:KVM_USER_PATH\alias\$testAlias.txt" | Should Exist
+            "$env:KVM_USER_PATH\alias\$testAlias.txt" | Should ContainExactly $kreName
         }
     }
 
     Context "When defining an alias for a Runtime with no arch or clr parameters" {
-        rundotnetsdk alias $testDefaultAlias $TestDotNetVersion
+        runkvm alias $testDefaultAlias $TestKreVersion
 
         It "writes the x86/CLR variant to the alias file" {
-            "$env:DOTNET_USER_PATH\alias\$testDefaultAlias.txt" | Should Exist
-            "$env:DOTNET_USER_PATH\alias\$testDefaultAlias.txt" | Should ContainExactly $kreName   
+            "$env:KVM_USER_PATH\alias\$testDefaultAlias.txt" | Should Exist
+            "$env:KVM_USER_PATH\alias\$testDefaultAlias.txt" | Should ContainExactly $kreName
         }
     }
 
     Context "When defining an alias for a Runtime that does not exist" {
-        rundotnetsdk alias $notRealAlias $notRealRuntimeVersion -x86 -r CLR
+        runkvm alias $notRealAlias $notRealRuntimeVersion -x86 -r CLR
 
         It "writes the alias file" {
-            "$env:DOTNET_USER_PATH\alias\$notRealAlias.txt" | Should Exist
-            "$env:DOTNET_USER_PATH\alias\$notRealAlias.txt" | Should ContainExactly $notRealKreName   
+            "$env:KVM_USER_PATH\alias\$notRealAlias.txt" | Should Exist
+            "$env:KVM_USER_PATH\alias\$notRealAlias.txt" | Should ContainExactly $notRealKreName
         }
     }
 
     Context "When displaying an alias" {
-        rundotnetsdk alias $testAlias
+        runkvm alias $testAlias
         It "outputs the value of the alias" {
-            $dotnetsdkout[0] | Should Be "Alias '$testAlias' is set to $kreName"
+            $kvmout[0] | Should Be "Alias '$testAlias' is set to $kreName"
         }
     }
 
     Context "When given an non-existant alias" {
-        rundotnetsdk alias $bogusAlias
+        runkvm alias $bogusAlias
 
         It "outputs an error" {
-            $dotnetsdkout[0] | Should Be "Alias '$bogusAlias' does not exist"
+            $kvmout[0] | Should Be "Alias '$bogusAlias' does not exist"
         }
 
         It "returns a non-zero exit code" {
-            $dotnetsdkexit | Should Not Be 0
+            $kvmexit | Should Not Be 0
         }
     }
 
     Context "When displaying all aliases" {
-        $allAliases = rundotnetsdk alias | Out-String
+        $allAliases = runkvm alias | Out-String
 
         It "lists all aliases in the alias files" {
-            dir "$env:DOTNET_USER_PATH\alias\*.txt" | ForEach-Object {
+            dir "$env:KVM_USER_PATH\alias\*.txt" | ForEach-Object {
                 $alias = [Regex]::Escape([IO.Path]::GetFileNameWithoutExtension($_.Name))
                 $val = [Regex]::Escape((Get-Content $_))
 
@@ -73,24 +73,24 @@ Describe "dotnetsdk-ps1 alias" -Tag "dotnetsdk-alias" {
     }
 }
 
-Describe "dotnetsdk-ps1 unalias" -Tag "dotnetsdk-alias" {
+Describe "kvm-ps1 unalias" -Tag "kvm-alias" {
     Context "When removing an alias that does not exist" {
-        rundotnetsdk unalias $bogusAlias
+        runkvm unalias $bogusAlias
 
         It "outputs an error" {
-            $dotnetsdkout[0] | Should Be "Cannot remove alias, '$bogusAlias' is not a valid alias name"
+            $kvmout[0] | Should Be "Cannot remove alias, '$bogusAlias' is not a valid alias name"
         }
 
         It "returns a non-zero exit code" {
-            $dotnetsdkexit | Should Not Be 0
+            $kvmexit | Should Not Be 0
         }
     }
 
     Context "When removing an alias that does exist" {
-        rundotnetsdk unalias $testAlias
+        runkvm unalias $testAlias
 
         It "removes the alias file" {
-            "$env:DOTNET_USER_PATH\alias\$testAlias.txt" | Should Not Exist
+            "$env:KVM_USER_PATH\alias\$testAlias.txt" | Should Not Exist
         }
     }
 }
