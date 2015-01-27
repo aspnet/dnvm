@@ -1,6 +1,8 @@
 # kvm.sh
 # Source this file from your .bash-profile or script to use
 
+K_DIR_NAME=".k"
+
 _kvm_has() {
     type "$1" > /dev/null 2>&1
     return $?
@@ -11,7 +13,7 @@ if _kvm_has "unsetopt"; then
 fi
 
 if [ -z "$KRE_USER_HOME" ]; then
-    eval KRE_USER_HOME=~/.k
+    eval KRE_USER_HOME="~/$K_DIR_NAME"
 fi
 
 KRE_USER_PACKAGES="$KRE_USER_HOME/runtimes"

@@ -22,26 +22,33 @@ param(
   [switch] $AssumeElevated
 )
 
-# "Constants" (in as much as PowerShell will allow)
-$RuntimePackageName = "kre"
-$RuntimeFriendlyName = "K Runtime"
-$RuntimeProgramFilesName = "KRE"
-$RuntimeFolderName = ".kre"
-$DefaultFeed = "https://www.myget.org/F/aspnetvnext/api/v2"
-$CrossGenCommand = "k-crossgen"
+# Constants
+Set-Variable -Option Constant "BuildNumber" "{{BUILD_NUMBER}}"
+Set-Variable -Option Constant "RuntimePackageName" "kre"
+Set-Variable -Option Constant "RuntimeFriendlyName" "K Runtime"
+Set-Variable -Option Constant "RuntimeShortName" "KRE"
+Set-Variable -Option Constant "RuntimeFolderName" ".k"
+Set-Variable -Option Constant "CommandName" "kvm"
+Set-Variable -Option Constant "VersionManagerName" "K Version Manager"
+Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
+Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
+Set-Variable -Option Constant "HomeEnvVar" "KRE_HOME"
+Set-Variable -Option Constant "UserHomeEnvVar" "KRE_USER_HOME"
+Set-Variable -Option Constant "FeedEnvVar" "KVM_FEED"
+
 
 $selectedArch=$null;
 $defaultArch="x86"
 $selectedRuntime=$null
 $defaultRuntime="clr"
 
-# Get or calculate userKrePath
-$userKrePath = $env:DOTNET_USER_PATH
-if(!$userKrePath) { $userKrePath = $env:USERPROFILE + "\$RuntimeFolderName" }
-$userDotNetRuntimesPath = $userKrePath + "\runtimes"
+# Get or calculate userHome
+$userHome = (cat "env:\$UserHomeEnvVar")
+if(!$userHome) { $userHome = $env:USERPROFILE + "\$RuntimeFolderName" }
+$userRuntimesPath = $userHome + "\runtimes"
 
 # Get the feed from the environment variable or set it to the default value
-$feed = $env:DOTNET_FEED
+$feed = (cat "env:\$FeedEnvVar")
 if (!$feed)
 {
     $feed = $DefaultFeed;
@@ -57,114 +64,114 @@ function String-IsEmptyOrWhitespace([string]$str) {
 
 $scriptPath = $myInvocation.MyCommand.Definition
 
-function kvm-Help {
+function _Help {
 @"
-K Version Manager - Build {{BUILD_NUMBER}}
+$VersionManagerName - Build $BuildNumber
 
-USAGE: kvm <command> [options]
+USAGE: $CommandName <command> [options]
 
-kvm upgrade [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-g|-Global] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
-  install latest KRE from feed
+$CommandName upgrade [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-g|-Global] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
+  install latest $RuntimeShortName from feed
   set 'default' alias to installed version
-  add KRE bin to user PATH environment variable
+  add $RuntimeShortName bin to user PATH environment variable
   -g|-Global        install to machine-wide location
   -f|-Force         upgrade even if latest is already installed
   -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. https://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
-kvm install <semver>|<alias>|<nupkg>|latest [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-a|-Alias <alias>] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
-  <semver>|<alias>  install requested KRE from feed
-  <nupkg>           install requested KRE from package on local filesystem
-  latest            install latest KRE from feed
-  add KRE bin to path of current command line
-  -p|-Persistent    add KRE bin to PATH environment variables persistently
-  -a|-Alias <alias> set alias <alias> for requested KRE on install
+$CommandName install <semver>|<alias>|<nupkg>|latest [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-a|-Alias <alias>] [-f|-Force] [-Proxy <ADDRESS>] [-NoNative]
+  <semver>|<alias>  install requested $RuntimeShortName from feed
+  <nupkg>           install requested $RuntimeShortName from package on local filesystem
+  latest            install latest $RuntimeShortName from feed
+  add $RuntimeShortName bin to path of current command line
+  -p|-Persistent    add $RuntimeShortName bin to PATH environment variables persistently
+  -a|-Alias <alias> set alias <alias> for requested $RuntimeShortName on install
   -f|-Force         install even if specified version is already installed
   -Proxy <ADDRESS>  use given address as proxy when accessing remote server (e.g. https://username:password@proxyserver:8080/). Alternatively set proxy using http_proxy environment variable.
   -NoNative         Do not generate native images (Effective only for CoreCLR flavors)
 
-kvm use <semver>|<alias>|<package>|none [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent]
-  <semver>|<alias>|<package>  add KRE bin to path of current command line
-  none                        remove KRE bin from path of current command line
-  -p|-Persistent              add KRE bin to PATH environment variable across all processes run by the current user
+$CommandName use <semver>|<alias>|<package>|none [-X86|-X64] [-r|-Runtime CLR|CoreCLR] [-p|-Persistent]
+  <semver>|<alias>|<package>  add $RuntimeShortName bin to path of current command line
+  none                        remove $RuntimeShortName bin from path of current command line
+  -p|-Persistent              add $RuntimeShortName bin to PATH environment variable across all processes run by the current user
 
-kvm list
-  list KRE versions installed
+$CommandName list
+  list $RuntimeShortName versions installed
 
-kvm alias
-  list KRE aliases which have been defined
+$CommandName alias
+  list $RuntimeShortName aliases which have been defined
 
-kvm alias <alias>
+$CommandName alias <alias>
   display value of the specified alias
 
-kvm alias <alias> <semver>|<alias>|<package> [-X86|-X64] [-r|-Runtime CLR|CoreCLR]
+$CommandName alias <alias> <semver>|<alias>|<package> [-X86|-X64] [-r|-Runtime CLR|CoreCLR]
   <alias>                      the name of the alias to set
-  <semver>|<alias>|<package>   the KRE version to set the alias to. Alternatively use the version of the specified alias
+  <semver>|<alias>|<package>   the $RuntimeShortName version to set the alias to. Alternatively use the version of the specified alias
 
-kvm unalias <alias>
+$CommandName unalias <alias>
   remove the specified alias
 
 "@ -replace "`n","`r`n" | Console-Write
 }
 
-function kvm-Global-Setup {
-  # Sets up the 'kvm' tool and adds the user-local kre install directory to the KRE_HOME variable
+function _Global-Setup {
+  # Sets up the version manager tool and adds the user-local runtime install directory to the home variable
   # Note: We no longer do global install via this tool. The MSI handles global install of runtimes AND will set
-  # the machine level KRE_HOME value.
+  # the machine level home value.
 
   # In this configuration, the user-level path will OVERRIDE the global path because it is placed first.
 
-  $kvmBinPath = "$userKrePath\bin"
+  $cmdBinPath = "$userHome\bin"
 
   If (Needs-Elevation)
   {
     $arguments = "-ExecutionPolicy unrestricted & '$scriptPath' setup -wait"
     Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $arguments -Wait
-    Console-Write "Adding $kvmBinPath to process PATH"
-    Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
-    Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process KRE_HOME"
-    $envkreHome = $env:KRE_HOME
-    $envkreHome = Change-Path $envkreHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
-    $env:KRE_HOME = $envkreHome
+    Console-Write "Adding $cmdBinPath to process PATH"
+    Set-Path (Change-Path $env:Path $cmdBinPath ($cmdBinPath))
+    Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process $HomeEnvVar"
+    $envRuntimeHome = (cat "env:\$HomeEnvVar")
+    $envRuntimeHome = Change-Path $envRuntimeHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
+    Set-Content "env:\$HomeEnvVar" $envRuntimeHome
     Console-Write "Setup complete"
     break
   }
 
   $scriptFolder = [System.IO.Path]::GetDirectoryName($scriptPath)
 
-  Console-Write "Copying file $kvmBinPath\kvm.ps1"
-  md $kvmBinPath -Force | Out-Null
-  copy "$scriptFolder\kvm.ps1" "$kvmBinPath\kvm.ps1"
+  Console-Write "Copying file $cmdBinPath\$CommandName.ps1"
+  md $cmdBinPath -Force | Out-Null
+  copy "$scriptFolder\$CommandName.ps1" "$cmdBinPath\$CommandName.ps1"
 
-  Console-Write "Copying file $kvmBinPath\kvm.cmd"
-  copy "$scriptFolder\kvm.cmd" "$kvmBinPath\kvm.cmd"
+  Console-Write "Copying file $cmdBinPath\$CommandName.cmd"
+  copy "$scriptFolder\$CommandName.cmd" "$cmdBinPath\$CommandName.cmd"
 
-  Console-Write "Adding $kvmBinPath to process PATH"
-  Set-Path (Change-Path $env:Path $kvmBinPath ($kvmBinPath))
+  Console-Write "Adding $cmdBinPath to process PATH"
+  Set-Path (Change-Path $env:Path $cmdBinPath ($cmdBinPath))
 
-  Console-Write "Adding $kvmBinPath to user PATH"
+  Console-Write "Adding $cmdBinPath to user PATH"
   $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-  $userPath = Change-Path $userPath $kvmBinPath ($kvmBinPath)
+  $userPath = Change-Path $userPath $cmdBinPath ($cmdBinPath)
   [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
 
-  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process KRE_HOME"
-  $envkreHome = $env:KRE_HOME
-  $envkreHome = Change-Path $envkreHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
-  $env:KRE_HOME = $envkreHome
+  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process $HomeEnvVar"
+  $envRuntimeHome = (cat "env:\$HomeEnvVar")
+  $envRuntimeHome = Change-Path $envRuntimeHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
+  Set-Content "env:\$HomeEnvVar" $envRuntimeHome
 
-  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to machine KRE_HOME"
-  $machinekreHome = [Environment]::GetEnvironmentVariable("KRE_HOME", [System.EnvironmentVariableTarget]::Machine)
-  $machinekreHome = Change-Path $machinekreHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
-  [Environment]::SetEnvironmentVariable("KRE_HOME", $machinekreHome, [System.EnvironmentVariableTarget]::Machine)
+  Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to machine $HomeEnvVar"
+  $machineruntimeHome = [Environment]::GetEnvironmentVariable($HomeEnvVar, [System.EnvironmentVariableTarget]::Machine)
+  $machineruntimeHome = Change-Path $machineruntimeHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
+  [Environment]::SetEnvironmentVariable($HomeEnvVar, $machineruntimeHome, [System.EnvironmentVariableTarget]::Machine)
 }
 
-function kvm-Upgrade {
+function _Upgrade {
 param(
   [boolean] $isGlobal
 )
   $Persistent = $true
   $Alias="default"
-  kvm-Install "latest" $isGlobal
+  _Install "latest" $isGlobal
 }
 
 function Add-Proxy-If-Specified {
@@ -186,7 +193,7 @@ param(
   }
 }
 
-function kvm-Find-Latest {
+function _Find-Latest {
 param(
   [string] $platform,
   [string] $architecture
@@ -209,7 +216,7 @@ param(
   return $version
 }
 
-function Do-kvm-Download {
+function Do-Download {
 param(
   [string] $runtimeFullName,
   [string] $runtimesFolder
@@ -247,7 +254,7 @@ param(
   Write-Verbose "Downloading $url ..."
   $wc.DownloadFile($url, $tempDownloadFile)
 
-  Do-kvm-Unpack $tempDownloadFile $runtimeTempDownload
+  Do-Unpack $tempDownloadFile $runtimeTempDownload
 
   md $runtimeFolder -Force | Out-Null
   Console-Write "Installing to $runtimeFolder"
@@ -255,7 +262,7 @@ param(
   Remove-Item "$runtimeTempDownload" -Force | Out-Null
 }
 
-function Do-kvm-Unpack {
+function Do-Unpack {
 param(
   [string] $runtimeFile,
   [string] $runtimeFolder
@@ -292,15 +299,18 @@ param(
   If (Test-Path ($runtimeFolder + "\package\")) {
     Remove-Item ($runtimeFolder + "\package\") -Force -Recurse
   }
+
+  # Clean up the package file itself.
+  Remove-Item $runtimeFile -Force
 }
 
-function kvm-Install {
+function _Install {
 param(
   [string] $versionOrAlias,
   [boolean] $isGlobal
 )
   if ($versionOrAlias -eq "latest") {
-    $versionOrAlias = kvm-Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
+    $versionOrAlias = _Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
   }
 
   if ($versionOrAlias.EndsWith(".nupkg")) {
@@ -309,7 +319,7 @@ param(
     $runtimeFullName =  Requested-VersionOrAlias $versionOrAlias
   }
 
-  $packageFolder = $userDotNetRuntimesPath
+  $packageFolder = $userRuntimesPath
 
   if ($versionOrAlias.EndsWith(".nupkg")) {
     Set-Variable -Name "selectedArch" -Value (Package-Arch $runtimeFullName) -Scope Script
@@ -336,7 +346,7 @@ param(
       }
       copy $versionOrAlias $tempDownloadFile
 
-      Do-kvm-Unpack $tempDownloadFile $tempUnpackFolder
+      Do-Unpack $tempDownloadFile $tempUnpackFolder
       md $runtimeFolder -Force | Out-Null
       Console-Write "Installing to $runtimeFolder"
       mv "$tempUnpackFolder\*" $runtimeFolder
@@ -345,17 +355,17 @@ param(
 
     $packageVersion = Package-Version $runtimeFullName
 
-    kvm-Use $packageVersion
+    _Use $packageVersion
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
-        kvm-Alias-Set $Alias $packageVersion
+        _Alias-Set $Alias $packageVersion
     }
   }
   else
   {
-    Do-kvm-Download $runtimeFullName $packageFolder
-    kvm-Use $versionOrAlias
+    Do-Download $runtimeFullName $packageFolder
+    _Use $versionOrAlias
     if (!$(String-IsEmptyOrWhitespace($Alias))) {
-        kvm-Alias-Set "$Alias" $versionOrAlias
+        _Alias-Set "$Alias" $versionOrAlias
     }
   }
 
@@ -371,20 +381,20 @@ param(
   }
 }
 
-function kvm-List {
-  $kreHome = $env:KRE_HOME
-  if (!$kreHome) {
-    $kreHome = "$userKrePath"
+function _List {
+  $runtimeHome = (cat "env:\$HomeEnvVar")
+  if (!$runtimeHome) {
+    $runtimeHome = "$userHome"
   }
 
-  md ($userKrePath + "\alias\") -Force | Out-Null
-  $aliases = Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}
+  md ($userHome + "\alias\") -Force | Out-Null
+  $aliases = Get-ChildItem ($userHome + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}
 
   $items = @()
-  foreach($portion in $kreHome.Split(';')) {
+  foreach($portion in $runtimeHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
     if (Test-Path("$path\runtimes")) {
-      $items += Get-ChildItem ("$path\runtimes\kre-*") | List-Parts $aliases
+      $items += Get-ChildItem ("$path\runtimes\$RuntimePackageName-*") | List-Parts $aliases
     }
   }
 
@@ -431,20 +441,20 @@ filter List-Parts {
   }
 }
 
-function kvm-Use {
+function _Use {
 param(
   [string] $versionOrAlias
 )
   Validate-Full-Package-Name-Arguments-Combination $versionOrAlias
 
   if ($versionOrAlias -eq "none") {
-    Console-Write "Removing KRE from process PATH"
-    Set-Path (Change-Path $env:Path "" ($userDotNetRuntimesPath))
+    Console-Write "Removing $RuntimeShortName from process PATH"
+    Set-Path (Change-Path $env:Path "" ($userRuntimesPath))
 
     if ($Persistent) {
-      Console-Write "Removing KRE from user PATH"
+      Console-Write "Removing $RuntimeShortName from user PATH"
       $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-      $userPath = Change-Path $userPath "" ($userDotNetRuntimesPath)
+      $userPath = Change-Path $userPath "" ($userRuntimesPath)
       [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
     }
     return;
@@ -452,61 +462,61 @@ param(
 
   $runtimeFullName = Requested-VersionOrAlias $versionOrAlias
 
-  $runtimeBin = Locate-DotNetBinFromFullName $runtimeFullName
+  $runtimeBin = Locate-RuntimeBinFromFullName $runtimeFullName
   if ($runtimeBin -eq $null) {
-    throw "Cannot find $runtimeFullName, do you need to run 'kvm install $versionOrAlias'?"
+    throw "Cannot find $runtimeFullName, do you need to run '$CommandName install $versionOrAlias'?"
   }
 
   Console-Write "Adding $runtimeBin to process PATH"
-  Set-Path (Change-Path $env:Path $runtimeBin ($userDotNetRuntimesPath))
+  Set-Path (Change-Path $env:Path $runtimeBin ($userRuntimesPath))
 
   if ($Persistent) {
     Console-Write "Adding $runtimeBin to user PATH"
     $userPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
-    $userPath = Change-Path $userPath $runtimeBin ($userDotNetRuntimesPath)
+    $userPath = Change-Path $userPath $runtimeBin ($userRuntimesPath)
     [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
   }
 }
 
-function kvm-Alias-List {
-  md ($userKrePath + "\alias\") -Force | Out-Null
+function _Alias-List {
+  md ($userHome + "\alias\") -Force | Out-Null
 
-  Get-ChildItem ($userKrePath + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
+  Get-ChildItem ($userHome + "\alias\") | Select @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }} | Format-Table -AutoSize
 }
 
-function kvm-Alias-Get {
+function _Alias-Get {
 param(
   [string] $name
 )
-  md ($userKrePath + "\alias\") -Force | Out-Null
-  $aliasFilePath=$userKrePath + "\alias\" + $name + ".txt"
+  md ($userHome + "\alias\") -Force | Out-Null
+  $aliasFilePath=$userHome + "\alias\" + $name + ".txt"
   if (!(Test-Path $aliasFilePath)) {
     Console-Write "Alias '$name' does not exist"
     $script:exitCode = 1 # Return non-zero exit code for scripting
   } else {
-    $aliasValue = (Get-Content ($userKrePath + "\alias\" + $name + ".txt"))
+    $aliasValue = (Get-Content ($userHome + "\alias\" + $name + ".txt"))
     Console-Write "Alias '$name' is set to $aliasValue"
   }
 }
 
-function kvm-Alias-Set {
+function _Alias-Set {
 param(
   [string] $name,
   [string] $value
 )
   $runtimeFullName = Requested-VersionOrAlias $value
-  $aliasFilePath = $userKrePath + "\alias\" + $name + ".txt"
+  $aliasFilePath = $userHome + "\alias\" + $name + ".txt"
   $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
   Console-Write "$action alias '$name' to '$runtimeFullName'"
-  md ($userKrePath + "\alias\") -Force | Out-Null
+  md ($userHome + "\alias\") -Force | Out-Null
   $runtimeFullName | Out-File ($aliasFilePath) ascii
 }
 
-function kvm-Unalias {
+function _Unalias {
 param(
   [string] $name
 )
-  $aliasPath=$userKrePath + "\alias\" + $name + ".txt"
+  $aliasPath=$userHome + "\alias\" + $name + ".txt"
   if (Test-Path -literalPath "$aliasPath") {
       Console-Write "Removing alias $name"
       Remove-Item -literalPath $aliasPath
@@ -516,15 +526,15 @@ param(
   }
 }
 
-function Locate-DotNetBinFromFullName() {
+function Locate-RuntimeBinFromFullName() {
 param(
   [string] $runtimeFullName
 )
-  $kreHome = $env:KRE_HOME
-  if (!$kreHome) {
-    $kreHome = "$globalDotNetPath;$userKrePath"
+  $runtimeHome = (cat "env:\$HomeEnvVar")
+  if (!$runtimeHome) {
+    $runtimeHome = $userHome
   }
-  foreach($portion in $kreHome.Split(';')) {
+  foreach($portion in $runtimeHome.Split(';')) {
     $path = [System.Environment]::ExpandEnvironmentVariables($portion)
     $runtimeBin = "$path\runtimes\$runtimeFullName\bin"
     if (Test-Path "$runtimeBin") {
@@ -545,14 +555,14 @@ function Package-Platform() {
 param(
   [string] $runtimeFullName
 )
-  return $runtimeFullName -replace 'kre-([^-]*).*', '$1'
+  return $runtimeFullName -replace "$RuntimePackageName-([^-]*).*", '$1'
 }
 
 function Package-Arch() {
 param(
   [string] $runtimeFullName
 )
-  return $runtimeFullName -replace 'kre-[^-]*-[^-]*-([^.]*).*', '$1'
+  return $runtimeFullName -replace "$RuntimePackageName-[^-]*-[^-]*-([^.]*).*", '$1'
 }
 
 
@@ -562,19 +572,19 @@ param(
 )
   Validate-Full-Package-Name-Arguments-Combination $versionOrAlias
 
-  $runtimeBin = Locate-DotNetBinFromFullName $versionOrAlias
+  $runtimeBin = Locate-RuntimeBinFromFullName $versionOrAlias
 
   # If the name specified is an existing package, just use it as is
   if ($runtimeBin -ne $null) {
     return $versionOrAlias
   }
 
-  If (Test-Path ($userKrePath + "\alias\" + $versionOrAlias + ".txt")) {
-    $aliasValue = Get-Content ($userKrePath + "\alias\" + $versionOrAlias + ".txt")
-    # Split kre-coreclr-win-x86.1.0.0-beta3-10922 into version and name sections
+  If (Test-Path ($userHome + "\alias\" + $versionOrAlias + ".txt")) {
+    $aliasValue = Get-Content ($userHome + "\alias\" + $versionOrAlias + ".txt")
+    # Split runtime-coreclr-win-x86.1.0.0-beta3-10922 into version and name sections
     $parts = $aliasValue.Split('.', 2)
     $pkgVersion = $parts[1]
-    # kre-coreclr-win-x86
+    # runtime-coreclr-win-x86
     $parts = $parts[0].Split('-', 4)
     $pkgPlatform = Requested-Platform $parts[1]
     $pkgArchitecture = Requested-Architecture $parts[3]
@@ -627,11 +637,11 @@ function Set-Path() {
 param(
   [string] $newPath
 )
-  md $userKrePath -Force | Out-Null
+  md $userHome -Force | Out-Null
   $env:Path = $newPath
 @"
 SET "PATH=$newPath"
-"@ | Out-File ($userKrePath + "\temp-set-envvars.cmd") ascii
+"@ | Out-File ($userHome + "\temp-set-envvars.cmd") ascii
 }
 
 function Needs-Elevation() {
@@ -732,7 +742,7 @@ function Validate-Full-Package-Name-Arguments-Combination() {
 param(
   [string] $versionOrAlias
 )
-  if ($versionOrAlias -like "kre-*" -and
+  if ($versionOrAlias -like "$RuntimePackageName-*" -and
       ($selectedArch -or $selectedRuntime)) {
     throw "Runtime or architecture cannot be specified when using the full package name."
   }
@@ -742,23 +752,23 @@ $script:exitCode = 0
 try {
   Validate-And-Santitize-Switches
   switch -wildcard ($Command + " " + $Args.Count) {
-    "setup 0"           {kvm-Global-Setup}
-    "upgrade 0"         {kvm-Upgrade $false}
-    "install 1"         {kvm-Install $Args[0] $false}
-    "list 0"            {kvm-List}
-    "use 1"             {kvm-Use $Args[0]}
-    "alias 0"           {kvm-Alias-List}
-    "alias 1"           {kvm-Alias-Get $Args[0]}
-    "alias 2"           {kvm-Alias-Set $Args[0] $Args[1]}
-    "unalias 1"         {kvm-Unalias $Args[0]}
-    "help 0"            {kvm-Help}
-    " 0"                {kvm-Help}
+    "setup 0"           {_Global-Setup}
+    "upgrade 0"         {_Upgrade $false}
+    "install 1"         {_Install $Args[0] $false}
+    "list 0"            {_List}
+    "use 1"             {_Use $Args[0]}
+    "alias 0"           {_Alias-List}
+    "alias 1"           {_Alias-Get $Args[0]}
+    "alias 2"           {_Alias-Set $Args[0] $Args[1]}
+    "unalias 1"         {_Unalias $Args[0]}
+    "help 0"            {_Help}
+    " 0"                {_Help}
     default             {throw "Unknown command"};
   }
 }
 catch {
   Console-Write-Error $_
-  Console-Write "Type 'kvm help' for help on how to use kvm."
+  Console-Write "Type '$CommandName help' for help on how to use $CommandName."
   $script:exitCode = -1
 }
 if ($Wait) {
