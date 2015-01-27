@@ -36,10 +36,10 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
 # that kvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
-$env:KVM_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
-$TestRuntimeVersion = "1.0.0-beta3-10924"
-$specificNupkgUrl = "$($env:KVM_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "355BD8849AE1A36AEC7614DDD7F9751B3BA612718382C1C775F634802B6D9D5D"
+$env:KRE_FEED = "https://www.myget.org/F/anursetemp/api/v2"
+$TestRuntimeVersion = "1.0.0-t150127194038"
+$specificNupkgUrl = "$($env:KRE_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
+$specificNupkgHash = "A8C0252EE5F3F91741289FB1D0247F74164847BB3E34AD91F4B12B43FC1CD828"
 $specificNupkgName = "kre-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
@@ -47,9 +47,9 @@ $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 $CommandPath = $TargetPath
 
 # Create test working directory
-if(Test-Path "$TestWorkingDir\.k") {
+if(Test-Path "$TestWorkingDir\$RuntimeFolderName") {
     Write-Banner "Wiping old test working area"
-    del -rec -for "$TestWorkingDir\.k"
+    del -rec -for "$TestWorkingDir\$RuntimeFolderName"
 }
 
 if(!(Test-Path $TestWorkingDir)) {
@@ -60,7 +60,7 @@ if(!(Test-Path $TestWorkingDir)) {
 Import-Module "$PesterPath\Pester.psm1"
 
 # Turn on Debug logging if requested
-if($Debug -or ($env:PS1_DEBUG -eq "1")) {
+if($Debug) {
     $DebugPreference = "Continue"
     $VerbosePreference = "Continue"
 }
@@ -76,7 +76,7 @@ Remove-EnvVar KRE_TRACE
 Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
-$UserPath = "$TestWorkingDir\.kre\user"
+$UserPath = "$TestWorkingDir\$RuntimeFolderName"
 Set-Content "env:\$UserHomeEnvVar" $UserPath
 mkdir $UserPath | Out-Null
 

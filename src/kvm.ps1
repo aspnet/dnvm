@@ -42,13 +42,19 @@ $defaultArch="x86"
 $selectedRuntime=$null
 $defaultRuntime="clr"
 
+function getenv($name) {
+  if(Test-Path "env:\$name") {
+    cat "env:\$name"
+  }
+}
+
 # Get or calculate userHome
-$userHome = (cat "env:\$UserHomeEnvVar")
+$userHome = (getenv $UserHomeEnvVar)
 if(!$userHome) { $userHome = $env:USERPROFILE + "\$RuntimeFolderName" }
 $userRuntimesPath = $userHome + "\runtimes"
 
 # Get the feed from the environment variable or set it to the default value
-$feed = (cat "env:\$FeedEnvVar")
+$feed = (getenv $FeedEnvVar)
 if (!$feed)
 {
     $feed = $DefaultFeed;
@@ -130,7 +136,7 @@ function _Global-Setup {
     Console-Write "Adding $cmdBinPath to process PATH"
     Set-Path (Change-Path $env:Path $cmdBinPath ($cmdBinPath))
     Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process $HomeEnvVar"
-    $envRuntimeHome = (cat "env:\$HomeEnvVar")
+    $envRuntimeHome = (getenv $HomeEnvVar)
     $envRuntimeHome = Change-Path $envRuntimeHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
     Set-Content "env:\$HomeEnvVar" $envRuntimeHome
     Console-Write "Setup complete"
@@ -155,7 +161,7 @@ function _Global-Setup {
   [Environment]::SetEnvironmentVariable("Path", $userPath, [System.EnvironmentVariableTarget]::User)
 
   Console-Write "Adding %USERPROFILE%\$RuntimeFolderName to process $HomeEnvVar"
-  $envRuntimeHome = (cat "env:\$HomeEnvVar")
+  $envRuntimeHome = (getenv $HomeEnvVar)
   $envRuntimeHome = Change-Path $envRuntimeHome "%USERPROFILE%\$RuntimeFolderName" ("%USERPROFILE%\$RuntimeFolderName")
   Set-Content "env:\$HomeEnvVar" $envRuntimeHome
 
@@ -382,7 +388,7 @@ param(
 }
 
 function _List {
-  $runtimeHome = (cat "env:\$HomeEnvVar")
+  $runtimeHome = (getenv $HomeEnvVar)
   if (!$runtimeHome) {
     $runtimeHome = "$userHome"
   }
@@ -530,7 +536,7 @@ function Locate-RuntimeBinFromFullName() {
 param(
   [string] $runtimeFullName
 )
-  $runtimeHome = (cat "env:\$HomeEnvVar")
+  $runtimeHome = (getenv $HomeEnvVar)
   if (!$runtimeHome) {
     $runtimeHome = $userHome
   }

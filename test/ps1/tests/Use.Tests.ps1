@@ -32,19 +32,19 @@ Describe "use" -Tag "use" {
         It "puts $RuntimeExecutableName on the PATH" {
             $cmd = Get-Command $RuntimeExecutableName -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$UserHome\runtimes\$runtimeName\bin\$RuntimeExecutableName")
+            $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$RuntimeExecutableName")
         }
 
         It "puts $PackageManagerName on the PATH" {
             $cmd = Get-Command $PackageManagerName -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$UserHome\runtimes\$runtimeName\bin\$PackageManagerName")
+            $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$PackageManagerName")
         }
 
         It "puts $RuntimeHostName on the PATH" {
             $cmd = Get-Command $RuntimeHostName -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$UserHome\runtimes\$runtimeName\bin\$RuntimeHostName")
+            $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$RuntimeHostName")
         }
 
         __kvmtest_run use none
@@ -57,19 +57,19 @@ Describe "use" -Tag "use" {
         It "puts $RuntimeExecutableName on the PATH" {
             $cmd = Get-Command $RuntimeExecutableName -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$UserHome\runtimes\$runtimeName\bin\$RuntimeExecutableName")
+            $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$RuntimeExecutableName")
         }
 
         It "puts $PackageManagerName on the PATH" {
             $cmd = Get-Command $PackageManagerName -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$UserHome\runtimes\$runtimeName\bin\$PackageManagerName")
+            $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$PackageManagerName")
         }
 
         It "puts $RuntimeHostName on the PATH" {
             $cmd = Get-Command $RuntimeHostName -ErrorAction SilentlyContinue
             $cmd | Should Not BeNullOrEmpty
-            $cmd.Definition | Should Be (Convert-Path "$UserHome\runtimes\$runtimeName\bin\$RuntimeHostName")
+            $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$RuntimeHostName")
         }
     }
 

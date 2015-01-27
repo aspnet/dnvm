@@ -3,7 +3,7 @@ __kvmtest_run install $TestRuntimeVersion -arch "x86" -r "CLR"
 
 $notRealRuntimeVersion = "0.0.1-notarealruntime"
 
-$kreName = GetRuntimeName "CLR" "x86"
+$runtimeName = GetRuntimeName "CLR" "x86"
 $notRealKreName = GetRuntimeName "CLR" "x86" $notRealRuntimeVersion
 
 $testAlias = "alias_test_" + [Guid]::NewGuid().ToString("N")
@@ -16,8 +16,8 @@ Describe "alias" -Tag "alias" {
         __kvmtest_run alias $testAlias $TestRuntimeVersion -x86 -r CLR
 
         It "writes the alias file" {
-            "$UserHome\alias\$testAlias.txt" | Should Exist
-            "$UserHome\alias\$testAlias.txt" | Should ContainExactly $kreName
+            "$UserPath\alias\$testAlias.txt" | Should Exist
+            "$UserPath\alias\$testAlias.txt" | Should ContainExactly $runtimeName
         }
     }
 
@@ -25,8 +25,8 @@ Describe "alias" -Tag "alias" {
         __kvmtest_run alias $testDefaultAlias $TestRuntimeVersion
 
         It "writes the x86/CLR variant to the alias file" {
-            "$UserHome\alias\$testDefaultAlias.txt" | Should Exist
-            "$UserHome\alias\$testDefaultAlias.txt" | Should ContainExactly $kreName
+            "$UserPath\alias\$testDefaultAlias.txt" | Should Exist
+            "$UserPath\alias\$testDefaultAlias.txt" | Should ContainExactly $runtimeName
         }
     }
 
@@ -34,15 +34,14 @@ Describe "alias" -Tag "alias" {
         __kvmtest_run alias $notRealAlias $notRealRuntimeVersion -x86 -r CLR
 
         It "writes the alias file" {
-            "$UserHome\alias\$notRealAlias.txt" | Should Exist
-            "$UserHome\alias\$notRealAlias.txt" | Should ContainExactly $notRealKreName
+            "$UserPath\alias\$notRealAlias.txt" | Should Exist
         }
     }
 
     Context "When displaying an alias" {
         __kvmtest_run alias $testAlias
         It "outputs the value of the alias" {
-            $__kvmtest_out[0] | Should Be "Alias '$testAlias' is set to $kreName"
+            $__kvmtest_out[0] | Should Be "Alias '$testAlias' is set to $runtimeName"
         }
     }
 
@@ -62,7 +61,7 @@ Describe "alias" -Tag "alias" {
         $allAliases = __kvmtest_run alias | Out-String
 
         It "lists all aliases in the alias files" {
-            dir "$UserHome\alias\*.txt" | ForEach-Object {
+            dir "$UserPath\alias\*.txt" | ForEach-Object {
                 $alias = [Regex]::Escape([IO.Path]::GetFileNameWithoutExtension($_.Name))
                 $val = [Regex]::Escape((Get-Content $_))
 
@@ -90,7 +89,7 @@ Describe "unalias" -Tag "alias" {
         __kvmtest_run unalias $testAlias
 
         It "removes the alias file" {
-            "$UserHome\alias\$testAlias.txt" | Should Not Exist
+            "$UserPath\alias\$testAlias.txt" | Should Not Exist
         }
     }
 }

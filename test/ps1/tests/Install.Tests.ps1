@@ -1,5 +1,5 @@
 function DefineInstallTests($clr, $arch) {
-    $runtimeHome = $UserHome
+    $runtimeHome = $UserPath
     $alias = "install_test_$arch_$clr"
 
     if($clr -eq "CoreCLR") {
@@ -34,6 +34,8 @@ function DefineInstallTests($clr, $arch) {
         It "can run the TestApp sample" {
             pushd "$TestAppsDir\TestApp"
             try {
+                "$runtimeRoot\bin\$RuntimeExecutableName" | Should Exist
+                
                 $output = & "$runtimeRoot\bin\$RuntimeExecutableName" run
                 $LASTEXITCODE | Should Be 0
                 $fullOutput = [String]::Join("`r`n", $output)
@@ -47,8 +49,8 @@ function DefineInstallTests($clr, $arch) {
         }
 
         It "assigned the requested alias" {
-            "$UserHome\alias\$alias.txt" | Should Exist
-            "$UserHome\alias\$alias.txt" | Should ContainExactly $runtimeName
+            "$UserPath\alias\$alias.txt" | Should Exist
+            "$UserPath\alias\$alias.txt" | Should ContainExactly $runtimeName
         }
 
         It "uses the new Runtime" {
@@ -103,7 +105,7 @@ Describe "install" -Tag "install" {
     }
 
     Context "When installing latest" {
-        $previous = @(dir "$UserHome\runtimes" | select -ExpandProperty Name)
+        $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
         It "downloads a runtime" {
             __kvmtest_run install latest -arch x86 -r CLR
         }
@@ -115,7 +117,7 @@ Describe "install" -Tag "install" {
         __kvmtest_run use none
 
         $runtimeName = GetRuntimeName "CLR" "x86"
-        $runtimePath = "$UserHome\runtimes\$runtimeName"
+        $runtimePath = "$UserPath\runtimes\$runtimeName"
         It "ensures the runtime is installed" {
             __kvmtest_run install $TestRuntimeVersion -x86 -r "CLR"
             $__kvmtest_out[0] | Should Match "$runtimeName already installed"
@@ -125,7 +127,7 @@ Describe "install" -Tag "install" {
 
     Context "When installing a specific package" {
         $name = [IO.Path]::GetFileNameWithoutExtension($specificNupkgName)
-        $runtimeRoot = "$UserHome\runtimes\$name"
+        $runtimeRoot = "$UserPath\runtimes\$name"
 
         It "unpacks the runtime" {
             __kvmtest_run install $specificNupkgPath
