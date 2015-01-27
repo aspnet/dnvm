@@ -1,6 +1,6 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
-if dotnetsdk use 0.1.0-not-real; then
-	die "dotnetsdk didn't fail to use bogus runtime version"
+if $_KVM_COMMAND_NAME use 0.1.0-not-real; then
+	die "$_KVM_COMMAND_NAME didn't fail to use bogus runtime version"
 fi

@@ -160,7 +160,7 @@ __kvm_locate_runtime_bin_from_full_name() {
     [ -e "$_KVM_USER_PACKAGES/$runtimeFullName/bin" ] && echo "$_KVM_USER_PACKAGES/$runtimeFullName/bin" && return
 }
 
-__kvm_exec()
+kvm()
 {
     if [ $# -lt 1 ]; then
         $_KVM_COMMAND_NAME help
@@ -429,6 +429,4 @@ __kvm_exec()
 }
 
 # Generate the command function using the constant defined above.
-eval "$_KVM_COMMAND_NAME() { __kvm_exec \$* }"
-
 $_KVM_COMMAND_NAME list default >/dev/null && $_KVM_COMMAND_NAME use default >/dev/null || true

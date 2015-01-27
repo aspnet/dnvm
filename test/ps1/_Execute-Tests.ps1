@@ -4,7 +4,7 @@ param(
     [string]$PesterRef = "anurse/teamcity",
     [string]$PesterRepo = "https://github.com/anurse/Pester",
     [string]$TestsPath = $null,
-    [string]$KvmPath = $null,
+    [string]$TargetPath = $null,
     [string]$TestName = $null,
     [string]$TestWorkingDir = $null,
     [string]$TestAppsDir = $null,
@@ -29,7 +29,7 @@ if(!$RunningInNewPowershell) {
 # Set defaults
 if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
 if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
-if(!$KvmPath) { $KvmPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
+if(!$TargetPath) { $TargetPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot "testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
 
@@ -37,14 +37,14 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 # that kvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
 $env:KVM_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
-$TestKreVersion = "1.0.0-beta3-10924"
-$specificNupkgUrl = "$($env:KVM_FEED)/package/kre-coreclr-win-x64/$TestKreVersion"
+$TestRuntimeVersion = "1.0.0-beta3-10924"
+$specificNupkgUrl = "$($env:KVM_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
 $specificNupkgHash = "355BD8849AE1A36AEC7614DDD7F9751B3BA612718382C1C775F634802B6D9D5D"
-$specificNupkgName = "kre-coreclr-win-x64.$TestKreVersion.nupkg"
+$specificNupkgName = "kre-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
 # Set up context
-$kvm = $KvmPath
+$CommandPath = $TargetPath
 
 # Create test working directory
 if(Test-Path "$TestWorkingDir\.k") {
@@ -76,25 +76,26 @@ Remove-EnvVar KRE_TRACE
 Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
-$env:KVM_USER_PATH = "$TestWorkingDir\.kre\user"
-mkdir $env:KVM_USER_PATH | Out-Null
+$UserPath = "$TestWorkingDir\.kre\user"
+Set-Content "env:\$UserHomeEnvVar" $UserPath
+mkdir $UserPath | Out-Null
 
 # Helper function to run kvm and capture stuff.
-$kvmout = $null
-$kvmexit = $null
-function runkvm {
-    $kvmout = $null
-    & $kvm -Proxy:$Proxy -AssumeElevated -OutputVariable kvmout -Quiet @args -ErrorVariable kvmerr -ErrorAction SilentlyContinue
-    $kvmexit = $LASTEXITCODE
+$__kvmtest_out = $null
+$__kvmtest_exit = $null
+function __kvmtest_run {
+    $__kvmtest_out = $null
+    & $CommandPath -Proxy:$Proxy -AssumeElevated -OutputVariable __kvmtest_out -Quiet @args -ErrorVariable __kvmtest_err -ErrorAction SilentlyContinue
+    $__kvmtest_exit = $LASTEXITCODE
 
     if($Debug) {
-        $kvmout | Write-CommandOutput kvm
+        $__kvmtest_out | Write-CommandOutput $CommandName
     }
 
     # Push the values up a scope
-    Set-Variable kvmout $kvmout -Scope 1
-    Set-Variable kvmexit $kvmexit -Scope 1
-    Set-Variable kvmerr $kvmerr -Scope 1
+    Set-Variable __kvmtest_out $__kvmtest_out -Scope 1
+    Set-Variable __kvmtest_exit $__kvmtest_exit -Scope 1
+    Set-Variable __kvmtest_err $__kvmtest_err -Scope 1
 }
 
 # Fetch a nupkg to use for the 'kvm install <path to nupkg>' scenario
@@ -160,7 +161,7 @@ function TeamCityEscape($str) {
 
 # Generate TeamCity Output
 if($TeamCity) {
-    Write-Host "##teamcity[testSuiteStarted name='ps1']"
+    Write-Host "##teamcity[testSuiteStarted name='$CommandName.ps1']"
     $result.TestResult | Group-Object Describe | ForEach-Object {
         $describe = TeamCityEscape $_.Name
         Write-Host "##teamcity[testSuiteStarted name='$describe']"

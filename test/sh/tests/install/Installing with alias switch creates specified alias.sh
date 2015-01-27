@@ -1,7 +1,7 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
-dotnetsdk install "$KRE_TEST_VERSION" -a test
+$_KVM_COMMAND_NAME install "$_TEST_VERSION" -a test
 
 [ -f "$KVM_USER_HOME/alias/test.alias" ] || die "test alias was not created"
-[ $(cat "$KVM_USER_HOME/alias/test.alias") == "dotnet-mono.$KRE_TEST_VERSION" ] || die "test alias was not set to expected value"
+[ $(cat "$KVM_USER_HOME/alias/test.alias") == "$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION" ] || die "test alias was not set to expected value"

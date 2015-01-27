@@ -15,8 +15,8 @@
 .PARAMETER TestsPath
     The path to the folder containing Tests to run (optional)
 
-.PARAMETER KvmPath
-    The path to the kvm.ps1 script to test (optional)
+.PARAMETER TargetPath
+    The path to the script to test (optional)
 
 .PARAMETER TestName
     The name of a specific test to run (optional)
@@ -44,7 +44,7 @@ param(
     [string]$PesterRef = "master",
     [string]$PesterRepo = "https://github.com/pester/Pester",
     [string]$TestsPath = $null,
-    [string]$KvmPath = $null,
+    [string]$TargetPath = $null,
     [string]$TestName = $null,
     [string]$TestWorkingDir = $null,
     [string]$TestAppsDir = $null,

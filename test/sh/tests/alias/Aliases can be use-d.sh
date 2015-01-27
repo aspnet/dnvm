@@ -1,21 +1,21 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
 # Alias the installed runtime
-dotnetsdk alias test_alias_use "$KRE_TEST_VERSION"
+$_KVM_COMMAND_NAME alias test_alias_use "$_TEST_VERSION"
 
 # Remove runtime from the path
-dotnetsdk use none
+$_KVM_COMMAND_NAME use none
 
 # 'use' the alias
-dotnetsdk use test_alias_use
+$_KVM_COMMAND_NAME use test_alias_use
 
 # Check that the path now has that Runtime on it
-EXPECTED_ROOT="$KVM_USER_HOME/runtimes/dotnet-mono.$KRE_TEST_VERSION/bin"
+EXPECTED_ROOT="$KVM_USER_HOME/runtimes/$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION/bin"
 
-[ $(path_of k) == "$EXPECTED_ROOT/k" ] || die "'k' was not available at the expected path!"
-[ $(path_of dotnet) == "$EXPECTED_ROOT/dotnet" ] || die "'dotnet' was not available at the expected path!"
-[ $(path_of kpm) == "$EXPECTED_ROOT/kpm" ] || die "'kpm' was not available at the expected path!"
+[ $(path_of $_KVM_RUNTIME_EXEC_NAME) == "$EXPECTED_ROOT/$_KVM_RUNTIME_EXEC_NAME" ] || die "'$_KVM_RUNTIME_EXEC_NAME' was not available at the expected path!"
+[ $(path_of $_KVM_RUNTIME_HOST_NAME) == "$EXPECTED_ROOT/$_KVM_RUNTIME_HOST_NAME" ] || die "'$_KVM_RUNTIME_HOST_NAME' was not available at the expected path!"
+[ $(path_of $_KVM_PACKAGE_MANAGER_NAME) == "$EXPECTED_ROOT/$_KVM_PACKAGE_MANAGER_NAME" ] || die "'$_KVM_PACKAGE_MANAGER_NAME' was not available at the expected path!"
 
 # Clean up the path
-dotnetsdk use none
+$_KVM_COMMAND_NAME use none

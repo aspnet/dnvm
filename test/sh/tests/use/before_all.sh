@@ -1,6 +1,6 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
 # Get a runtime to use during these tests
-dotnetsdk install "$KRE_TEST_VERSION"
-dotnetsdk alias default "$KRE_TEST_VERSION"
+$_KVM_COMMAND_NAME install "$_TEST_VERSION"
+$_KVM_COMMAND_NAME alias default "$_TEST_VERSION"

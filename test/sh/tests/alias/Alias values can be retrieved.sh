@@ -1,8 +1,8 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
 # Alias the installed runtime
-dotnetsdk alias test_alias_get "$KRE_TEST_VERSION"
+$_KVM_COMMAND_NAME alias test_alias_get "$_TEST_VERSION"
 
 # Try to read it
-[ $(dotnetsdk alias test_alias_get) = "$DOTNET_NUPKG_NAME" ] || die "alias value was not the expected value"
+[ $($_KVM_COMMAND_NAME alias test_alias_get) = "$_NUPKG_NAME" ] || die "alias value was not the expected value"

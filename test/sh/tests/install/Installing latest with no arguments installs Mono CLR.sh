@@ -1,13 +1,13 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
-dotnetsdk install $KRE_TEST_VERSION
+$_KVM_COMMAND_NAME install $_TEST_VERSION
 
 # Resolve the name of the runtime directory
-RUNTIME_PATH="$KVM_USER_HOME/runtimes/dotnet-mono.$KRE_TEST_VERSION"
+RUNTIME_PATH="$KVM_USER_HOME/runtimes/$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
 
-[ -f "$RUNTIME_PATH/bin/k" ] || die "dotnetsdk did not include 'k' command!"
-[ -f "$RUNTIME_PATH/bin/dotnet" ] || die "dotnetsdk did not include 'dotnet' command!"
-[ -f "$RUNTIME_PATH/bin/kpm" ] || die "dotnetsdk did not include 'kpm' command!"
+[ -f "$RUNTIME_PATH/bin/$_KVM_RUNTIME_EXEC_NAME" ] || die "$_KVM_COMMAND_NAME did not include '$_KVM_RUNTIME_EXEC_NAME' command!"
+[ -f "$RUNTIME_PATH/bin/$_KVM_RUNTIME_HOST_NAME" ] || die "$_KVM_COMMAND_NAME did not include '$_KVM_RUNTIME_HOST_NAME' command!"
+[ -f "$RUNTIME_PATH/bin/$_KVM_PACKAGE_MANAGER_NAME" ] || die "$_KVM_COMMAND_NAME did not include '$_KVM_PACKAGE_MANAGER_NAME' command!"
 
 [ ! -f "$KVM_USER_HOME/alias/default.alias" ] || die "default alias was created despite not setting --persistant"

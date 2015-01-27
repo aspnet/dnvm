@@ -1,6 +1,6 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
-if dotnetsdk use bogus_alias; then
-	die "dotnetsdk didn't fail to use bogus alias"
+if $_KVM_COMMAND_NAME use bogus_alias; then
+	die "$_KVM_COMMAND_NAME didn't fail to use bogus alias"
 fi

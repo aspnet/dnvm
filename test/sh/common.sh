@@ -1,5 +1,20 @@
 # A bunch of helper functions and variables!
 
+# "Constants"
+_KVM_BUILDNUMBER="{{BUILD_NUMBER}}"
+_KVM_RUNTIME_PACKAGE_NAME="kre"
+_KVM_RUNTIME_FRIENDLY_NAME="K Runtime"
+_KVM_RUNTIME_SHORT_NAME="KRE"
+_KVM_RUNTIME_FOLDER_NAME=".k"
+_KVM_COMMAND_NAME="kvm"
+_KVM_VERSION_MANAGER_NAME="K Version Manager"
+_KVM_DEFAULT_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
+_KVM_HOME_VAR_NAME="KRE_HOME"
+
+_KVM_RUNTIME_EXEC_NAME="k"
+_KVM_PACKAGE_MANAGER_NAME="kpm"
+_KVM_RUNTIME_HOST_NAME="klr"
+
 if [ "$NO_COLOR" != "1" ]; then
 	# ANSI Colors
 	RCol='\e[0m'    # Text Reset

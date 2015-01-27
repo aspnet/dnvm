@@ -1,15 +1,15 @@
 source $COMMON_HELPERS
-source $dotnetsdk
+source $_KVM_PATH
 
 # Use a runtime
-dotnetsdk use "$KRE_TEST_VERSION"
+$_KVM_COMMAND_NAME use "$_TEST_VERSION"
 
 # Use none
-dotnetsdk use none
+$_KVM_COMMAND_NAME use none
 
 # Check paths
-EXPECTED_ROOT="$KVM_USER_HOME/runtimes/dotnet-mono.$KRE_TEST_VERSION/bin"
+EXPECTED_ROOT="$KVM_USER_HOME/runtimes/$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION/bin"
 
-[ $(path_of k) != "$EXPECTED_ROOT/k" ] || die "'k' was still available at the expected path!"
-[ $(path_of dotnet) != "$EXPECTED_ROOT/dotnet" ] || die "'dotnet' was still available at the expected path!"
-[ $(path_of kpm) != "$EXPECTED_ROOT/kpm" ] || die "'kpm' was still available at the expected path!"
+[ $(path_of $_KVM_RUNTIME_EXEC_NAME) != "$EXPECTED_ROOT/$_KVM_RUNTIME_EXEC_NAME" ] || die "'$_KVM_RUNTIME_EXEC_NAME' was still available at the expected path!"
+[ $(path_of $_KVM_RUNTIME_HOST_NAME) != "$EXPECTED_ROOT/$_KVM_RUNTIME_HOST_NAME" ] || die "'$_KVM_RUNTIME_HOST_NAME' was still available at the expected path!"
+[ $(path_of $_KVM_PACKAGE_MANAGER_NAME) != "$EXPECTED_ROOT/$_KVM_PACKAGE_MANAGER_NAME" ] || die "'$_KVM_PACKAGE_MANAGER_NAME' was still available at the expected path!"

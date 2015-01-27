@@ -11,24 +11,26 @@ pushd $SCRIPT_DIR/../.. > /dev/null
 REPO_ROOT=$(pwd)
 popd > /dev/null
 
+# Load helper functions
+export COMMON_HELPERS="$SCRIPT_DIR/common.sh"
+source $COMMON_HELPERS
+
 # Default variable values
 [ -z "$TEST_WORK_DIR" ]     && export TEST_WORK_DIR="$(pwd)/testwork"
 [ -z "$TEST_SHELLS" ]       && export TEST_SHELLS="bash zsh"
 [ -z "$TEST_DIR" ]          && export TEST_DIR="$SCRIPT_DIR/tests"
 [ -z "$CHESTER" ]           && export CHESTER="$SCRIPT_DIR/chester"
-[ -z "$DOTNET_FEED" ]       && export DOTNET_FEED="https://www.myget.org/F/aspnetvnext/api/v2" # doesn't really matter what the feed is, just that it is a feed
+[ -z "$KRE_FEED" ]          && export KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2" # doesn't really matter what the feed is, just that it is a feed
 [ -z "$TEST_APPS_DIR" ]     && export TEST_APPS_DIR="$REPO_ROOT/test/apps"
 
-# This is a KRE to use for testing various commands. It doesn't matter what version it is
-[ -z "$DOTNET_TEST_VERSION"]   && export DOTNET_TEST_VERSION="1.0.0-beta3-10935"
-[ -z "$DOTNET_NUPKG_HASH" ]    && export DOTNET_NUPKG_HASH="62951e3f3a3951e166cc28fcba00ff5716a3ddba"
-[ -z "$DOTNET_NUPKG_URL" ]     && export DOTNET_NUPKG_URL="https://www.myget.org/F/aspnetvnext/api/v2/package/dotnet-mono/$DOTNET_TEST_VERSION"
-[ -z "$DOTNET_NUPKG_NAME" ]    && export DOTNET_NUPKG_NAME="dotnet-mono.$DOTNET_TEST_VERSION"
-[ -z "$DOTNET_NUPKG_FILE" ]    && export DOTNET_NUPKG_FILE="$TEST_WORK_DIR/${DOTNET_NUPKG_NAME}.nupkg"
+export KRE_FEED
 
-# Load helper functions
-export COMMON_HELPERS="$SCRIPT_DIR/common.sh"
-source $COMMON_HELPERS
+# This is a KRE to use for testing various commands. It doesn't matter what version it is
+[ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta3-10935"
+[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH="62951e3f3a3951e166cc28fcba00ff5716a3ddba"
+[ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$KRE_FEED/package/$_KVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
+[ -z "$_NUPKG_NAME" ]       && export _NUPKG_NAME="$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
+[ -z "$_NUPKG_FILE" ]       && export _NUPKG_FILE="$TEST_WORK_DIR/${_NUPKG_NAME}.nupkg"
 
 requires curl
 requires awk
@@ -45,44 +47,44 @@ if [ ! -e "$TEST_WORK_DIR" ]; then
     mkdir -p "$TEST_WORK_DIR"
 fi
 
-if [ -f "$DOTNET_NUPKG_FILE" ]; then
+if [ -f "$_NUPKG_FILE" ]; then
     # Remove the file if it doesn't match the expected hash
-    if [ $(shasum $DOTNET_NUPKG_FILE | awk '{ print $1 }') = "$DOTNET_NUPKG_HASH" ]; then
+    if [ $(shasum $_NUPKG_FILE | awk '{ print $1 }') = "$_NUPKG_HASH" ]; then
         info "Test package already exists and matches expected hash"
     else
         warn "Test package does not match expected hash, removing and redownloading."
-        rm "$DOTNET_NUPKG_FILE"
+        rm "$_NUPKG_FILE"
     fi
 fi
 
-if [ ! -f "$DOTNET_NUPKG_FILE" ]; then
+if [ ! -f "$_NUPKG_FILE" ]; then
     # Fetch the nupkg we use for testing
     info "Fetching test dependencies..."
 
-    curl -L -o $DOTNET_NUPKG_FILE $DOTNET_NUPKG_URL >/dev/null 2>&1
-    ACTUAL_HASH=$(shasum $DOTNET_NUPKG_FILE | awk '{ print $1 }')
-    [ -e $DOTNET_NUPKG_FILE ] || die "failed to fetch test nupkg"
-    [ "$ACTUAL_HASH" = "$DOTNET_NUPKG_HASH" ] || die "downloaded nupkg hash '$ACTUAL_HASH' does not match expected value"
+    curl -L -o $_NUPKG_FILE $_NUPKG_URL >/dev/null 2>&1
+    ACTUAL_HASH=$(shasum $_NUPKG_FILE | awk '{ print $1 }')
+    [ -e $_NUPKG_FILE ] || die "failed to fetch test nupkg"
+    [ "$ACTUAL_HASH" = "$_NUPKG_HASH" ] || die "downloaded nupkg hash '$ACTUAL_HASH' does not match expected value"
 fi
 
 # Set up useful variables for the test
 pushd "$SCRIPT_DIR/../../src" > /dev/null
-export dotnetsdk=$(pwd)/dotnetsdk.sh
+export _KVM_PATH=$(pwd)/$_KVM_COMMAND_NAME.sh
 popd > /dev/null
 
-if [ ! -e $dotnetsdk ]; then
-    die "Couldn't find dotnetsdk at $dotnetsdk"
-elif [ ! -f $dotnetsdk ]; then
-    die "dotnetsdk at $dotnetsdk is not a file?!"
+if [ ! -e $_KVM_PATH ]; then
+    die "Couldn't find $_KVM_COMMAND_NAME at $_KVM_PATH"
+elif [ ! -f $_KVM_PATH ]; then
+    die "$_KVM_COMMAND_NAME at $_KVM_PATH is not a file?!"
 fi
 
-info "Using dotnetsdk at $dotnetsdk"
+info "Using $_KVM_COMMAND_NAME at $_KVM_PATH"
 
 # Run the test runner in each test shell
 FAILED=()
 SUCCEEDED=()
 for shell in $TEST_SHELLS; do
-    info "Testing dotnetsdk.sh in $shell"
+    info "Testing $_KVM_COMMAND_NAME.sh in $shell"
 
     if [ -e "$TEST_WORK_DIR/$shell" ]; then
         if [ ! -d "$TEST_WORK_DIR/$shell" ]; then
@@ -94,15 +96,15 @@ for shell in $TEST_SHELLS; do
     fi
     mkdir "$TEST_WORK_DIR/$shell"
 
-    export DOTNET_USER_HOME="$TEST_WORK_DIR/$shell"
-    [ -d $DOTNET_USER_HOME ] || mkdir $DOTNET_USER_HOME
+    export KVM_USER_HOME="$TEST_WORK_DIR/$shell"
+    [ -d $KVM_USER_HOME ] || mkdir $KVM_USER_HOME
 
     pushd "$SCRIPT_DIR/tests" >/dev/null 2>&1
     $CHESTER $@ -s $shell -n $shell "*"
     err_code="$?"
     popd >/dev/null 2>&1
 
-    unset DOTNET_USER_HOME
+    unset KVM_USER_HOME
 
     if [ "$err_code" -eq 0 ]; then
         SUCCEEDED+=("$shell")

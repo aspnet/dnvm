@@ -1,6 +1,18 @@
-# "Constants"
-$PackageManagerName = "kpm"
-$RuntimeExecutableName = "k"
+# Constants
+Set-Variable -Option Constant "RuntimePackageName" "kre"
+Set-Variable -Option Constant "RuntimeFriendlyName" "K Runtime"
+Set-Variable -Option Constant "RuntimeShortName" "KRE"
+Set-Variable -Option Constant "RuntimeFolderName" ".k"
+Set-Variable -Option Constant "CommandName" "kvm"
+Set-Variable -Option Constant "VersionManagerName" "K Version Manager"
+Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
+Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
+Set-Variable -Option Constant "HomeEnvVar" "KRE_HOME"
+Set-Variable -Option Constant "UserHomeEnvVar" "KRE_USER_HOME"
+Set-Variable -Option Constant "FeedEnvVar" "KRE_FEED"
+Set-Variable -Option Constant "PackageManagerName" "kpm.cmd"
+Set-Variable -Option Constant "RuntimeExecutableName" "k.cmd"
+Set-Variable -Option Constant "RuntimeHostName" "klr.exe"
 
 function Write-Banner {
     param($Message)
@@ -23,38 +35,38 @@ function Remove-EnvVar($var) {
 }
 
 function GetRuntimesOnPath {
-    param($kreHome)
-    if(!$kreHome) {
-        $kreHome = $env:KVM_USER_PATH
+    param($runtimeHome)
+    if(!$runtimeHome) {
+        $runtimeHome = (cat "env:\$UserHomeEnvVar")
     }
 
     if($env:PATH) {
         $paths = $env:PATH.Split(";")
         if($paths) {
-            @($paths | Where { $_.StartsWith("$kreHome\runtimes") })
+            @($paths | Where { $_.StartsWith("$runtimeHome\runtimes") })
         }
     }
 }
 
 function GetActiveRuntimePath {
-    param($kreHome)
-    GetRuntimesOnPath $kreHome | Select -First 1
+    param($runtimeHome)
+    GetRuntimesOnPath $runtimeHome | Select -First 1
 }
 
 function GetActiveRuntimeName {
-    param($kreHome)
-    if(!$kreHome) {
-        $kreHome = $env:KVM_USER_PATH
+    param($runtimeHome)
+    if(!$runtimeHome) {
+        $runtimeHome = (cat "env:\$UserHomeEnvVar")
     }
-    $activeRuntime = GetActiveRuntimePath $kreHome
+    $activeRuntime = GetActiveRuntimePath $runtimeHome
     if($activeRuntime) {
-        $activeRuntime.Replace("$kreHome\runtimes\", "").Replace("\bin", "")
+        $activeRuntime.Replace("$runtimeHome\runtimes\", "").Replace("\bin", "")
     }
 }
 
 function GetRuntimeName {
-    param($clr, $arch, $ver = $TestKreVersion)
-    "kre-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
+    param($clr, $arch, $ver = $TestRuntimeVersion)
+    "$RuntimePackageName-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
 }
 
 # Borrowed from kvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)
