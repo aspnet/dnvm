@@ -2,7 +2,7 @@ source $COMMON_HELPERS
 source $dotnetsdk
 
 # Alias the installed runtime
-dotnetsdk alias test_alias_use "$DOTNET_TEST_VERSION"
+dotnetsdk alias test_alias_use "$KRE_TEST_VERSION"
 
 # Remove runtime from the path
 dotnetsdk use none
@@ -11,7 +11,7 @@ dotnetsdk use none
 dotnetsdk use test_alias_use
 
 # Check that the path now has that Runtime on it
-EXPECTED_ROOT="$DOTNET_USER_HOME/runtimes/dotnet-mono.$DOTNET_TEST_VERSION/bin"
+EXPECTED_ROOT="$KVM_USER_HOME/runtimes/dotnet-mono.$KRE_TEST_VERSION/bin"
 
 [ $(path_of k) == "$EXPECTED_ROOT/k" ] || die "'k' was not available at the expected path!"
 [ $(path_of dotnet) == "$EXPECTED_ROOT/dotnet" ] || die "'dotnet' was not available at the expected path!"

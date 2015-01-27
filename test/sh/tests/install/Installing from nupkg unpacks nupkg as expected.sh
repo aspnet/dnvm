@@ -4,9 +4,9 @@ source $dotnetsdk
 # Install the nupkg
 dotnetsdk install $DOTNET_NUPKG_FILE
 
-[ -d "$DOTNET_USER_HOME/runtimes/$DOTNET_NUPKG_NAME" ] || die "unable to find installed runtime"
+[ -d "$KVM_USER_HOME/runtimes/$DOTNET_NUPKG_NAME" ] || die "unable to find installed runtime"
 
-pushd "$DOTNET_USER_HOME/runtimes/$DOTNET_NUPKG_NAME" 2>/dev/null 1>/dev/null
+pushd "$KVM_USER_HOME/runtimes/$DOTNET_NUPKG_NAME" 2>/dev/null 1>/dev/null
 [ -f bin/k ] || die "dotnetsdk did not include 'k' command!"
 [ -f bin/dotnet ] || die "dotnetsdk did not include 'dotnet' command!"
 [ -f bin/kpm ] || die "dotnetsdk did not include 'kpm' command!"

@@ -1,6 +1,9 @@
 # kvm.sh
 # Source this file from your .bash-profile or script to use
 
+# "Constants"
+
+
 K_DIR_NAME=".k"
 
 _kvm_has() {
@@ -12,11 +15,11 @@ if _kvm_has "unsetopt"; then
     unsetopt nomatch 2>/dev/null
 fi
 
-if [ -z "$KRE_USER_HOME" ]; then
-    eval KRE_USER_HOME="~/$K_DIR_NAME"
+if [ -z "$KVM_USER_HOME" ]; then
+    eval KVM_USER_HOME="~/$K_DIR_NAME"
 fi
 
-KRE_USER_PACKAGES="$KRE_USER_HOME/runtimes"
+KRE_USER_PACKAGES="$KVM_USER_HOME/runtimes"
 if [ -z "$KRE_FEED" ]; then
     KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 fi
@@ -127,8 +130,8 @@ _kvm_requested_version_or_alias() {
     if [ -n "$runtimeBin" ]; then
         echo "$versionOrAlias"
     else
-       if [ -e "$KRE_USER_HOME/alias/$versionOrAlias.alias" ]; then
-           local runtimeFullName=$(cat "$KRE_USER_HOME/alias/$versionOrAlias.alias")
+       if [ -e "$KVM_USER_HOME/alias/$versionOrAlias.alias" ]; then
+           local runtimeFullName=$(cat "$KVM_USER_HOME/alias/$versionOrAlias.alias")
            local pkgName=$(echo $runtimeFullName | sed "s/\([^.]*\).*/\1/")
            local pkgVersion=$(echo $runtimeFullName | sed "s/[^.]*.\(.*\)/\1/")
            local pkgPlatform=$(echo "$pkgName" | sed "s/kre-\([^.-]*\).*/\1/")
@@ -274,9 +277,9 @@ kvm()
                 # Strip other version from PATH
                 PATH=$(_kvm_strip_path "$PATH" "/bin")
 
-                if [[ -n $persistent && -e "$KRE_USER_HOME/alias/default.alias" ]]; then
+                if [[ -n $persistent && -e "$KVM_USER_HOME/alias/default.alias" ]]; then
                     echo "Setting default KRE to none"
-                    rm "$KRE_USER_HOME/alias/default.alias"
+                    rm "$KVM_USER_HOME/alias/default.alias"
                 fi
                 return 0
             fi
@@ -303,15 +306,15 @@ kvm()
         "alias" )
             [[ $# -gt 3 ]] && kvm help && return
 
-            [[ ! -e "$KRE_USER_HOME/alias/" ]] && mkdir "$KRE_USER_HOME/alias/" > /dev/null
+            [[ ! -e "$KVM_USER_HOME/alias/" ]] && mkdir "$KVM_USER_HOME/alias/" > /dev/null
 
             if [[ $# == 1 ]]; then
                 echo ""
                 local format="%-20s %s\n"
                 printf "$format" "Alias" "Name"
                 printf "$format" "-----" "----"
-                if [ -d "$KRE_USER_HOME/alias" ]; then
-                    for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
+                if [ -d "$KVM_USER_HOME/alias" ]; then
+                    for _kvm_file in $(find "$KVM_USER_HOME/alias" -name *.alias); do
                         local alias="$(basename $_kvm_file | sed 's/\.alias//')"
                         local name="$(cat $_kvm_file)"
                         printf "$format" "$alias" "$name"
@@ -324,8 +327,8 @@ kvm()
             local name="$2"
 
             if [[ $# == 2 ]]; then
-                [[ ! -e "$KRE_USER_HOME/alias/$name.alias" ]] && echo "There is no alias called '$name'" && return
-                cat "$KRE_USER_HOME/alias/$name.alias"
+                [[ ! -e "$KVM_USER_HOME/alias/$name.alias" ]] && echo "There is no alias called '$name'" && return
+                cat "$KVM_USER_HOME/alias/$name.alias"
                 echo ""
                 return
             fi
@@ -335,16 +338,16 @@ kvm()
             [[ ! -d "$KRE_USER_PACKAGES/$runtimeFullName" ]] && echo "$runtimeFullName is not an installed KRE version" && return 1
 
             local action="Setting"
-            [[ -e "$KRE_USER_HOME/alias/$name.alias" ]] && action="Updating"
+            [[ -e "$KVM_USER_HOME/alias/$name.alias" ]] && action="Updating"
             echo "$action alias '$name' to '$runtimeFullName'"
-            echo "$runtimeFullName" > "$KRE_USER_HOME/alias/$name.alias"
+            echo "$runtimeFullName" > "$KVM_USER_HOME/alias/$name.alias"
         ;;
 
         "unalias" )
             [[ $# -ne 2 ]] && kvm help && return
 
             local name=$2
-            local aliasPath="$KRE_USER_HOME/alias/$name.alias"
+            local aliasPath="$KVM_USER_HOME/alias/$name.alias"
             [[ ! -e  "$aliasPath" ]] && echo "Cannot remove alias, '$name' is not a valid alias name" && return 1
             echo "Removing alias $name"
             rm "$aliasPath" >> /dev/null 2>&1
@@ -370,8 +373,8 @@ kvm()
             # Z shell array-index starts at one.
             local i=1
             local format="%-20s %s\n"
-            if [ -d "$KRE_USER_HOME/alias" ]; then
-                for _kvm_file in $(find "$KRE_USER_HOME/alias" -name *.alias); do
+            if [ -d "$KVM_USER_HOME/alias" ]; then
+                for _kvm_file in $(find "$KVM_USER_HOME/alias" -name *.alias); do
                     arr[$i]="$(basename $_kvm_file | sed 's/\.alias//')/$(cat $_kvm_file)"
                     let i+=1
                 done
