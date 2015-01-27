@@ -34,7 +34,7 @@ Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext
 Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
 Set-Variable -Option Constant "HomeEnvVar" "KRE_HOME"
 Set-Variable -Option Constant "UserHomeEnvVar" "KRE_USER_HOME"
-Set-Variable -Option Constant "FeedEnvVar" "KVM_FEED"
+Set-Variable -Option Constant "FeedEnvVar" "KRE_FEED"
 
 
 $selectedArch=$null;
