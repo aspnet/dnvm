@@ -36,10 +36,10 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
 # that kvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
-$env:KRE_FEED = "https://www.myget.org/F/anursetemp/api/v2"
-$TestRuntimeVersion = "1.0.0-t150127194038"
+$env:KRE_FEED = "https://www.myget.org/F/weitemp/api/v2"
+$TestRuntimeVersion = "1.0.0-beta3-10997"
 $specificNupkgUrl = "$($env:KRE_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "A8C0252EE5F3F91741289FB1D0247F74164847BB3E34AD91F4B12B43FC1CD828"
+$specificNupkgHash = "D073288877CA8596F381BBFAF34A69A09047D7544BD148A58C15A1252D522AF8"
 $specificNupkgName = "kre-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
