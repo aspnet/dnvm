@@ -305,6 +305,9 @@ param(
   If (Test-Path ($runtimeFolder + "\package\")) {
     Remove-Item ($runtimeFolder + "\package\") -Force -Recurse
   }
+
+  # Clean up the package file itself.
+  Remove-Item $runtimeFile -Force
 }
 
 function _Install {
