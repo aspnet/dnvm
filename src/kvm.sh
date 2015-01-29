@@ -22,7 +22,7 @@ if __kvm_has "unsetopt"; then
 fi
 
 if [ -z "$KVM_USER_HOME" ]; then
-    eval KVM_USER_HOME="~/$K_DIR_NAME"
+    eval KVM_USER_HOME="~/$_KVM_RUNTIME_FOLDER_NAME"
 fi
 
 _KVM_USER_PACKAGES="$KVM_USER_HOME/runtimes"
