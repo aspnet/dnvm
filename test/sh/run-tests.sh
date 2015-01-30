@@ -20,14 +20,14 @@ source $COMMON_HELPERS
 [ -z "$TEST_SHELLS" ]       && export TEST_SHELLS="bash zsh"
 [ -z "$TEST_DIR" ]          && export TEST_DIR="$SCRIPT_DIR/tests"
 [ -z "$CHESTER" ]           && export CHESTER="$SCRIPT_DIR/chester"
-[ -z "$KRE_FEED" ]          && export KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2" # doesn't really matter what the feed is, just that it is a feed
+[ -z "$KRE_FEED" ]          && export KRE_FEED="https://www.myget.org/F/aspnetrelease/api/v2" # doesn't really matter what the feed is, just that it is a feed
 [ -z "$TEST_APPS_DIR" ]     && export TEST_APPS_DIR="$REPO_ROOT/test/apps"
 
 export KRE_FEED
 
 # This is a KRE to use for testing various commands. It doesn't matter what version it is
-[ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta3-10935"
-[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH="62951e3f3a3951e166cc28fcba00ff5716a3ddba"
+[ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta3-11001"
+[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='a08277b15a967cb0a8239a1bac146e0c788ff78a'
 [ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$KRE_FEED/package/$_KVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
 [ -z "$_NUPKG_NAME" ]       && export _NUPKG_NAME="$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
 [ -z "$_NUPKG_FILE" ]       && export _NUPKG_FILE="$TEST_WORK_DIR/${_NUPKG_NAME}.nupkg"
