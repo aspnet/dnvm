@@ -64,7 +64,7 @@ if [ ! -f "$_NUPKG_FILE" ]; then
     curl -L -o $_NUPKG_FILE $_NUPKG_URL >/dev/null 2>&1
     ACTUAL_HASH=$(shasum $_NUPKG_FILE | awk '{ print $1 }')
     [ -e $_NUPKG_FILE ] || die "failed to fetch test nupkg"
-    [ "$ACTUAL_HASH" = "$_NUPKG_HASH" ] || die "downloaded nupkg hash '$ACTUAL_HASH' does not match expected value"
+    [ "$ACTUAL_HASH" = "$_NUPKG_HASH" ] || die "downloaded nupkg hash '$ACTUAL_HASH' for '$_NUPKG_URL' does not match expected value"
 fi
 
 # Set up useful variables for the test
