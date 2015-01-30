@@ -27,7 +27,7 @@ export KRE_FEED
 
 # This is a KRE to use for testing various commands. It doesn't matter what version it is
 [ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta3-11001"
-[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='a08277b15a967cb0a8239a1bac146e0c788ff78a'
+[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='997b000f698b86f0d34208cb28cce8a19fcc16cb'
 [ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$KRE_FEED/package/$_KVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
 [ -z "$_NUPKG_NAME" ]       && export _NUPKG_NAME="$_KVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
 [ -z "$_NUPKG_FILE" ]       && export _NUPKG_FILE="$TEST_WORK_DIR/${_NUPKG_NAME}.nupkg"
