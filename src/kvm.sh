@@ -29,7 +29,7 @@ _KVM_USER_PACKAGES="$KVM_USER_HOME/runtimes"
 _KVM_ALIAS_DIR="$KVM_USER_HOME/alias"
 
 if [ -z "$KRE_FEED" ]; then
-    KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
+    KRE_FEED="$_KVM_DEFAULT_FEED"
 fi
 
 __kvm_find_latest() {
