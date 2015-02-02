@@ -9,7 +9,7 @@ _KVM_RUNTIME_SHORT_NAME="KRE"
 _KVM_RUNTIME_FOLDER_NAME=".k"
 _KVM_COMMAND_NAME="kvm"
 _KVM_VERSION_MANAGER_NAME="K Version Manager"
-_KVM_DEFAULT_FEED="https://www.myget.org/F/aspnetrelease/api/v2"
+_KVM_DEFAULT_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 _KVM_HOME_VAR_NAME="KRE_HOME"
 
 __kvm_has() {
