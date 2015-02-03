@@ -39,7 +39,7 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 $env:KRE_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
 $TestRuntimeVersion = "1.0.0-beta3-11001"
 $specificNupkgUrl = "$($env:KRE_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "C489C81878E2881362C5AA57B65F33F6D06E3CE2816FCE8AA5BB64756581DDCE"
+$specificNupkgHash = "E334075CD028DA2FB1BC801A2EA021AB2CE27D4E880B414817BC612C82CABE93"
 $specificNupkgName = "kre-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
