@@ -12,9 +12,15 @@ Set-Variable -Option Constant "CommandFriendlyName" "K Runtime Version Manager"
 Set-Variable -Option Constant "DefaultUserDirectoryName" ".k"
 Set-Variable -Option Constant "RuntimePackageName" "kre"
 
+# Commands that have been deprecated but do still work.
+$DeprecatedCommands = @("unalias")
+
 # Load Environment variables
 $RuntimeHomes = $env:KRE_HOME
 $UserHome = $env:KRE_USER_HOME
+
+# Default Exit Code
+$Script:ExitCode = 0
 
 
 ############################################################
@@ -62,13 +68,17 @@ $AliasesDir = "$UserHome\alias"
 $Aliases = $null
 
 ### Helper Functions
-function Write-Usage {
-    Write-Host "$CommandFriendlyName Version $BuildVersion"
-    Write-Host
-    Write-Host "Usage: $CommandName <command> [<arguments...>]"
+function Write-Console {
+    Write-Host @args    
 }
 
-function Get-Alias {
+function Write-Usage {
+    Write-Console "$CommandFriendlyName Version $BuildVersion"
+    Write-Console
+    Write-Console "Usage: $CommandName <command> [<arguments...>]"
+}
+
+function Get-RuntimeAlias {
     if($Aliases -eq $null) {
         Write-Debug "Scanning for aliases in $AliasesDir"
         if(Test-Path $AliasesDir) {
@@ -84,6 +94,13 @@ function IsOnPath {
     param($dir)
 
     $env:Path.Split(';') -icontains $dir
+}
+
+function Get-RuntimeName(
+    [Parameter(Mandatory=$true)][string]$Version,
+    [Parameter(Mandatory=$true)][string]$Architecture,
+    [Parameter(Mandatory=$true)][string]$Runtime) {
+    "$RuntimePackageName-$Runtime-win-$Architecture.$Version"
 }
 
 filter List-Parts {
@@ -118,6 +135,57 @@ filter List-Parts {
     }
 }
 
+function Read-Alias($Name) {
+    Write-Debug "Listing aliases matching '$Name'"
+
+    $aliases = Get-RuntimeAlias
+
+    $result = @($aliases | Where { !$Name -or ($_.Alias.Contains($Name)) })
+    if($Name -and ($result.Length -eq 1)) {
+        Write-Console "Alias '$Name' is set to '$($result[0].Name)'"
+    } elseif($Name -and ($result.Length -eq 0)) {
+        $Script:ExitCode = 1
+        Write-Warning "Alias does not exist: '$Name'"
+    } else {
+        $result
+    }
+}
+
+function Write-Alias {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$Version,
+        [Parameter(Mandatory=$true)][string]$Architecture,
+        [Parameter(Mandatory=$true)][string]$Runtime)
+
+    $runtimeFullName = Get-RuntimeName $Version $Architecture $Runtime
+    $aliasFilePath = Join-Path $AliasesDir "$Name.txt"
+    $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
+    
+    if(!(Test-Path $AliasesDir)) {
+        Write-Debug "Creating alias directory: $AliasesDir"
+        New-Item -Type Directory $AliasesDir | Out-Null
+    }
+    Write-Console "$action alias '$Name' to '$runtimeFullName'"
+    $runtimeFullName | Out-File $aliasFilePath ascii
+}
+
+function Delete-Alias {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name)
+
+    $aliasPath = Join-Path $AliasesDir "$Name.txt"
+    if (Test-Path -literalPath "$aliasPath") {
+        Write-Console "Removing alias $Name"
+
+        # Delete with "-Force" because we already confirmed above
+        Remove-Item -literalPath $aliasPath -Force
+    } else {
+        Write-Warning "Cannot remove alias, '$Name' is not a valid alias name"
+        $Script:ExitCode = 1 # Return non-zero exit code for scripting
+    }
+}
+
 ### Commands
 
 <#
@@ -129,64 +197,84 @@ filter List-Parts {
 function command-help {
     [CmdletBinding(DefaultParameterSetName="GeneralHelp")]
     param(
-        [Parameter(Mandatory=$true,Position=0,ParameterSetName="SpecificCommand")][string]$Command)
+        [Parameter(Mandatory=$true,Position=0,ParameterSetName="SpecificCommand")][string]$Command,
+        [switch]$PassThru)
 
     if($Command) {
         $help = Get-Help "command-$Command"
+        $cmd = Get-Command "command-$Command"
         if($PassThru) {
             $help
         } else {
-            Write-Host "$CommandName-$Command"
-            Write-Host "  $($help.Synopsis)"
-            Write-Host
-            Write-Host "usage:"
+            Write-Console "$CommandName-$Command"
+            Write-Console "  $($help.Synopsis)"
+            Write-Console
+            Write-Console "usage:"
             $help.Syntax.syntaxItem | ForEach-Object {
-                Write-Host "  $CommandName $Command" -noNewLine
+                Write-Console "  $CommandName $Command" -noNewLine
                 if($_.parameter) {
                     $_.parameter | ForEach-Object {
-                        $paramStr = "";
-                        if($_.position -ne "Named") {
-                            $paramStr += "["
+                        $cmdParam = $cmd.Parameters[$_.name]
+                        $name = $_.name
+                        if($cmdParam.Aliases.Length -gt 0) {
+                            $name = $cmdParam.Aliases | Sort-Object | Select-Object -First 1
                         }
-                        $paramStr += "-$($_.name)"
-                        if($_.position -ne "Named") {
-                            $paramStr += "]"
+
+                        $paramStr = "";
+                        if($_.position -eq "Named") {
+                            $paramStr += "-$name "
                         }
                         if($_.parameterValue) {
-                            $paramStr += " <$($_.parameterValue)>"
+                            $paramStr += "<$($_.name)>"
                         }
 
                         if($_.required -ne "true") {
                             $paramStr = "[$paramStr]"
                         }
-                        Write-Host " $paramStr" -noNewLine
+                        Write-Console " $paramStr" -noNewLine
                     }
                 }
-                Write-Host
+                Write-Console
             }
 
             if($help.parameters -and $help.parameters.parameter) {
-                Write-Host
-                Write-Host "options:"
+                Write-Console
+                Write-Console "options:"
                 $help.parameters.parameter | ForEach-Object {
-                    Write-Host "  -$($_.name.PadRight(15)) $($_.description.Text)"
+                    $cmdParam = $cmd.Parameters[$_.name]
+                    $name = $_.name
+                    if($cmdParam.Aliases.Length -gt 0) {
+                        $name = $cmdParam.Aliases | Sort-Object | Select-Object -First 1
+                    }
+                    if($_.position -eq "Named") {
+                        $name="-$name"
+                    } else {
+                        $name="<$name>"
+                    }
+                    Write-Console "  $($name.PadRight(10)) $($_.description.Text)"
                 }
             }
 
             if($help.description) {
-                Write-Host
-                Write-Host $help.description.Text
+                Write-Console
+                Write-Console $help.description.Text
+            }
+
+            if($DeprecatedCommands -contains $Command) {
+                Write-Warning "This command has been deprecated and should not longer be used"
             }
         }
     } else {
         Write-Usage
-        Write-Host
-        Write-Host "Commands: "
+        Write-Console
+        Write-Console "Commands: "
         Get-Command "command-*" | 
             ForEach-Object {
                 $h = Get-Help $_.Name
                 $name = $_.Name.Substring(8)
-                Write-Host "    $($name.PadRight(10)) $($h.Synopsis)"
+                if($DeprecatedCommands -notcontains $name) {
+                    Write-Console "    $($name.PadRight(10)) $($h.Synopsis)"
+                }
             }
     }
 }
@@ -200,7 +288,7 @@ function command-help {
 function command-list {
     param(
         [Parameter(Mandatory=$false)][switch]$PassThru)
-    $aliases = Get-Alias
+    $aliases = Get-RuntimeAlias
 
     $items = @()
     $RuntimeHomes | ForEach-Object {
@@ -217,6 +305,64 @@ function command-list {
             Sort-Object Version, Runtime, Architecture, Alias | 
             Format-Table -AutoSize -Property @{name="Active";expression={if($_.Active) { "*" } else { "" }};alignment="center"}, "Version", "Runtime", "Architecture", "Location", "Alias"
     }
+}
+
+<#
+.SYNOPSIS
+    Lists and manages aliases
+.PARAMETER Name
+    The name of the alias to read/write/delete
+.PARAMETER Version
+    The version to assign to the new alias
+.PARAMETER Architecture
+    The architecture of the runtime to assign to this alias
+.PARAMETER Runtime
+    The flavor of the runtime to assign to this alias
+.PARAMETER Delete
+    Set this switch to delete the alias with the specified name
+#>
+function command-alias {
+    param(
+        [Alias("d")]
+        [Parameter(ParameterSetName="Delete",Mandatory=$true)]
+        [switch]$Delete,
+
+        [Parameter(ParameterSetName="Read",Mandatory=$false,Position=0)]
+        [Parameter(ParameterSetName="Write",Mandatory=$true,Position=0)]
+        [Parameter(ParameterSetName="Delete",Mandatory=$true,Position=0)]
+        [string]$Name,
+        
+        [Parameter(ParameterSetName="Write",Mandatory=$true,Position=1)]
+        [string]$Version,
+
+        [Alias("a")]
+        [ValidateSet("x86","amd64")]
+        [Parameter(ParameterSetName="Write", Mandatory=$false)]
+        [string]$Architecture = "x86",
+
+        [Alias("r")]
+        [ValidateSet("clr","coreclr")]
+        [Parameter(ParameterSetName="Write")]
+        [string]$Runtime = "clr")
+
+    switch($PSCmdlet.ParameterSetName) {
+        "Read" { Read-Alias $Name }
+        "Write" { Write-Alias $Name $Version -Architecture $Architecture -Runtime $Runtime }
+        "Delete" { Delete-Alias $Name }
+    }
+}
+
+<#
+.SYNOPSIS
+    [DEPRECATED] Removes an alias
+.PARAMETER Name
+    The name of the alias to remove
+#>
+function command-unalias {
+    param(
+        [Parameter(Mandatory=$true,Position=0)][string]$Name)
+    Write-Warning "This command is obsolete. Use '$CommandName alias -d' instead"
+    command-alias -Delete -Name $Name
 }
 
 ### The main "entry point"
@@ -244,3 +390,5 @@ else {
     Write-Warning "Unknown command: '$cmd'"
     & command-help
 }
+
+exit $Script:ExitCode
