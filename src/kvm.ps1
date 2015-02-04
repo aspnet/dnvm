@@ -315,8 +315,11 @@ param(
   [string] $versionOrAlias,
   [boolean] $isGlobal
 )
+  $installPlatform = Requested-Platform $defaultRuntime
+  $installArchitecture = Requested-Architecture $defaultArch
+
   if ($versionOrAlias -eq "latest") {
-    $versionOrAlias = _Find-Latest (Requested-Platform $defaultRuntime) (Requested-Architecture $defaultArch)
+    $versionOrAlias = _Find-Latest $installPlatform $installArchitecture
   }
 
   if ($versionOrAlias.EndsWith(".nupkg")) {
@@ -375,7 +378,23 @@ param(
     }
   }
 
-  if ($runtimeFullName.Contains("CoreCLR")) {
+  if ($installPlatform -eq "CLR") {
+    if ($NoNative) {
+      Console-Write "Native image generation (ngen) is skipped"
+    }
+    else {
+      $runtimeBin = Locate-RuntimeBinFromFullName $runtimeFullName
+      If (Needs-Elevation)
+      {
+        $ngenCmd = "-ExecutionPolicy unrestricted & $PSScriptRoot\k-ngen.ps1 -runtimeBin $runtimeBin -architecture $installArchitecture"
+        $ngenProc = Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $ngenCmd -Wait -PassThru
+        if ($ngenProc.ExitCode -ne 0) {
+          Console-Write-Error "Unable to ngen runtime libraries."
+        }
+      }
+    }
+  }
+  elseif ($installPlatform -eq "CoreCLR") {
     if ($NoNative) {
       Console-Write "Native image generation is skipped"
     }
@@ -384,6 +403,9 @@ param(
       Start-Process $CrossGenCommand -Wait
       Console-Write "Finished native image compilation."
     }
+  }
+  else {
+    Console-Write-Error "Unexpected platform: $installPlatform. No optimization would be performed on the package installed."
   }
 }
 
