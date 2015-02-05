@@ -13,6 +13,28 @@ Set-Variable -Option Constant "DefaultUserDirectoryName" ".k"
 Set-Variable -Option Constant "RuntimePackageName" "kre"
 Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
 Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
+Set-Variable -Option Constant "CommandPrefix" "kvm-"
+
+Set-Variable -Option Constant "AsciiArt" @"
+   __ ___   ____  ___
+  / //_/ | / /  |/  /
+ / ,<  | |/ / /|_/ / 
+/_/|_| |___/_/  /_/  
+"@
+
+$ColorScheme = $KvmColors
+if(!$ColorScheme) {
+    $ColorScheme = @{
+        "Banner"=[ConsoleColor]::Cyan
+        "RuntimeName"=[ConsoleColor]::Yellow
+        "Help_Header"=[ConsoleColor]::Yellow
+        "Help_Switch"=[ConsoleColor]::Green
+        "Help_Argument"=[ConsoleColor]::Cyan
+        "Help_Optional"=[ConsoleColor]::Gray
+        "Help_Command"=[ConsoleColor]::DarkYellow
+        "Help_Executable"=[ConsoleColor]::DarkYellow
+    }
+}
 
 Set-Variable -Option Constant "OptionPadding" 20
 
@@ -32,6 +54,8 @@ $Script:ExitCode = 0
 ### should never be used. Instead, use the Constants     ###
 ### defined above                                        ###
 ############################################################
+# An exception to the above: The commands are defined by functions
+# named "kvm-[command name]" so that extension functions can be added
 
 if(!$ActiveFeed) {
     $ActiveFeed = $DefaultFeed
@@ -78,13 +102,30 @@ $Aliases = $null
 
 ### Helper Functions
 function Write-Console {
-    Write-Host @args    
+    param(
+        [Parameter(Mandatory=$false, Position=0)][object]$Object,
+        [Parameter(Mandatory=$false)][ConsoleColor]$ForegroundColor,
+        [Parameter(Mandatory=$false)][ConsoleColor]$BackgroundColor,
+        [Parameter(Mandatory=$false)][switch]$NoNewLine)
+
+    if(!$ForegroundColor) {
+        $ForegroundColor = $host.UI.RawUI.ForegroundColor
+    }
+    if(!$BackgroundColor) {
+        $BackgroundColor = $host.UI.RawUI.BackgroundColor
+    }
+
+    Write-Host -Object:$Object -ForegroundColor:$ForegroundColor -BackgroundColor:$BackgroundColor -NoNewLine:$NoNewLine
 }
 
 function Write-Usage {
-    Write-Console "$CommandFriendlyName Version $BuildVersion"
+    Write-Console -ForegroundColor $ColorScheme.Banner $AsciiArt
+    Write-Console "$CommandFriendlyName v$BuildVersion"
     Write-Console
-    Write-Console "Usage: $CommandName <command> [<arguments...>]"
+    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Header "usage:"
+    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Executable " $CommandName"
+    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Command " <command>"
+    Write-Console -ForegroundColor $ColorScheme.Help_Argument " [<arguments...>]"
 }
 
 function Get-RuntimeAlias {
@@ -344,24 +385,30 @@ function Unpack-Package([string]$DownloadFile, [string]$UnpackFolder) {
 .PARAMETER Command
     A specific command to get help for
 #>
-function command-help {
+function kvm-help {
     [CmdletBinding(DefaultParameterSetName="GeneralHelp")]
     param(
         [Parameter(Mandatory=$true,Position=0,ParameterSetName="SpecificCommand")][string]$Command,
         [switch]$PassThru)
 
     if($Command) {
-        $help = Get-Help "command-$Command"
-        $cmd = Get-Command "command-$Command"
+        $cmd = Get-Command "kvm-$Command" -ErrorAction SilentlyContinue
+        if(!$cmd) {
+            Write-Warning "No such command: $Command"
+            kvm-help
+            return
+        }
+        $help = Get-Help "kvm-$Command"
         if($PassThru) {
             $help
         } else {
-            Write-Console "$CommandName-$Command"
-            Write-Console "  $($help.Synopsis)"
+            Write-Console -ForegroundColor $ColorScheme.Help_Header "$CommandName-$Command"
+            Write-Console "  $($help.Synopsis.Trim())"
             Write-Console
-            Write-Console "usage:"
+            Write-Console -ForegroundColor $ColorScheme.Help_Header "usage:"
             $help.Syntax.syntaxItem | ForEach-Object {
-                Write-Console "  $CommandName $Command" -noNewLine
+                Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Executable "  $CommandName "
+                Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Command "$Command"
                 if($_.parameter) {
                     $_.parameter | ForEach-Object {
                         $cmdParam = $cmd.Parameters[$_.name]
@@ -370,21 +417,25 @@ function command-help {
                             $name = $cmdParam.Aliases | Sort-Object | Select-Object -First 1
                         }
 
-                        $paramStr = "";
+                        Write-Console -NoNewLine " "
+                        
+                        if($_.required -ne "true") {
+                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Optional "["
+                        }
+
                         if($_.position -eq "Named") {
-                            $paramStr += "-$name"
+                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Switch "-$name"
                         }
                         if($_.parameterValue) {
                             if($_.position -eq "Named") {
-                                $paramStr += " "
+                                Write-Console -NoNewLine " "       
                             }
-                            $paramStr += "<$($_.name)>"
+                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Argument "<$($_.name)>"
                         }
 
                         if($_.required -ne "true") {
-                            $paramStr = "[$paramStr]"
+                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Optional "]"
                         }
-                        Write-Console " $paramStr" -noNewLine
                     }
                 }
                 Write-Console
@@ -392,25 +443,28 @@ function command-help {
 
             if($help.parameters -and $help.parameters.parameter) {
                 Write-Console
-                Write-Console "options:"
+                Write-Console -ForegroundColor $ColorScheme.Help_Header "options:"
                 $help.parameters.parameter | ForEach-Object {
                     $cmdParam = $cmd.Parameters[$_.name]
                     $name = $_.name
                     if($cmdParam.Aliases.Length -gt 0) {
                         $name = $cmdParam.Aliases | Sort-Object | Select-Object -First 1
                     }
+                    
+                    Write-Console -NoNewLine "  "
+                    
                     if($_.position -eq "Named") {
-                        $name="-$name"
+                        Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Switch "-$name".PadRight($OptionPadding)
                     } else {
-                        $name="<$name>"
+                        Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Argument "<$name>".PadRight($OptionPadding)
                     }
-                    Write-Console "  $($name.PadRight($OptionPadding)) $($_.description.Text)"
+                    Write-Console " $($_.description.Text)"
                 }
             }
 
             if($help.description) {
                 Write-Console
-                Write-Console "remarks:"
+                Write-Console -ForegroundColor $ColorScheme.Help_Header "remarks:"
                 Write-Console (
                     $help.description.Text.Split(@("`r", "`n"), "RemoveEmptyEntries") | 
                         ForEach-Object { "  $_" })
@@ -423,13 +477,15 @@ function command-help {
     } else {
         Write-Usage
         Write-Console
-        Write-Console "Commands: "
-        Get-Command "command-*" | 
+        Write-Console -ForegroundColor $ColorScheme.Help_Header "commands: "
+        Get-Command "$CommandPrefix*" | 
             ForEach-Object {
                 $h = Get-Help $_.Name
-                $name = $_.Name.Substring(8)
+                $name = $_.Name.Substring($CommandPrefix.Length)
                 if($DeprecatedCommands -notcontains $name) {
-                    Write-Console "    $($name.PadRight(10)) $($h.Synopsis)"
+                    Write-Console -NoNewLine "    "
+                    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Command $name.PadRight(10)
+                    Write-Console " $($h.Synopsis.Trim())"
                 }
             }
     }
@@ -441,7 +497,7 @@ function command-help {
 .PARAMETER PassThru
     Set this switch to return unformatted powershell objects for use in scripting
 #>
-function command-list {
+function kvm-list {
     param(
         [Parameter(Mandatory=$false)][switch]$PassThru)
     $aliases = Get-RuntimeAlias
@@ -477,7 +533,7 @@ function command-list {
 .PARAMETER Delete
     Set this switch to delete the alias with the specified name
 #>
-function command-alias {
+function kvm-alias {
     param(
         [Alias("d")]
         [Parameter(ParameterSetName="Delete",Mandatory=$true)]
@@ -514,11 +570,11 @@ function command-alias {
 .PARAMETER Name
     The name of the alias to remove
 #>
-function command-unalias {
+function kvm-unalias {
     param(
         [Parameter(Mandatory=$true,Position=0)][string]$Name)
     Write-Warning "This command is obsolete. Use '$CommandName alias -d' instead"
-    command-alias -Delete -Name $Name
+    kvm-alias -Delete -Name $Name
 }
 
 <#
@@ -544,7 +600,7 @@ function command-unalias {
     A proxy can also be specified by using the 'http_proxy' environment variable
 
 #>
-function command-install {
+function kvm-install {
     param(
         [Parameter(Mandatory=$false, Position=0)]
         [string]$VersionOrNuPkg,
@@ -575,7 +631,7 @@ function command-install {
 
     if(!$VersionOrNuPkg) {
         Write-Warning "A version, nupkg path, or the string 'latest' must be provided."
-        command-help install
+        kvm-help install
         return
     }
 
@@ -641,10 +697,10 @@ function command-install {
 
     $PackageVersion = Get-PackageVersion $runtimeFullName
 
-    command-use $PackageVersion
+    kvm-use $PackageVersion
 
     if($Alias) {
-        command-alias $Alias $PackageVersion
+        kvm-alias $Alias $PackageVersion
     }
 
     if ($runtimeFullName.Contains("CoreCLR")) {
@@ -657,6 +713,39 @@ function command-install {
           Write-Console "Finished native image compilation."
         }
     }
+}
+
+
+<#
+.SYNOPSIS
+    Adds a runtime to the PATH environment variable for your current shell
+.PARAMETER VersionOrAlias
+    The version or alias of the runtime to place on the PATH
+.PARAMETER Architecture
+    The processor architecture of the runtime to place on the PATH (default: x86, or whatever the alias specifies in the case of use-ing an alias)
+.PARAMETER Runtime
+    The runtime flavor of the runtime to place on the PATH (default: clr, or whatever the alias specifies in the case of use-ing an alias)
+.PARAMETER Persistent
+    Make the change persistent across all processes run by the current user
+#>
+function kvm-use {
+    param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$VersionOrAlias,
+
+        [Alias("arch")]
+        [ValidateSet("x86","x64")]
+        [Parameter(Mandatory=$false)]
+        [string]$Architecture = "x86",
+
+        [Alias("r")]
+        [ValidateSet("clr","coreclr")]
+        [Parameter(Mandatory=$false)]
+        [string]$Runtime = "clr",
+
+        [Alias("p")]
+        [Parameter(Mandatory=$false)]
+        [switch]$Persistent)
 }
 
 ### The main "entry point"
@@ -677,12 +766,12 @@ if(!$cmd) {
 }
 
 # Check for the command
-if(Get-Command -Name "command-$cmd" -ErrorAction SilentlyContinue) {
-    & "command-$cmd" @cmdargs
+if(Get-Command -Name "$CommandPrefix$cmd" -ErrorAction SilentlyContinue) {
+    & "kvm-$cmd" @cmdargs
 }
 else {
     Write-Warning "Unknown command: '$cmd'"
-    & command-help
+    & kvm-help
 }
 
 exit $Script:ExitCode
