@@ -11,7 +11,6 @@ param(
     [Alias("Tags")][string]$Tag = $null,
     [string]$OutputFile = $null,
     [string]$OutputFormat = $null,
-    [string]$Proxy = $null,
     [switch]$Strict,
     [switch]$Quiet,
     [switch]$Debug,
@@ -77,25 +76,27 @@ Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
 $UserPath = "$TestWorkingDir\$RuntimeFolderName"
-Set-Content "env:\$UserHomeEnvVar" $UserPath
+$env:KRE_HOME=$UserPath
+$env:KRE_USER_HOME=$UserPath
 mkdir $UserPath | Out-Null
 
 # Helper function to run kvm and capture stuff.
-$__kvmtest_out = $null
-$__kvmtest_exit = $null
+$Global:__kvmtest_out = $null
+$Global:__kvmtest_exit = $null
 function __kvmtest_run {
-    $__kvmtest_out = $null
-    & $CommandPath -Proxy:$Proxy -AssumeElevated -OutputVariable __kvmtest_out -Quiet @args -ErrorVariable __kvmtest_err -ErrorAction SilentlyContinue
-    $__kvmtest_exit = $LASTEXITCODE
+    $oldWP = $WarningPreference
+    $WarningPreference = "SilentlyContinue"
 
-    if($Debug) {
-        $__kvmtest_out | Write-CommandOutput $CommandName
+    $Global:__kvmtest_exit = $null
+    $__TeeTo = "__kvmtest_out"
+    try {
+        & $CommandPath @args
+        $Global:__kvmtest_exit = $LASTEXITCODE
+    } catch {
+        $Global:__kvmtest_err = $_
     }
 
-    # Push the values up a scope
-    Set-Variable __kvmtest_out $__kvmtest_out -Scope 1
-    Set-Variable __kvmtest_exit $__kvmtest_exit -Scope 1
-    Set-Variable __kvmtest_err $__kvmtest_err -Scope 1
+    $WarningPreference = $oldWP
 }
 
 # Fetch a nupkg to use for the 'kvm install <path to nupkg>' scenario
@@ -119,7 +120,6 @@ if(Test-Path $specificNupkgPath) {
 if(!(Test-Path $specificNupkgPath)) {
     # It doesn't, redownload it
     $wc = New-Object System.Net.WebClient
-    Add-Proxy-If-Specified $wc $Proxy
     $wc.DownloadFile($specificNupkgUrl, $specificNupkgPath)
 
     # Test it against the expected hash

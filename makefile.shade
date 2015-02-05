@@ -1,31 +1,52 @@
-use assembly="System.Xml.Linq, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-use assembly="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-use import="Environment"
+use import="Files"
 use import="BuildEnv"
+use import="Environment"
 
 var PRODUCT_VERSION = '1.0.0'
 var AUTHORS='Microsoft Open Technologies, Inc.'
 
 use-standard-lifecycle
 
-var ROOT = '${Directory.GetCurrentDirectory()}'
-var SOURCE_DIR = '${Path.Combine(ROOT, "src")}'
-var TEST_DIR = '${Path.Combine(ROOT, "test")}'
-var ARTIFACTS_DIR = '${Path.Combine(ROOT, "artifacts")}'
+default BASE_DIR='${Directory.GetCurrentDirectory()}'
+default TARGET_DIR='${Path.Combine(BASE_DIR, "artifacts")}'
+default SOURCE_DIR='${Path.Combine(BASE_DIR, "src")}'
+default BUILD_DIR='${Path.Combine(BASE_DIR, "build")}'
+default TEST_DIR='${Path.Combine(BASE_DIR, "test")}'
+default Configuration='${E("Configuration")}'
+
+@{
+  if (string.IsNullOrEmpty(E("K_BUILD_VERSION")))
+  {
+    E("K_BUILD_VERSION", BuildNumber);
+  }
+  if (string.IsNullOrEmpty(E("K_AUTHOR")))
+  {
+    E("K_AUTHOR", AUTHORS);
+  }
+  if (string.IsNullOrEmpty(Configuration))
+  {
+    Configuration = "Debug";
+    E("Configuration", Configuration);
+  }
+}
 
 default DEPLOY_KVM="${Environment.GetEnvironmentVariable("DEPLOY_KVM")}"
 default KVM_DEPLOY_REPO="${Environment.GetEnvironmentVariable("KVM_DEPLOY_REPO")}"
 default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRANCH")}"
 
 #copy-kvm target='compile'
-    copy sourceDir='${SOURCE_DIR}' outputDir='${ARTIFACTS_DIR}' include='*.*' overwrite='${true}'
+    copy sourceDir='${SOURCE_DIR}' outputDir='${TARGET_DIR}' include='*.*' overwrite='${true}'
 
-    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.ps1")}' @{
-        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
+    update-file updateFile='${Path.Combine(TARGET_DIR, "kvm.ps1")}' @{
+        updateText = updateText
+            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("K_BUILD_VERSION"))
+            .Replace("{{AUTHORS}}", AUTHORS);
     }
 
-    update-file updateFile='${Path.Combine(ARTIFACTS_DIR, "kvm.sh")}' @{
-        updateText = updateText.Replace("{{BUILD_NUMBER}}", Environment.GetEnvironmentVariable("BUILD_NUMBER"));
+    update-file updateFile='${Path.Combine(TARGET_DIR, "kvm.sh")}' @{
+        updateText = updateText
+            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("K_BUILD_VERSION"))
+            .Replace("{{AUTHORS}}", AUTHORS);
     }
 
 #run-ps1-tests target='test' if='!IsLinux'
@@ -35,4 +56,9 @@ default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRAN
     exec program='/bin/bash' commandline="${Path.Combine(TEST_DIR, "sh", "run-tests.sh")} ${IsTeamCity?"-t ":""}-v" workingdir="${Path.Combine(TEST_DIR, "sh")}"
 
 #push-kvm target='deploy' if='DEPLOY_KVM == "1" && !String.IsNullOrEmpty(KVM_DEPLOY_REPO) && !String.IsNullOrEmpty(KVM_DEPLOY_BRANCH)'
-	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="kvm.cmd;kvm.ps1;kvm.sh" baseMessage=":arrow_up: kvm.ps1, kvm.cmd, kvm.sh"
+	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="${Path.Combine(TARGET_DIR, "kvm.cmd")};${Path.Combine(TARGET_DIR, "kvm.ps1")};${Path.Combine(TARGET_DIR, "kvm.sh")}" baseMessage=":arrow_up: kvm.ps1, kvm.cmd, kvm.sh"
+
+functions @{
+    string E(string key) { return Environment.GetEnvironmentVariable(key); }
+    void E(string key, string value) { Environment.SetEnvironmentVariable(key, value); }
+}

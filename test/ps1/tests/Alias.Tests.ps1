@@ -13,7 +13,7 @@ $bogusAlias = "alias_bogus_" + [Guid]::NewGuid().ToString("N")
 
 Describe "alias" -Tag "alias" {
     Context "When defining an alias for a Runtime that exists" {
-        __kvmtest_run alias $testAlias $TestRuntimeVersion -x86 -r CLR
+        __kvmtest_run alias $testAlias $TestRuntimeVersion -x86 -r CLR | Out-Null
 
         It "writes the alias file" {
             "$UserPath\alias\$testAlias.txt" | Should Exist
@@ -22,7 +22,7 @@ Describe "alias" -Tag "alias" {
     }
 
     Context "When defining an alias for a Runtime with no arch or clr parameters" {
-        __kvmtest_run alias $testDefaultAlias $TestRuntimeVersion
+        __kvmtest_run alias $testDefaultAlias $TestRuntimeVersion | Out-Null
 
         It "writes the x86/CLR variant to the alias file" {
             "$UserPath\alias\$testDefaultAlias.txt" | Should Exist
@@ -31,7 +31,7 @@ Describe "alias" -Tag "alias" {
     }
 
     Context "When defining an alias for a Runtime that does not exist" {
-        __kvmtest_run alias $notRealAlias $notRealRuntimeVersion -x86 -r CLR
+        __kvmtest_run alias $notRealAlias $notRealRuntimeVersion -x86 -r CLR | Out-Null
 
         It "writes the alias file" {
             "$UserPath\alias\$notRealAlias.txt" | Should Exist
@@ -39,17 +39,17 @@ Describe "alias" -Tag "alias" {
     }
 
     Context "When displaying an alias" {
-        __kvmtest_run alias $testAlias
+        __kvmtest_run alias $testAlias | Out-Null
         It "outputs the value of the alias" {
-            $__kvmtest_out[0] | Should Be "Alias '$testAlias' is set to $runtimeName"
+            $__kvmtest_out.Trim() | Should Be "Alias '$testAlias' is set to '$runtimeName'"
         }
     }
 
     Context "When given an non-existant alias" {
-        __kvmtest_run alias $bogusAlias
+        __kvmtest_run alias $bogusAlias | Out-Null
 
         It "outputs an error" {
-            $__kvmtest_out[0] | Should Be "Alias '$bogusAlias' does not exist"
+            $__kvmtest_out.Trim() | Should Be "Alias does not exist: '$bogusAlias'"
         }
 
         It "returns a non-zero exit code" {
@@ -63,21 +63,18 @@ Describe "alias" -Tag "alias" {
         It "lists all aliases in the alias files" {
             dir "$UserPath\alias\*.txt" | ForEach-Object {
                 $alias = [Regex]::Escape([IO.Path]::GetFileNameWithoutExtension($_.Name))
-                $val = [Regex]::Escape((Get-Content $_))
 
                 # On some consoles, the value of the alias gets cut off, so don't require it in the assertion.
                 $allAliases | Should Match ".*$alias.*"
             }
         }
     }
-}
 
-Describe "unalias" -Tag "alias" {
     Context "When removing an alias that does not exist" {
-        __kvmtest_run unalias $bogusAlias
+        __kvmtest_run alias -d $bogusAlias | Out-Null
 
         It "outputs an error" {
-            $__kvmtest_out[0] | Should Be "Cannot remove alias, '$bogusAlias' is not a valid alias name"
+            $__kvmtest_out.Trim() | Should Be "Cannot remove alias '$bogusAlias'. It does not exist."
         }
 
         It "returns a non-zero exit code" {
@@ -86,7 +83,7 @@ Describe "unalias" -Tag "alias" {
     }
 
     Context "When removing an alias that does exist" {
-        __kvmtest_run unalias $testAlias
+        __kvmtest_run alias -d $testAlias | Out-Null
 
         It "removes the alias file" {
             "$UserPath\alias\$testAlias.txt" | Should Not Exist

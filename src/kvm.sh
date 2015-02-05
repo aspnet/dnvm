@@ -170,7 +170,7 @@ kvm()
     case $1 in
         "help" )
             echo ""
-            echo "$_KVM_VERSION_MANAGER_NAME - Build $_KVM_BUILDNUMBER"
+            echo "$_KVM_VERSION_MANAGER_NAME - Version 1.0.0-{{BUILD_VERSION}}"
             echo ""
             echo "USAGE: $_KVM_COMMAND_NAME <command> [options]"
             echo ""

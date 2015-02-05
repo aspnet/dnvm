@@ -57,7 +57,7 @@ git gitCommand='clone ${repo} ${workdir} --branch="${branch}"'
 	foreach(var file in files.Split(";".ToCharArray()))
 	{
 		File.Copy(
-			sourceFileName: Path.Combine(ARTIFACTS_DIR, file),
+			sourceFileName: file,
 			destFileName: Path.Combine(workdir, file),
 			overwrite: true);
 	}

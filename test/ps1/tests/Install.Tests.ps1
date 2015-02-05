@@ -14,7 +14,7 @@ function DefineInstallTests($clr, $arch) {
     Context "When installing $clr on $arch" {
         It "downloads and unpacks a runtime" {
             # Never crossgen in the automated tests since it takes a loooong time :(.
-            __kvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -a $alias -nonative
+            __kvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -a $alias -nonative | Out-Null
             $__kvmtest_exit | Should Be 0
         }
 
@@ -66,7 +66,7 @@ Describe "install" -Tag "install" {
     DefineInstallTests "CoreCLR" "x64"
 
     Context "When installing a non-existant Runtime version" {
-        __kvmtest_run install "0.0.1-thisisnotarealruntime"
+        __kvmtest_run install "0.0.1-thisisnotarealruntime" | Out-Null
 
         It "returns a non-zero exit code" {
             $__kvmtest_exit | Should Not Be 0
@@ -78,49 +78,49 @@ Describe "install" -Tag "install" {
     }
 
     Context "When no architecture is specified" {
-        __kvmtest_run install $TestRuntimeVersion -r CLR
+        __kvmtest_run install $TestRuntimeVersion -r CLR | Out-Null
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses x86" {
-            $__kvmtest_out[0] | Should Be "$runtimeName already installed."
+            $__kvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
         }
     }
 
     Context "When no clr is specified" {
-        __kvmtest_run install $TestRuntimeVersion -arch x86
+        __kvmtest_run install $TestRuntimeVersion -arch x86 | Out-Null
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses Desktop CLR" {
-            $__kvmtest_out[0] | Should Be "$runtimeName already installed."
+            $__kvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
         }
     }
 
     Context "When neither architecture nor clr is specified" {
-        __kvmtest_run install $TestRuntimeVersion
+        __kvmtest_run install $TestRuntimeVersion | Out-Null
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses x86/Desktop" {
-            $__kvmtest_out[0] | Should Be "$runtimeName already installed."
+            $__kvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
         }
     }
 
     Context "When installing latest" {
         $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
         It "downloads a runtime" {
-            __kvmtest_run install latest -arch x86 -r CLR
+            __kvmtest_run install latest -arch x86 -r CLR | Out-Null
         }
         # TODO: Check that it actually installed the latest?
     }
 
     Context "When installing an already-installed runtime" {
         # Clear active dotnet runtime
-        __kvmtest_run use none
+        __kvmtest_run use none | Out-Null
 
         $runtimeName = GetRuntimeName "CLR" "x86"
         $runtimePath = "$UserPath\runtimes\$runtimeName"
         It "ensures the runtime is installed" {
-            __kvmtest_run install $TestRuntimeVersion -x86 -r "CLR"
-            $__kvmtest_out[0] | Should Match "$runtimeName already installed"
+            __kvmtest_run install $TestRuntimeVersion -arch x86 -r "CLR" | Out-Null
+            $__kvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
             $runtimePath | Should Exist
         }
     }
@@ -130,7 +130,7 @@ Describe "install" -Tag "install" {
         $runtimeRoot = "$UserPath\runtimes\$name"
 
         It "unpacks the runtime" {
-            __kvmtest_run install $specificNupkgPath
+            __kvmtest_run install $specificNupkgPath | Out-Null
         }
 
         It "installs the runtime into the user directory" {
