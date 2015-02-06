@@ -1,3 +1,5 @@
+$ScriptPath = $MyInvocation.MyCommand.Definition
+
 $Script:UseWriteHost = $true
 function _WriteDebug($msg) {
     if($Script:UseWriteHost) {
@@ -65,9 +67,10 @@ if($BuildVersion.StartsWith("{{")) {
 }
 $FullVersion="$ProductVersion-$BuildVersion"
 
-Set-Variable -Option Constant "CommandName" ([IO.Path]::GetFileNameWithoutExtension($MyInvocation.MyCommand.Name))
+Set-Variable -Option Constant "CommandName" ([IO.Path]::GetFileNameWithoutExtension($ScriptPath))
 Set-Variable -Option Constant "CommandFriendlyName" "K Runtime Version Manager"
 Set-Variable -Option Constant "DefaultUserDirectoryName" ".k"
+Set-Variable -Option Constant "OldUserDirectoryName" ".kre"
 Set-Variable -Option Constant "RuntimePackageName" "kre"
 Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
 Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
@@ -75,6 +78,11 @@ Set-Variable -Option Constant "CommandPrefix" "kvm-"
 Set-Variable -Option Constant "DefaultArchitecture" "x86"
 Set-Variable -Option Constant "DefaultRuntime" "clr"
 Set-Variable -Option Constant "AliasExtension" ".txt"
+
+# These are intentionally using "%" syntax. The environment variables are expanded whenever the value is used.
+Set-Variable -Option Constant "OldUserHome" "%USERPROFILE%\.kre"
+Set-Variable -Option Constant "DefaultUserHome" "%USERPROFILE%\.k"
+Set-Variable -Option Constant "HomeEnvVar" "KRE_HOME"
 
 Set-Variable -Option Constant "AsciiArt" @"
    __ ___   ____  ___
@@ -148,12 +156,13 @@ if(!$ActiveFeed) {
 # Determine where runtimes can exist (RuntimeHomes)
 if(!$RuntimeHomes) {
     # Set up a default value for the runtime home
-    $RuntimeHomes = "$env:USERPROFILE\$DefaultUserDirectoryName"
+    $UnencodedHomes = "%USERPROFILE%\$DefaultUserDirectoryName"
 } else {
-    $RuntimeHomes = [Environment]::ExpandEnvironmentVariables($RuntimeHomes)
+    $UnencodedHomes = $RuntimeHomes
 }
 
-$RuntimeHomes = $RuntimeHomes.Split(";")
+$UnencodedHomes = $UnencodedHomes.Split(";")
+$RuntimeHomes = [Environment]::ExpandEnvironmentVariables($UnencodedHomes).Split(";")
 $RuntimeDirs = $RuntimeHomes | ForEach-Object { Join-Path $_ "runtimes" }
 
 # Determine the default installation directory (UserHome)
@@ -493,14 +502,15 @@ function Change-Path() {
         [string] $prependPath,
         [string[]] $removePaths
     )
-    $removePaths = $removePaths | ForEach-Object { if($_.EndsWith("/")) {$_} else {"$_\"}}
-    _WriteDebug "Updating PATH to prepend '$prependPath' and remove '$removePaths'"
+    _WriteDebug "Updating value to prepend '$prependPath' and remove '$removePaths'"
     
     $newPath = $prependPath
     foreach($portion in $existingPaths.Split(';')) {
         $skip = $portion -eq ""
         foreach($removePath in $removePaths) {
-            if ($removePath -and ($portion.StartsWith($removePath))) {
+            $removePrefix = if($removePath.EndsWith("/")) { $removePath } else { "$removePath/" }
+
+            if ($removePath -and (($portion -eq $removePath) -or ($portion.StartsWith($removePrefix)))) {
                 _WriteDebug " Removing '$portion' because it matches '$removePath'"
                 $skip = $true
             }
@@ -1020,11 +1030,90 @@ function kvm-name {
     Get-RuntimeName $VersionOrAlias $Architecture $Runtime
 }
 
-function kvm-throw {
-    throw "Yikes!"
+<#
+.SYNOPSIS
+    Installs the version manager into your User profile directory
+.PARAMETER SkipUserEnvironmentInstall
+    Set this switch to skip configuring the user-level KRE_HOME and PATH environment variables
+#>
+function kvm-setup {
+    param(
+        [switch]$SkipUserEnvironmentInstall)
+
+    $DestinationHome = "$env:USERPROFILE\$DefaultUserDirectoryName"
+
+    # Install scripts
+    $Destination = "$DestinationHome\bin"
+    _WriteOut "Installing $CommandFriendlyName to $Destination"
+
+    $ScriptFolder = Split-Path -Parent $ScriptPath
+
+    if(!(Test-Path $Destination)) {
+        New-Item -Type Directory $Destination | Out-Null
+    }
+
+    $ps1Command = Join-Path $ScriptFolder "$CommandName.ps1"
+    if(Test-Path $ps1Command) {
+        _WriteOut "Installing '$CommandName.ps1' to '$Destination' ..."
+        Copy-Item $ps1Command $Destination -Force
+    } else {
+        _WriteOut "WARNING: Could not find '$CommandName.ps1' in '$ScriptFolder'. Unable to install!"
+    }
+    $cmdCommand = Join-Path $ScriptFolder "$CommandName.cmd"
+    if(Test-Path $cmdCommand) {
+        _WriteOut "Installing '$CommandName.cmd' to '$Destination' ..."
+        Copy-Item $cmdCommand $Destination -Force
+    } else {
+        _WriteOut "WARNING: Could not find '$CommandName.cmd' in '$ScriptFolder'. Unable to install!"
+    }
+
+    # Configure Environment Variables
+    # Also, clean old user home values if present
+
+    # We'll be removing any existing homes, both
+    $PathsToRemove = @(
+        "%USERPROFILE%\$DefaultUserDirectoryName",
+        [Environment]::ExpandEnvironmentVariables($OldUserHome),
+        $DestinationHome,
+        $OldUserHome)
+
+    # First: PATH
+    _WriteOut "Adding $Destination to Process PATH"
+    Set-Path (Change-Path $env:PATH $Destination $PathsToRemove)
+
+    if(!$SkipUserEnvironmentInstall) {
+        _WriteOut "Adding $Destination to User PATH"
+        $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+        $userPath = Change-Path $userPath $Destination $PathsToRemove
+        [Environment]::SetEnvironmentVariable("PATH", $userPath, "User")
+    }
+
+    # Now the HomeEnvVar
+    _WriteOut "Adding $DestinationHome to Process $HomeEnvVar"
+    $processHome = ""
+    if(Test-Path "env:\$HomeEnvVar") {
+        $processHome = cat "env:\$HomeEnvVar"
+    }
+    $processHome = Change-Path $processHome "%USERPROFILE%\$DefaultUserDirectoryName" $PathsToRemove
+    Set-Content "env:\$HomeEnvVar" $processHome
+
+    if(!$SkipUserEnvironmentInstall) {
+        _WriteOut "Adding $DestinationHome to User $HomeEnvVar"
+        $userHomeVal = [Environment]::GetEnvironmentVariable($HomeEnvVar, "User")
+        $userHomeVal = Change-Path $userHomeVal "%USERPROFILE%\$DefaultUserDirectoryName" $PathsToRemove
+        [Environment]::SetEnvironmentVariable($HomeEnvVar, $userHomeVal, "User")
+    }
 }
 
 ### The main "entry point"
+
+# Check for old KRE_HOME values
+if($UnencodedHomes -contains $OldUserHome) {
+    _WriteOut -ForegroundColor Yellow "WARNING: Found '$OldUserHome' in your $HomeEnvVar value. This folder has been deprecated."
+    if($UnencodedHomes -notcontains $DefaultUserHome) {
+        _WriteOut -ForegroundColor Yellow "WARNING: Didn't find '$DefaultUserHome' in your $HomeEnvVar value. You should run '$CommandName setup' to upgrade."
+    }
+}
 
 # Read arguments
 
