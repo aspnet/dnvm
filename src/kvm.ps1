@@ -1,8 +1,65 @@
+$Script:UseWriteHost = $true
+function _WriteDebug($msg) {
+    if($Script:UseWriteHost) {
+        try {
+            Write-Debug $msg
+        } catch {
+            $Script:UseWriteHost = $false
+            _WriteDebug $msg
+        }
+    }
+}
+
+function _WriteOut {
+    param(
+        [Parameter(Mandatory=$false, Position=0, ValueFromPipeline=$true)][string]$msg,
+        [Parameter(Mandatory=$false)][ConsoleColor]$ForegroundColor,
+        [Parameter(Mandatory=$false)][ConsoleColor]$BackgroundColor,
+        [Parameter(Mandatory=$false)][switch]$NoNewLine)
+
+    if(!$Script:UseWriteHost) {
+        if(!$msg) {
+            $msg = ""
+        }
+        if($NoNewLine) {
+            [Console]::Write($msg)
+        } else {
+            [Console]::WriteLine($msg)
+        }
+    }
+    else {
+        try {
+            if(!$ForegroundColor) {
+                $ForegroundColor = $host.UI.RawUI.ForegroundColor
+            }
+            if(!$BackgroundColor) {
+                $BackgroundColor = $host.UI.RawUI.BackgroundColor
+            }
+
+            Write-Host $msg -ForegroundColor:$ForegroundColor -BackgroundColor:$BackgroundColor -NoNewLine:$NoNewLine
+        } catch {
+            $Script:UseWriteHost = $false
+            _WriteOut $msg
+        }
+    }
+
+    if($__TeeTo) {
+        $cur = Get-Variable -Name $__TeeTo -ValueOnly -Scope Global -ErrorAction SilentlyContinue
+        $val = $cur + "$Object"
+        if(!$NoNewLine) {
+            $val += [Environment]::NewLine
+        }
+        Set-Variable -Name $__TeeTo -Value $val -Scope Global -Force
+    }
+}
+
 ### Constants
 $ProductVersion="1.0.0"
 $BuildVersion="{{BUILD_VERSION}}"
 $Authors="{{AUTHORS}}"
-if($BuildVersion -eq "{{BUILD_VERSION}}") {
+
+# If the Version hasn't been replaced...
+if($BuildVersion.StartsWith("{{")) {
     # We're being run from source code rather than the "compiled" artifact
     $BuildVersion = "HEAD"
 }
@@ -51,7 +108,7 @@ Set-Variable -Option Constant "OptionPadding" 20
 
 # Test Control Variables
 if($__TeeTo) {
-    Write-Debug "Saving output to '$__TeeTo' variable"
+    _WriteDebug "Saving output to '$__TeeTo' variable"
     Set-Variable -Name $__TeeTo -Value "" -Scope Global -Force
 }
 
@@ -78,10 +135,10 @@ $StartPath = $env:PATH
 
 if($CmdPathFile) {
     if(Test-Path $CmdPathFile) {
-        Write-Debug "Cleaning old CMD PATH file: $CmdPathFile"
+        _WriteDebug "Cleaning old CMD PATH file: $CmdPathFile"
         Remove-Item $CmdPathFile -Force
     }
-    Write-Debug "Using CMD PATH file: $CmdPathFile"
+    _WriteDebug "Using CMD PATH file: $CmdPathFile"
 }
 
 if(!$ActiveFeed) {
@@ -120,10 +177,10 @@ if(!$UserHome) {
     }
 }
 
-Write-Debug ""
-Write-Debug "=== Running $CommandName ==="
-Write-Debug "Runtime Homes: $RuntimeHomes"
-Write-Debug "User Home: $UserHome"
+_WriteDebug ""
+_WriteDebug "=== Running $CommandName ==="
+_WriteDebug "Runtime Homes: $RuntimeHomes"
+_WriteDebug "User Home: $UserHome"
 $AliasesDir = Join-Path $UserHome "alias"
 $RuntimesDir = Join-Path $UserHome "runtimes"
 $Aliases = $null
@@ -147,48 +204,22 @@ function GetRuntime($Runtime) {
     }
 }
 
-function Write-Console {
-    param(
-        [Parameter(Mandatory=$false, Position=0)][object]$Object,
-        [Parameter(Mandatory=$false)][ConsoleColor]$ForegroundColor,
-        [Parameter(Mandatory=$false)][ConsoleColor]$BackgroundColor,
-        [Parameter(Mandatory=$false)][switch]$NoNewLine)
-
-    if(!$ForegroundColor) {
-        $ForegroundColor = $host.UI.RawUI.ForegroundColor
-    }
-    if(!$BackgroundColor) {
-        $BackgroundColor = $host.UI.RawUI.BackgroundColor
-    }
-
-    Write-Host -Object:$Object -ForegroundColor:$ForegroundColor -BackgroundColor:$BackgroundColor -NoNewLine:$NoNewLine
-
-    if($__TeeTo) {
-        $cur = Get-Variable -Name $__TeeTo -ValueOnly -Scope Global -ErrorAction SilentlyContinue
-        $val = $cur + "$Object"
-        if(!$NoNewLine) {
-            $val += [Environment]::NewLine
-        }
-        Set-Variable -Name $__TeeTo -Value $val -Scope Global -Force
-    }
-}
-
 function Write-Usage {
-    Write-Console -ForegroundColor $ColorScheme.Banner $AsciiArt
-    Write-Console "$CommandFriendlyName v$FullVersion"
-    if($Authors -ne "{{AUTHORS}}") {
-        Write-Console "By $Authors"
+    _WriteOut -ForegroundColor $ColorScheme.Banner $AsciiArt
+    _WriteOut "$CommandFriendlyName v$FullVersion"
+    if(!$Authors.StartsWith("{{")) {
+        _WriteOut "By $Authors"
     }
-    Write-Console
-    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Header "usage:"
-    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Executable " $CommandName"
-    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Command " <command>"
-    Write-Console -ForegroundColor $ColorScheme.Help_Argument " [<arguments...>]"
+    _WriteOut
+    _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Header "usage:"
+    _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Executable " $CommandName"
+    _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Command " <command>"
+    _WriteOut -ForegroundColor $ColorScheme.Help_Argument " [<arguments...>]"
 }
 
 function Get-RuntimeAlias {
     if($Aliases -eq $null) {
-        Write-Debug "Scanning for aliases in $AliasesDir"
+        _WriteDebug "Scanning for aliases in $AliasesDir"
         if(Test-Path $AliasesDir) {
             $Aliases = @(Get-ChildItem ($UserHome + "\alias\") | Select-Object @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }})
         } else {
@@ -265,15 +296,15 @@ filter List-Parts {
 }
 
 function Read-Alias($Name) {
-    Write-Debug "Listing aliases matching '$Name'"
+    _WriteDebug "Listing aliases matching '$Name'"
 
     $aliases = Get-RuntimeAlias
 
     $result = @($aliases | Where-Object { !$Name -or ($_.Alias.Contains($Name)) })
     if($Name -and ($result.Length -eq 1)) {
-        Write-Console "Alias '$Name' is set to '$($result[0].Name)'"
+        _WriteOut "Alias '$Name' is set to '$($result[0].Name)'"
     } elseif($Name -and ($result.Length -eq 0)) {
-        Write-Console "Alias does not exist: '$Name'"
+        _WriteOut "Alias does not exist: '$Name'"
         $Script:ExitCode = $ExitCodes.AliasDoesNotExist
     } else {
         $result
@@ -292,10 +323,10 @@ function Write-Alias {
     $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
     
     if(!(Test-Path $AliasesDir)) {
-        Write-Debug "Creating alias directory: $AliasesDir"
+        _WriteDebug "Creating alias directory: $AliasesDir"
         New-Item -Type Directory $AliasesDir | Out-Null
     }
-    Write-Console "$action alias '$Name' to '$runtimeFullName'"
+    _WriteOut "$action alias '$Name' to '$runtimeFullName'"
     $runtimeFullName | Out-File $aliasFilePath ascii
 }
 
@@ -305,12 +336,12 @@ function Delete-Alias {
 
     $aliasPath = Join-Path $AliasesDir "$Name.txt"
     if (Test-Path -literalPath "$aliasPath") {
-        Write-Console "Removing alias $Name"
+        _WriteOut "Removing alias $Name"
 
         # Delete with "-Force" because we already confirmed above
         Remove-Item -literalPath $aliasPath -Force
     } else {
-        Write-Console "Cannot remove alias '$Name'. It does not exist."
+        _WriteOut "Cannot remove alias '$Name'. It does not exist."
         $Script:ExitCode = $ExitCodes.AliasDoesNotExist # Return non-zero exit code for scripting
     }
 }
@@ -344,7 +375,7 @@ function Find-Latest {
     )
     if(!$Feed) { $Feed = $ActiveFeed }
 
-    Write-Console "Determining latest version"
+    _WriteOut "Determining latest version"
 
     $RuntimeId = Get-RuntimeId -Architecture:"$architecture" -Runtime:"$runtime"
     $url = "$Feed/GetUpdates()?packageIds=%27$RuntimeId%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
@@ -353,13 +384,13 @@ function Find-Latest {
 
     $wc = New-Object System.Net.WebClient
     Apply-Proxy $wc -Proxy:$Proxy
-    Write-Debug "Downloading $url ..."
+    _WriteDebug "Downloading $url ..."
     [xml]$xml = $wc.DownloadString($url)
 
     $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
 
     if (![String]::IsNullOrWhiteSpace($version)) {
-        Write-Debug "Found latest version: $version"
+        _WriteDebug "Found latest version: $version"
         $version
     }
 }
@@ -397,16 +428,16 @@ function Download-Package(
     
     $url = "$Feed/package/" + (Get-RuntimeId $Architecture $Runtime) + "/" + $Version
     
-    Write-Console "Downloading $runtimeFullName from $feed"
+    _WriteOut "Downloading $runtimeFullName from $feed"
 
     $wc = New-Object System.Net.WebClient
     Apply-Proxy $wc -Proxy:$Proxy
-    Write-Debug "Downloading $url ..."
+    _WriteDebug "Downloading $url ..."
     $wc.DownloadFile($url, $DestinationFile)
 }
 
 function Unpack-Package([string]$DownloadFile, [string]$UnpackFolder) {
-    Write-Debug "Unpacking $DownloadFile to $UnpackFolder"
+    _WriteDebug "Unpacking $DownloadFile to $UnpackFolder"
 
     $compressionLib = [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
 
@@ -444,12 +475,12 @@ function Unpack-Package([string]$DownloadFile, [string]$UnpackFolder) {
 }
 
 function Get-RuntimePath($runtimeFullName) {
-    Write-Debug "Resolving $runtimeFullName"
+    _WriteDebug "Resolving $runtimeFullName"
     foreach($RuntimeHome in $RuntimeHomes) {
         $runtimeBin = "$RuntimeHome\runtimes\$runtimeFullName\bin"
-        Write-Debug " Candidate $runtimeBin"
+        _WriteDebug " Candidate $runtimeBin"
         if (Test-Path "$runtimeBin") {
-            Write-Debug " Found in $runtimeBin"
+            _WriteDebug " Found in $runtimeBin"
             return $runtimeBin
         }
     }
@@ -463,14 +494,14 @@ function Change-Path() {
         [string[]] $removePaths
     )
     $removePaths = $removePaths | ForEach-Object { if($_.EndsWith("/")) {$_} else {"$_\"}}
-    Write-Debug "Updating PATH to prepend '$prependPath' and remove '$removePaths'"
+    _WriteDebug "Updating PATH to prepend '$prependPath' and remove '$removePaths'"
     
     $newPath = $prependPath
     foreach($portion in $existingPaths.Split(';')) {
         $skip = $portion -eq ""
         foreach($removePath in $removePaths) {
             if ($removePath -and ($portion.StartsWith($removePath))) {
-                Write-Debug " Removing '$portion' because it matches '$removePath'"
+                _WriteDebug " Removing '$portion' because it matches '$removePath'"
                 $skip = $true
             }
         }
@@ -496,7 +527,7 @@ function Set-Path() {
         if(!(Test-Path $Parent)) {
             New-Item -Type Directory $Parent -Force | Out-Null
         }
-        Write-Debug " Writing PATH file for CMD script"
+        _WriteDebug " Writing PATH file for CMD script"
         @"
 SET "PATH=$newPath"
 "@ | Out-File $CmdPathFile ascii
@@ -520,7 +551,7 @@ function kvm-help {
     if($Command) {
         $cmd = Get-Command "kvm-$Command" -ErrorAction SilentlyContinue
         if(!$cmd) {
-            Write-Warning "No such command: $Command"
+            _WriteOut "No such command: $Command"
             kvm-help
             $Script:ExitCodes = $ExitCodes.UnknownCommand
             return
@@ -529,13 +560,13 @@ function kvm-help {
         if($PassThru) {
             $help
         } else {
-            Write-Console -ForegroundColor $ColorScheme.Help_Header "$CommandName-$Command"
-            Write-Console "  $($help.Synopsis.Trim())"
-            Write-Console
-            Write-Console -ForegroundColor $ColorScheme.Help_Header "usage:"
+            _WriteOut -ForegroundColor $ColorScheme.Help_Header "$CommandName-$Command"
+            _WriteOut "  $($help.Synopsis.Trim())"
+            _WriteOut
+            _WriteOut -ForegroundColor $ColorScheme.Help_Header "usage:"
             $help.Syntax.syntaxItem | ForEach-Object {
-                Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Executable "  $CommandName "
-                Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Command "$Command"
+                _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Executable "  $CommandName "
+                _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Command "$Command"
                 if($_.parameter) {
                     $_.parameter | ForEach-Object {
                         $cmdParam = $cmd.Parameters[$_.name]
@@ -544,33 +575,33 @@ function kvm-help {
                             $name = $cmdParam.Aliases | Sort-Object | Select-Object -First 1
                         }
 
-                        Write-Console -NoNewLine " "
+                        _WriteOut -NoNewLine " "
                         
                         if($_.required -ne "true") {
-                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Optional "["
+                            _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Optional "["
                         }
 
                         if($_.position -eq "Named") {
-                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Switch "-$name"
+                            _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Switch "-$name"
                         }
                         if($_.parameterValue) {
                             if($_.position -eq "Named") {
-                                Write-Console -NoNewLine " "       
+                                _WriteOut -NoNewLine " "       
                             }
-                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Argument "<$($_.name)>"
+                            _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Argument "<$($_.name)>"
                         }
 
                         if($_.required -ne "true") {
-                            Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Optional "]"
+                            _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Optional "]"
                         }
                     }
                 }
-                Write-Console
+                _WriteOut
             }
 
             if($help.parameters -and $help.parameters.parameter) {
-                Write-Console
-                Write-Console -ForegroundColor $ColorScheme.Help_Header "options:"
+                _WriteOut
+                _WriteOut -ForegroundColor $ColorScheme.Help_Header "options:"
                 $help.parameters.parameter | ForEach-Object {
                     $cmdParam = $cmd.Parameters[$_.name]
                     $name = $_.name
@@ -578,41 +609,41 @@ function kvm-help {
                         $name = $cmdParam.Aliases | Sort-Object | Select-Object -First 1
                     }
                     
-                    Write-Console -NoNewLine "  "
+                    _WriteOut -NoNewLine "  "
                     
                     if($_.position -eq "Named") {
-                        Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Switch "-$name".PadRight($OptionPadding)
+                        _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Switch "-$name".PadRight($OptionPadding)
                     } else {
-                        Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Argument "<$($_.name)>".PadRight($OptionPadding)
+                        _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Argument "<$($_.name)>".PadRight($OptionPadding)
                     }
-                    Write-Console " $($_.description.Text)"
+                    _WriteOut " $($_.description.Text)"
                 }
             }
 
             if($help.description) {
-                Write-Console
-                Write-Console -ForegroundColor $ColorScheme.Help_Header "remarks:"
-                Write-Console (
+                _WriteOut
+                _WriteOut -ForegroundColor $ColorScheme.Help_Header "remarks:"
+                _WriteOut (
                     $help.description.Text.Split(@("`r", "`n"), "RemoveEmptyEntries") | 
                         ForEach-Object { "  $_" })
             }
 
             if($DeprecatedCommands -contains $Command) {
-                Write-Warning "This command has been deprecated and should not longer be used"
+                _WriteOut "This command has been deprecated and should not longer be used"
             }
         }
     } else {
         Write-Usage
-        Write-Console
-        Write-Console -ForegroundColor $ColorScheme.Help_Header "commands: "
+        _WriteOut
+        _WriteOut -ForegroundColor $ColorScheme.Help_Header "commands: "
         Get-Command "$CommandPrefix*" | 
             ForEach-Object {
                 $h = Get-Help $_.Name
                 $name = $_.Name.Substring($CommandPrefix.Length)
                 if($DeprecatedCommands -notcontains $name) {
-                    Write-Console -NoNewLine "    "
-                    Write-Console -NoNewLine -ForegroundColor $ColorScheme.Help_Command $name.PadRight(10)
-                    Write-Console " $($h.Synopsis.Trim())"
+                    _WriteOut -NoNewLine "    "
+                    _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Command $name.PadRight(10)
+                    _WriteOut " $($h.Synopsis.Trim())"
                 }
             }
     }
@@ -631,7 +662,7 @@ function kvm-list {
 
     $items = @()
     $RuntimeHomes | ForEach-Object {
-        Write-Debug "Scanning $_ for runtimes..."
+        _WriteDebug "Scanning $_ for runtimes..."
         if (Test-Path "$_\runtimes") {
             $items += Get-ChildItem "$_\runtimes\$RuntimePackageName-*" | List-Parts $aliases
         }
@@ -700,7 +731,7 @@ function kvm-alias {
 function kvm-unalias {
     param(
         [Parameter(Mandatory=$true,Position=0)][string]$Name)
-    Write-Warning "This command is obsolete. Use '$CommandName alias -d' instead"
+    _WriteOut "This command is obsolete. Use '$CommandName alias -d' instead"
     kvm-alias -Delete -Name $Name
 }
 
@@ -802,7 +833,7 @@ function kvm-install {
         [switch]$NoNative)
 
     if(!$VersionOrNuPkg) {
-        Write-Warning "A version, nupkg path, or the string 'latest' must be provided."
+        _WriteOut "A version, nupkg path, or the string 'latest' must be provided."
         kvm-help install
         $Script:ExitCode = $ExitCodes.InvalidArguments
         return
@@ -827,48 +858,48 @@ function kvm-install {
 
     $PackageVersion = Get-PackageVersion $runtimeFullName
     
-    Write-Debug "Preparing to install runtime '$runtimeFullName'"
-    Write-Debug "Architecture: $Architecture"
-    Write-Debug "Runtime: $Runtime"
-    Write-Debug "Version: $PackageVersion"
+    _WriteDebug "Preparing to install runtime '$runtimeFullName'"
+    _WriteDebug "Architecture: $Architecture"
+    _WriteDebug "Runtime: $Runtime"
+    _WriteDebug "Version: $PackageVersion"
 
     $RuntimeFolder = Join-Path $RuntimesDir $runtimeFullName
-    Write-Debug "Destination: $RuntimeFolder"
+    _WriteDebug "Destination: $RuntimeFolder"
 
     if((Test-Path $RuntimeFolder) -and $Force) {
-        Write-Console "Cleaning existing installation..."
+        _WriteOut "Cleaning existing installation..."
         Remove-Item $RuntimeFolder -Recurse -Force
     }
 
     if(Test-Path $RuntimeFolder) {
-        Write-Console "'$runtimeFullName' is already installed."
+        _WriteOut "'$runtimeFullName' is already installed."
     }
     else {
         $UnpackFolder = Join-Path $RuntimesDir "temp"
         $DownloadFile = Join-Path $UnpackFolder "$runtimeFullName.nupkg"
 
         if(Test-Path $UnpackFolder) {
-            Write-Debug "Cleaning temporary directory $UnpackFolder"
+            _WriteDebug "Cleaning temporary directory $UnpackFolder"
             Remove-Item $UnpackFolder -Recurse -Force
         }
         New-Item -Type Directory $UnpackFolder | Out-Null
 
         if($IsNuPkg) {
-            Write-Debug "Copying local nupkg $VersionOrNuPkg to $DownloadFile"
+            _WriteDebug "Copying local nupkg $VersionOrNuPkg to $DownloadFile"
             Copy-Item $VersionOrNuPkg $DownloadFile
         } else {
             # Download the package
-            Write-Debug "Downloading version $VersionOrNuPkg to $DownloadFile"
+            _WriteDebug "Downloading version $VersionOrNuPkg to $DownloadFile"
             Download-Package $VersionOrNuPkg $Architecture $Runtime $DownloadFile -Proxy:$Proxy
         }
 
         Unpack-Package $DownloadFile $UnpackFolder
 
         New-Item -Type Directory $RuntimeFolder -Force | Out-Null
-        Write-Console "Installing to $RuntimeFolder"
-        Write-Debug "Moving package contents to $RuntimeFolder"
+        _WriteOut "Installing to $RuntimeFolder"
+        _WriteDebug "Moving package contents to $RuntimeFolder"
         Move-Item "$UnpackFolder\*" $RuntimeFolder
-        Write-Debug "Cleaning temporary directory $UnpackFolder"
+        _WriteDebug "Cleaning temporary directory $UnpackFolder"
         Remove-Item $UnpackFolder -Force | Out-Null
 
         
@@ -876,18 +907,18 @@ function kvm-install {
 
         if ($runtimeFullName.Contains("coreclr")) {
             if ($NoNative) {
-              Write-Console "Skipping native image compilation."
+              _WriteOut "Skipping native image compilation."
             }
             else {
-              Write-Console "Compiling native images for $runtimeFullName to improve startup performance..."
+              _WriteOut "Compiling native images for $runtimeFullName to improve startup performance..."
               Start-Process $CrossGenCommand -Wait
-              Write-Console "Finished native image compilation."
+              _WriteOut "Finished native image compilation."
             }
         }
     }
 
     if($Alias) {
-        Write-Debug "Aliasing installed runtime to '$Alias'"
+        _WriteDebug "Aliasing installed runtime to '$Alias'"
         kvm-alias $Alias $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
     }
 }
@@ -925,14 +956,14 @@ function kvm-use {
         [switch]$Persistent)
 
     if([String]::IsNullOrWhiteSpace($VersionOrAlias)) {
-        Write-Warning "Missing version or alias to add to path"
+        _WriteOut "Missing version or alias to add to path"
         kvm-help use
         $Script:ExitCode = $ExitCodes.InvalidArguments
         return
     }
 
     if ($versionOrAlias -eq "none") {
-        Write-Console "Removing all runtimes from process PATH"
+        _WriteOut "Removing all runtimes from process PATH"
         Set-Path (Change-Path $env:Path "" ($RuntimeDirs))
 
         if ($Persistent) {
@@ -950,7 +981,7 @@ function kvm-use {
         throw "Cannot find $runtimeFullName, do you need to run '$CommandName install $versionOrAlias'?"
     }
 
-    Write-Console "Adding $runtimeBin to process PATH"
+    _WriteOut "Adding $runtimeBin to process PATH"
     Set-Path (Change-Path $env:Path $runtimeBin ($RuntimeDirs))
 
     if ($Persistent) {
@@ -989,6 +1020,10 @@ function kvm-name {
     Get-RuntimeName $VersionOrAlias $Architecture $Runtime
 }
 
+function kvm-throw {
+    throw "Yikes!"
+}
+
 ### The main "entry point"
 
 # Read arguments
@@ -1005,33 +1040,33 @@ if($args.Length -gt 1) {
 # So we manually parse them :)
 if($cmdargs -icontains "-amd64") {
     $CompatArch = "x64"
-    Write-Warning "The -amd64 switch has been deprecated. Use the '-arch x64' parameter instead"
+    _WriteOut "The -amd64 switch has been deprecated. Use the '-arch x64' parameter instead"
 } elseif($cmdargs -icontains "-x86") {
     $CompatArch = "x86"
-    Write-Warning "The -x86 switch has been deprecated. Use the '-arch x86' parameter instead"
+    _WriteOut "The -x86 switch has been deprecated. Use the '-arch x86' parameter instead"
 } elseif($cmdargs -icontains "-x64") {
     $CompatArch = "x64"
-    Write-Warning "The -x64 switch has been deprecated. Use the '-arch x64' parameter instead"
+    _WriteOut "The -x64 switch has been deprecated. Use the '-arch x64' parameter instead"
 }
 $cmdargs = @($cmdargs | Where-Object { @("-amd64", "-x86", "-x64") -notcontains $_ })
 
 if(!$cmd) {
-    Write-Warning "You must specify a command!"
+    _WriteOut "You must specify a command!"
     $cmd = "help"
     $Script:ExitCode = $ExitCodes.InvalidArguments
 }
 
 # Check for the command
 if(Get-Command -Name "$CommandPrefix$cmd" -ErrorAction SilentlyContinue) {
-    Write-Debug "& kvm-$cmd $cmdargs"
+    _WriteDebug "& kvm-$cmd $cmdargs"
     & "kvm-$cmd" @cmdargs
 }
 else {
-    Write-Warning "Unknown command: '$cmd'"
+    _WriteOut "Unknown command: '$cmd'"
     kvm-help
     $Script:ExitCode = $ExitCodes.UnknownCommand
 }
 
-Write-Debug "=== End $CommandName (Exit Code $Script:ExitCode) ==="
-Write-Debug ""
+_WriteDebug "=== End $CommandName (Exit Code $Script:ExitCode) ==="
+_WriteDebug ""
 exit $Script:ExitCode
