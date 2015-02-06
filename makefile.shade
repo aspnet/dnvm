@@ -12,21 +12,21 @@ default TARGET_DIR='${Path.Combine(BASE_DIR, "artifacts")}'
 default SOURCE_DIR='${Path.Combine(BASE_DIR, "src")}'
 default BUILD_DIR='${Path.Combine(BASE_DIR, "build")}'
 default TEST_DIR='${Path.Combine(BASE_DIR, "test")}'
-default Configuration='${E("Configuration")}'
+default Configuration='${GetEnvironmentVariable("Configuration")}'
 
 @{
-  if (string.IsNullOrEmpty(E("K_BUILD_VERSION")))
+  if (string.IsNullOrEmpty(GetEnvironmentVariable("K_BUILD_VERSION")))
   {
-    E("K_BUILD_VERSION", BuildNumber);
+    SetEnvironmentVariable("K_BUILD_VERSION", BuildNumber);
   }
-  if (string.IsNullOrEmpty(E("K_AUTHOR")))
+  if (string.IsNullOrEmpty(GetEnvironmentVariable("K_AUTHOR")))
   {
-    E("K_AUTHOR", AUTHORS);
+    SetEnvironmentVariable("K_AUTHOR", AUTHORS);
   }
   if (string.IsNullOrEmpty(Configuration))
   {
     Configuration = "Debug";
-    E("Configuration", Configuration);
+    SetEnvironmentVariable("Configuration", Configuration);
   }
 }
 
@@ -59,6 +59,6 @@ default KVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("KVM_DEPLOY_BRAN
 	push-kvm repo="${KVM_DEPLOY_REPO}" branch="${KVM_DEPLOY_BRANCH}" files="${Path.Combine(TARGET_DIR, "kvm.cmd")};${Path.Combine(TARGET_DIR, "kvm.ps1")};${Path.Combine(TARGET_DIR, "kvm.sh")}" baseMessage=":arrow_up: kvm.ps1, kvm.cmd, kvm.sh"
 
 functions @{
-    string E(string key) { return Environment.GetEnvironmentVariable(key); }
-    void E(string key, string value) { Environment.SetEnvironmentVariable(key, value); }
+    string GetEnvironmentVariable(string key) { return Environment.GetEnvironmentVariable(key); }
+    void SetEnvironmentVariable(string key, string value) { Environment.SetEnvironmentVariable(key, value); }
 }
