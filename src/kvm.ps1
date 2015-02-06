@@ -61,6 +61,8 @@ $BuildVersion="{{BUILD_VERSION}}"
 $Authors="{{AUTHORS}}"
 
 # If the Version hasn't been replaced...
+# We can't compare directly with the build version token
+# because it'll just get replaced here as well :)
 if($BuildVersion.StartsWith("{{")) {
     # We're being run from source code rather than the "compiled" artifact
     $BuildVersion = "HEAD"
