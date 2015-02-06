@@ -162,11 +162,12 @@ if(!$RuntimeHomes) {
 }
 
 $UnencodedHomes = $UnencodedHomes.Split(";")
-$RuntimeHomes = [Environment]::ExpandEnvironmentVariables($UnencodedHomes).Split(";")
+$RuntimeHomes = $UnencodedHomes | ForEach-Object { [Environment]::ExpandEnvironmentVariables($_) }
 $RuntimeDirs = $RuntimeHomes | ForEach-Object { Join-Path $_ "runtimes" }
 
 # Determine the default installation directory (UserHome)
 if(!$UserHome) {
+    _WriteDebug "Detecting User Home..."
     $pf = $env:ProgramFiles
     if(Test-Path "env:\ProgramFiles(x86)") {
         $pf32 = cat "env:\ProgramFiles(x86)"
@@ -181,6 +182,8 @@ if(!$UserHome) {
         !($_.StartsWith($pf) -or $_.StartsWith($pf32))
     } | Select-Object -First 1
 
+    _WriteDebug "Found: $UserHome"
+    
     if(!$UserHome) {
         $UserHome = "$env:USERPROFILE\$DefaultUserDirectoryName"
     }
@@ -633,9 +636,8 @@ function kvm-help {
             if($help.description) {
                 _WriteOut
                 _WriteOut -ForegroundColor $ColorScheme.Help_Header "remarks:"
-                _WriteOut (
-                    $help.description.Text.Split(@("`r", "`n"), "RemoveEmptyEntries") | 
-                        ForEach-Object { "  $_" })
+                $help.description.Text.Split(@("`r","`n"), "RemoveEmptyEntries") | 
+                    ForEach-Object { _WriteOut "  $_" }
             }
 
             if($DeprecatedCommands -contains $Command) {
@@ -691,7 +693,7 @@ function kvm-list {
 .SYNOPSIS
     Lists and manages aliases
 .PARAMETER Name
-    The name of the alias to read/write/delete
+    The name of the alias to read/create/delete
 .PARAMETER Version
     The version to assign to the new alias
 .PARAMETER Architecture
@@ -700,6 +702,13 @@ function kvm-list {
     The flavor of the runtime to assign to this alias
 .PARAMETER Delete
     Set this switch to delete the alias with the specified name
+.DESCRIPTION
+    If no arguments are provided, this command lists all aliases. If <Name> is provided,
+    the value of that alias, if present, is displayed. If <Name> and <Version> are
+    provided, the alias <Name> is set to the runtime defined by <Version>, <Architecture>
+    (defaults to 'x86') and <Runtime> (defaults to 'clr').
+
+    Finally, if the '-d' switch is provided, the alias <Name> is deleted, if it exists.
 #>
 function kvm-alias {
     param(
@@ -741,13 +750,13 @@ function kvm-alias {
 function kvm-unalias {
     param(
         [Parameter(Mandatory=$true,Position=0)][string]$Name)
-    _WriteOut "This command is obsolete. Use '$CommandName alias -d' instead"
+    _WriteOut "This command has been deprecated. Use '$CommandName alias -d' instead"
     kvm-alias -Delete -Name $Name
 }
 
 <#
 .SYNOPSIS
-    Upgrades an alias to the latest version of the runtime
+    Installs the latest version of the runtime and reassigns the specified alias to point at it
 .PARAMETER Alias
     The alias to upgrade (default: 'default')
 .PARAMETER Architecture
