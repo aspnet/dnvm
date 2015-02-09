@@ -24,7 +24,7 @@ $regKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey($regHive, $regView)
 $frameworkPath = $regKey.OpenSubKey("SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full").GetValue("InstallPath")
 $ngenExe = Join-Path $frameworkPath 'ngen.exe'
 
-foreach ($bin in Get-ChildItem $runtimeBin -Filter "Microsoft.CodeAnalysis*.dll") {
+foreach ($bin in Get-ChildItem $runtimeBin -Filter "Microsoft.CodeAnalysis.CSharp.dll") {
   &"$ngenExe" "install" "$($bin.FullName)"
 }
 
