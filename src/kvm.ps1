@@ -384,13 +384,17 @@ param(
     }
     else {
       $runtimeBin = Locate-RuntimeBinFromFullName $runtimeFullName
-      If (Needs-Elevation)
-      {
-        $ngenCmd = "-ExecutionPolicy unrestricted & $PSScriptRoot\k-ngen.ps1 -runtimeBin $runtimeBin -architecture $installArchitecture"
-        $ngenProc = Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList $ngenCmd -Wait -PassThru
-        if ($ngenProc.ExitCode -ne 0) {
-          Console-Write-Error "Unable to ngen runtime libraries."
-        }
+      $ngenCmd = "$PSScriptRoot\k-ngen.ps1 -runtimeBin $runtimeBin -architecture $installArchitecture"
+
+      If (Needs-Elevation) {
+        $ngenProc = Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList "-ExecutionPolicy unrestricted & $ngenCmd" -Wait -PassThru
+      }
+      else {
+        $ngenProc = Start-Process "$psHome\powershell.exe" -ArgumentList $ngenCmd -Wait -PassThru
+      }
+
+      if ($ngenProc.ExitCode -ne 0) {
+        Console-Write-Error "Unable to ngen runtime libraries."
       }
     }
   }
