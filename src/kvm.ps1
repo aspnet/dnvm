@@ -1,3 +1,5 @@
+#Requires -Version 4
+
 $ScriptPath = $MyInvocation.MyCommand.Definition
 
 $Script:UseWriteHost = $true
