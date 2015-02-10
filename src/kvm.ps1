@@ -551,6 +551,43 @@ SET "PATH=$newPath"
     }
 }
 
+function Ngen-Library(
+    [Parameter(Mandatory=$true)]
+    [string]$runtimeBin,
+
+    [ValidateSet("x86","x64")]
+    [Parameter(Mandatory=$true)]
+    [string]$architecture) {
+
+    if ($architecture -eq 'x64') {
+        $regView = [Microsoft.Win32.RegistryView]::Registry64
+    }
+    elseif ($architecture -eq 'x86') {
+        $regView = [Microsoft.Win32.RegistryView]::Registry32
+    }
+    else {
+        _WriteOut "Installation does not understand architecture $architecture, skipping ngen..."
+        return
+    }
+
+    $regHive = [Microsoft.Win32.RegistryHive]::LocalMachine
+    $regKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey($regHive, $regView)
+    $frameworkPath = $regKey.OpenSubKey("SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full").GetValue("InstallPath")
+    $ngenExe = Join-Path $frameworkPath 'ngen.exe'
+
+    $ngenCmds = ""
+    foreach ($bin in Get-ChildItem $runtimeBin -Filter "Microsoft.CodeAnalysis.CSharp.dll") {
+        $ngenCmds += "$ngenExe install $($bin.FullName);"
+    }
+
+    $ngenProc = Start-Process "$psHome\powershell.exe" -Verb runAs -ArgumentList "-ExecutionPolicy unrestricted & $ngenCmds" -Wait -PassThru
+}
+
+function Is-Elevated() {
+    $user = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+    return $user.IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+}
+
 ### Commands
 
 <#
@@ -771,8 +808,10 @@ function kvm-unalias {
     Overwrite an existing runtime if it already exists
 .PARAMETER Proxy
     Use the given address as a proxy when accessing remote server
-.Parameter NoNative
-    Skip generation of native images when installing coreclr runtime flavors
+.PARAMETER NoNative
+    Skip generation of native images
+.PARAMETER Ngen
+    For CLR flavor only. Ngen XRE libraries for faster startup. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
 #>
 function kvm-upgrade {
     param(
@@ -798,9 +837,12 @@ function kvm-upgrade {
         [string]$Proxy,
 
         [Parameter(Mandatory=$false)]
-        [switch]$NoNative)
+        [switch]$NoNative,
 
-    kvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative
+        [Parameter(Mandatory=$false)]
+        [switch]$Ngen)
+
+    kvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen
 }
 
 <#
@@ -819,8 +861,10 @@ function kvm-upgrade {
     Overwrite an existing runtime if it already exists
 .PARAMETER Proxy
     Use the given address as a proxy when accessing remote server
-.Parameter NoNative
-    Skip generation of native images when installing coreclr runtime flavors
+.PARAMETER NoNative
+    Skip generation of native images
+.PARAMETER Ngen
+    For CLR flavor only. Ngen XRE libraries for faster startup. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
 
 .DESCRIPTION
     A proxy can also be specified by using the 'http_proxy' environment variable
@@ -853,7 +897,10 @@ function kvm-install {
         [string]$Proxy,
 
         [Parameter(Mandatory=$false)]
-        [switch]$NoNative)
+        [switch]$NoNative,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$Ngen)
 
     if(!$VersionOrNuPkg) {
         _WriteOut "A version, nupkg path, or the string 'latest' must be provided."
@@ -898,6 +945,8 @@ function kvm-install {
         _WriteOut "'$runtimeFullName' is already installed."
     }
     else {
+        $Architecture = GetArch $Architecture
+        $Runtime = GetRuntime $Runtime
         $UnpackFolder = Join-Path $RuntimesDir "temp"
         $DownloadFile = Join-Path $UnpackFolder "$runtimeFullName.nupkg"
 
@@ -925,10 +974,20 @@ function kvm-install {
         _WriteDebug "Cleaning temporary directory $UnpackFolder"
         Remove-Item $UnpackFolder -Force | Out-Null
 
-        
         kvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
 
-        if ($runtimeFullName.Contains("coreclr")) {
+        if ($Runtime -eq "clr") {
+            if (-not $NoNative) {
+                if ((Is-Elevated) -or $Ngen) {
+                    $runtimeBin = Get-RuntimePath $runtimeFullName
+                    Ngen-Library $runtimeBin $Architecture
+                }
+                else {
+                    _WriteOut "Native image generation (ngen) is skipped. Include -Ngen switch to turn on native image generation to improve application startup time."
+                }
+            }
+        }
+        elseif ($Runtime -eq "coreclr") {
             if ($NoNative) {
               _WriteOut "Skipping native image compilation."
             }
@@ -937,6 +996,9 @@ function kvm-install {
               Start-Process $CrossGenCommand -Wait
               _WriteOut "Finished native image compilation."
             }
+        }
+        else {
+            _WriteOut "Unexpected platform: $Runtime. No optimization would be performed on the package installed."
         }
     }
 
