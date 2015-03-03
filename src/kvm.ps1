@@ -515,7 +515,7 @@ function Change-Path() {
     foreach($portion in $existingPaths.Split(';')) {
         $skip = $portion -eq ""
         foreach($removePath in $removePaths) {
-            $removePrefix = if($removePath.EndsWith("/")) { $removePath } else { "$removePath/" }
+            $removePrefix = if($removePath.EndsWith("\")) { $removePath } else { "$removePath\" }
 
             if ($removePath -and (($portion -eq $removePath) -or ($portion.StartsWith($removePrefix)))) {
                 _WriteDebug " Removing '$portion' because it matches '$removePath'"
