@@ -56,9 +56,11 @@ git gitCommand='clone ${repo} ${workdir} --branch="${branch}"'
 	// so there's no way to get a Char literal, hence the ToCharArray weirdness
 	foreach(var file in files.Split(";".ToCharArray()))
 	{
+        var dest = Path.Combine(workdir, Path.GetFileName(file));
+        Log.Info("Copying " + file + " to " + dest);
 		File.Copy(
 			sourceFileName: file,
-			destFileName: Path.Combine(workdir, file),
+			destFileName: dest, 
 			overwrite: true);
 	}
 }
