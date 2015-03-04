@@ -49,7 +49,7 @@ function _WriteOut {
 
     if($__TeeTo) {
         $cur = Get-Variable -Name $__TeeTo -ValueOnly -Scope Global -ErrorAction SilentlyContinue
-        $val = $cur + "$Object"
+        $val = $cur + "$msg"
         if(!$NoNewLine) {
             $val += [Environment]::NewLine
         }

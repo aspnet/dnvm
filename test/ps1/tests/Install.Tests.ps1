@@ -42,7 +42,6 @@ function DefineInstallTests($clr, $arch) {
                 $output | ForEach-Object { Write-Verbose $_ }
 
                 $fullOutput | Should Match "Runtime is sane!"
-                $fullOutput | Should Match "Runtime Framework:\s+$fxName"
             } finally {
                 popd
             }

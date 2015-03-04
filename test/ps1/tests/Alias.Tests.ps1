@@ -65,7 +65,8 @@ Describe "alias" -Tag "alias" {
                 $alias = [Regex]::Escape([IO.Path]::GetFileNameWithoutExtension($_.Name))
 
                 # On some consoles, the value of the alias gets cut off, so don't require it in the assertion.
-                $allAliases | Should Match ".*$alias.*"
+                # Instead, we just test the short prefix
+                $allAliases | Should Match ".*alias_.*"
             }
         }
     }
