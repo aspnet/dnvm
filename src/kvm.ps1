@@ -1,4 +1,4 @@
-#Requires -Version 4
+#Requires -Version 3
 
 $ScriptPath = $MyInvocation.MyCommand.Definition
 
