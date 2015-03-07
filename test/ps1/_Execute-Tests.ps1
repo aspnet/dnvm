@@ -33,7 +33,7 @@ if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot "testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
 
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
-# that kvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
+# that dnvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
 $env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
 $TestRuntimeVersion = "1.0.0-beta4-???"
@@ -80,7 +80,7 @@ $env:DNX_HOME=$UserPath
 $env:DNX_USER_HOME=$UserPath
 mkdir $UserPath | Out-Null
 
-# Helper function to run kvm and capture stuff.
+# Helper function to run dnvm and capture stuff.
 $Global:__dnvmtest_out = $null
 $Global:__dnvmtest_exit = $null
 function __dnvmtest_run {
@@ -99,7 +99,7 @@ function __dnvmtest_run {
     $WarningPreference = $oldWP
 }
 
-# Fetch a nupkg to use for the 'kvm install <path to nupkg>' scenario
+# Fetch a nupkg to use for the 'dnvm install <path to nupkg>' scenario
 Write-Banner "Fetching test prerequisites"
 
 $downloadDir = Join-Path $TestWorkingDir "downloads"
