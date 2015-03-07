@@ -28,18 +28,18 @@ if(!$RunningInNewPowershell) {
 # Set defaults
 if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
 if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
-if(!$TargetPath) { $TargetPath = Convert-Path (Join-Path $PSScriptRoot "../../src/kvm.ps1") }
+if(!$TargetPath) { $TargetPath = Convert-Path (Join-Path $PSScriptRoot "../../src/dnvm.ps1") }
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot "testwork" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
 
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
 # that kvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
-$env:KRE_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
-$TestRuntimeVersion = "1.0.0-beta3-11001"
-$specificNupkgUrl = "$($env:KRE_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
+$env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
+$TestRuntimeVersion = "1.0.0-beta4-???"
+$specificNupkgUrl = "$($env:DNX_FEED)/package/kre-coreclr-win-x64/$TestRuntimeVersion"
 $specificNupkgHash = "E334075CD028DA2FB1BC801A2EA021AB2CE27D4E880B414817BC612C82CABE93"
-$specificNupkgName = "kre-coreclr-win-x64.$TestRuntimeVersion.nupkg"
+$specificNupkgName = "dnx-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
 # Set up context
@@ -65,35 +65,35 @@ if($Debug) {
 }
 
 # Unset KRE_HOME for the test
-$oldKreHome = $env:KRE_HOME
-Remove-EnvVar KRE_HOME
+$oldKreHome = $env:DNX_HOME
+Remove-EnvVar DNX_HOME
 
 # Unset KRE_TRACE for the test
-Remove-EnvVar KRE_TRACE
+Remove-EnvVar DNX_TRACE
 
 # Unset PATH for the test
 Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
 $UserPath = "$TestWorkingDir\$RuntimeFolderName"
-$env:KRE_HOME=$UserPath
-$env:KRE_USER_HOME=$UserPath
+$env:DNX_HOME=$UserPath
+$env:DNX_USER_HOME=$UserPath
 mkdir $UserPath | Out-Null
 
 # Helper function to run kvm and capture stuff.
-$Global:__kvmtest_out = $null
-$Global:__kvmtest_exit = $null
-function __kvmtest_run {
+$Global:__dnvmtest_out = $null
+$Global:__dnvmtest_exit = $null
+function __dnvmtest_run {
     $oldWP = $WarningPreference
     $WarningPreference = "SilentlyContinue"
 
-    $Global:__kvmtest_exit = $null
-    $__TeeTo = "__kvmtest_out"
+    $Global:__dnvmtest_exit = $null
+    $__TeeTo = "__dnvmtest_out"
     try {
         & $CommandPath @args
-        $Global:__kvmtest_exit = $LASTEXITCODE
+        $Global:__dnvmtest_exit = $LASTEXITCODE
     } catch {
-        $Global:__kvmtest_err = $_
+        $Global:__dnvmtest_err = $_
     }
 
     $WarningPreference = $oldWP
@@ -192,7 +192,7 @@ if($TeamCity) {
         }
         Write-Host "##teamcity[testSuiteFinished name='$describe']"
     }
-    Write-Host "##teamcity[testSuiteFinished name='ps1']"
+    Write-Host "##teamcity[testSuiteFinished name='$CommandName.ps1']"
 }
 
 # Set the exit code!

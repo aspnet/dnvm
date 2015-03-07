@@ -1,7 +1,7 @@
 #Requires -Version 3
 <#
 .SYNOPSIS
-    Runs the tests for kvm
+    Runs the tests for dnvm
 
 .PARAMETER PesterPath
     The path to the root of the Pester (https://github.com/pester/Pester) module (optional)
@@ -22,10 +22,10 @@
     The name of a specific test to run (optional)
 
 .PARAMETER TestWorkingDir
-    The directory in which to place KREs downloaded during the tests (optional)
+    The directory in which to place DNXes downloaded during the tests (optional)
 
 .PARAMETER TestAppsDir
-    The directory in which test K apps live (optional)
+    The directory in which test apps live (optional)
 
 .PARAMETER Tag
     Run only tests with the specified tag (optional)

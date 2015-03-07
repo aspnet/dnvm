@@ -72,27 +72,27 @@ if($BuildVersion.StartsWith("{{")) {
 $FullVersion="$ProductVersion-$BuildVersion"
 
 Set-Variable -Option Constant "CommandName" ([IO.Path]::GetFileNameWithoutExtension($ScriptPath))
-Set-Variable -Option Constant "CommandFriendlyName" "K Runtime Version Manager"
-Set-Variable -Option Constant "DefaultUserDirectoryName" ".k"
-Set-Variable -Option Constant "OldUserDirectoryName" ".kre"
-Set-Variable -Option Constant "RuntimePackageName" "kre"
+Set-Variable -Option Constant "CommandFriendlyName" ".NET Version Manager"
+Set-Variable -Option Constant "DefaultUserDirectoryName" ".dnx"
+Set-Variable -Option Constant "OldUserDirectoryNames" @(".kre",".k")
+Set-Variable -Option Constant "RuntimePackageName" "dnx"
 Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
 Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
-Set-Variable -Option Constant "CommandPrefix" "kvm-"
+Set-Variable -Option Constant "CommandPrefix" "dnvm-"
 Set-Variable -Option Constant "DefaultArchitecture" "x86"
 Set-Variable -Option Constant "DefaultRuntime" "clr"
 Set-Variable -Option Constant "AliasExtension" ".txt"
 
 # These are intentionally using "%" syntax. The environment variables are expanded whenever the value is used.
-Set-Variable -Option Constant "OldUserHome" "%USERPROFILE%\.kre"
-Set-Variable -Option Constant "DefaultUserHome" "%USERPROFILE%\.k"
-Set-Variable -Option Constant "HomeEnvVar" "KRE_HOME"
+Set-Variable -Option Constant "OldUserHomes" @("%USERPROFILE%\.kre","%USERPROFILE%\.k")
+Set-Variable -Option Constant "DefaultUserHome" "%USERPROFILE%\$DefaultUserDirectoryName"
+Set-Variable -Option Constant "HomeEnvVar" "DNX_HOME"
 
 Set-Variable -Option Constant "AsciiArt" @"
-   __ ___   ____  ___
-  / //_/ | / /  |/  /
- / ,<  | |/ / /|_/ / 
-/_/|_| |___/_/  /_/  
+   ___  _  ___   ____  ___
+  / _ \/ |/ / | / /  |/  /
+ / // /    /| |/ / /|_/ / 
+/____/_/|_/ |___/_/  /_/  
 "@
 
 $ExitCodes = @{
@@ -102,7 +102,7 @@ $ExitCodes = @{
     "InvalidArguments"          = 1003
 }
 
-$ColorScheme = $KvmColors
+$ColorScheme = $DnvmColors
 if(!$ColorScheme) {
     $ColorScheme = @{
         "Banner"=[ConsoleColor]::Cyan
@@ -128,20 +128,20 @@ if($__TeeTo) {
 $DeprecatedCommands = @("unalias")
 
 # Load Environment variables
-$RuntimeHomes = $env:KRE_HOME
-$UserHome = $env:KRE_USER_HOME
-$ActiveFeed = $env:KRE_FEED
+$RuntimeHomes = $env:DNX_HOME
+$UserHome = $env:DNX_USER_HOME
+$ActiveFeed = $env:DNX_FEED
 
 # Default Exit Code
 $Script:ExitCode = $ExitCodes.Success
 
 ############################################################
-### Below this point, the terms "KVM", "KRE", "K", etc.  ###
+### Below this point, the terms "DNVM", "DNX", etc.      ###
 ### should never be used. Instead, use the Constants     ###
 ### defined above                                        ###
 ############################################################
 # An exception to the above: The commands are defined by functions
-# named "kvm-[command name]" so that extension functions can be added
+# named "dnvm-[command name]" so that extension functions can be added
 
 $StartPath = $env:PATH
 
@@ -596,21 +596,21 @@ function Is-Elevated() {
 .PARAMETER Command
     A specific command to get help for
 #>
-function kvm-help {
+function dnvm-help {
     [CmdletBinding(DefaultParameterSetName="GeneralHelp")]
     param(
         [Parameter(Mandatory=$true,Position=0,ParameterSetName="SpecificCommand")][string]$Command,
         [switch]$PassThru)
 
     if($Command) {
-        $cmd = Get-Command "kvm-$Command" -ErrorAction SilentlyContinue
+        $cmd = Get-Command "dnvm-$Command" -ErrorAction SilentlyContinue
         if(!$cmd) {
             _WriteOut "No such command: $Command"
-            kvm-help
+            dnvm-help
             $Script:ExitCodes = $ExitCodes.UnknownCommand
             return
         }
-        $help = Get-Help "kvm-$Command"
+        $help = Get-Help "dnvm-$Command"
         if($PassThru) {
             $help
         } else {
@@ -708,7 +708,7 @@ function kvm-help {
 .PARAMETER PassThru
     Set this switch to return unformatted powershell objects for use in scripting
 #>
-function kvm-list {
+function dnvm-list {
     param(
         [Parameter(Mandatory=$false)][switch]$PassThru)
     $aliases = Get-RuntimeAlias
@@ -751,7 +751,7 @@ function kvm-list {
 
     Finally, if the '-d' switch is provided, the alias <Name> is deleted, if it exists.
 #>
-function kvm-alias {
+function dnvm-alias {
     param(
         [Alias("d")]
         [Parameter(ParameterSetName="Delete",Mandatory=$true)]
@@ -788,11 +788,11 @@ function kvm-alias {
 .PARAMETER Name
     The name of the alias to remove
 #>
-function kvm-unalias {
+function dnvm-unalias {
     param(
         [Parameter(Mandatory=$true,Position=0)][string]$Name)
     _WriteOut "This command has been deprecated. Use '$CommandName alias -d' instead"
-    kvm-alias -Delete -Name $Name
+    dnvm-alias -Delete -Name $Name
 }
 
 <#
@@ -811,9 +811,9 @@ function kvm-unalias {
 .PARAMETER NoNative
     Skip generation of native images
 .PARAMETER Ngen
-    For CLR flavor only. Ngen XRE libraries for faster startup. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
+    For CLR flavor only. Generate native images for runtime libraries on Desktop CLR to improve startup time. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
 #>
-function kvm-upgrade {
+function dnvm-upgrade {
     param(
         [Alias("a")]
         [Parameter(Mandatory=$false, Position=0)]
@@ -842,7 +842,7 @@ function kvm-upgrade {
         [Parameter(Mandatory=$false)]
         [switch]$Ngen)
 
-    kvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen
+    dnvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen
 }
 
 <#
@@ -864,13 +864,12 @@ function kvm-upgrade {
 .PARAMETER NoNative
     Skip generation of native images
 .PARAMETER Ngen
-    For CLR flavor only. Ngen XRE libraries for faster startup. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
-
+    For CLR flavor only. Generate native images for runtime libraries on Desktop CLR to improve startup time. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
 .DESCRIPTION
     A proxy can also be specified by using the 'http_proxy' environment variable
 
 #>
-function kvm-install {
+function dnvm-install {
     param(
         [Parameter(Mandatory=$false, Position=0)]
         [string]$VersionOrNuPkg,
@@ -904,7 +903,7 @@ function kvm-install {
 
     if(!$VersionOrNuPkg) {
         _WriteOut "A version, nupkg path, or the string 'latest' must be provided."
-        kvm-help install
+        dnvm-help install
         $Script:ExitCode = $ExitCodes.InvalidArguments
         return
     }
@@ -974,7 +973,7 @@ function kvm-install {
         _WriteDebug "Cleaning temporary directory $UnpackFolder"
         Remove-Item $UnpackFolder -Force | Out-Null
 
-        kvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
+        dnvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
 
         if ($Runtime -eq "clr") {
             if (-not $NoNative) {
@@ -1004,7 +1003,7 @@ function kvm-install {
 
     if($Alias) {
         _WriteDebug "Aliasing installed runtime to '$Alias'"
-        kvm-alias $Alias $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
+        dnvm-alias $Alias $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
     }
 }
 
@@ -1021,7 +1020,7 @@ function kvm-install {
 .PARAMETER Persistent
     Make the change persistent across all processes run by the current user
 #>
-function kvm-use {
+function dnvm-use {
     param(
         [Parameter(Mandatory=$false, Position=0)]
         [string]$VersionOrAlias,
@@ -1042,7 +1041,7 @@ function kvm-use {
 
     if([String]::IsNullOrWhiteSpace($VersionOrAlias)) {
         _WriteOut "Missing version or alias to add to path"
-        kvm-help use
+        dnvm-help use
         $Script:ExitCode = $ExitCodes.InvalidArguments
         return
     }
@@ -1087,7 +1086,7 @@ function kvm-use {
 .PARAMETER Runtime
     The runtime flavor of the runtime to place on the PATH (default: clr, or whatever the alias specifies in the case of use-ing an alias)
 #>
-function kvm-name {
+function dnvm-name {
     param(
         [Parameter(Mandatory=$false, Position=0)]
         [string]$VersionOrAlias,
@@ -1109,9 +1108,9 @@ function kvm-name {
 .SYNOPSIS
     Installs the version manager into your User profile directory
 .PARAMETER SkipUserEnvironmentInstall
-    Set this switch to skip configuring the user-level KRE_HOME and PATH environment variables
+    Set this switch to skip configuring the user-level DNX_HOME and PATH environment variables
 #>
-function kvm-setup {
+function dnvm-setup {
     param(
         [switch]$SkipUserEnvironmentInstall)
 
@@ -1182,7 +1181,7 @@ function kvm-setup {
 
 ### The main "entry point"
 
-# Check for old KRE_HOME values
+# Check for old DNX_HOME values
 if($UnencodedHomes -contains $OldUserHome) {
     _WriteOut -ForegroundColor Yellow "WARNING: Found '$OldUserHome' in your $HomeEnvVar value. This folder has been deprecated."
     if($UnencodedHomes -notcontains $DefaultUserHome) {
@@ -1222,12 +1221,12 @@ if(!$cmd) {
 
 # Check for the command
 if(Get-Command -Name "$CommandPrefix$cmd" -ErrorAction SilentlyContinue) {
-    _WriteDebug "& kvm-$cmd $cmdargs"
-    & "kvm-$cmd" @cmdargs
+    _WriteDebug "& dnvm-$cmd $cmdargs"
+    & "dnvm-$cmd" @cmdargs
 }
 else {
     _WriteOut "Unknown command: '$cmd'"
-    kvm-help
+    dnvm-help
     $Script:ExitCode = $ExitCodes.UnknownCommand
 }
 

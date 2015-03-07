@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 
-namespace HelloK {
+namespace TestApp {
     public class Program {
         private readonly IApplicationEnvironment _env;
         public Program(IApplicationEnvironment env) {

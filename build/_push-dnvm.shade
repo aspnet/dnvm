@@ -1,12 +1,12 @@
 default repo="https://github.com/aspnet/Home"
 default branch="dev"
-default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushkvm")}"
+default workdir="${Path.Combine(Directory.GetCurrentDirectory(), ".pushdnvm")}"
 default author="ASP.NET Push Bot <noemail@noemail>"
 
 default sourceRepoUrl="${Environment.GetEnvironmentVariable("REPO_URL")}"
 
 -// Borrowing commit message style from atom: https://github.com/atom/atom/blob/master/CONTRIBUTING.md#git-commit-messages
-default baseMessage=":arrow_up: kvm"
+default baseMessage=":arrow_up: dnvm"
 
 
 -// Clean up the checkout directory if it's still here from last time
@@ -33,7 +33,7 @@ robocopy-delete dir="${workdir}" if="Directory.Exists(workdir)"
 
     var sourceMessage = String.Empty;
     if(!String.IsNullOrEmpty(commit)) {
-        sourceMessage = "Source: kvm commit " + commit;
+        sourceMessage = "Source: dnvm commit " + commit;
         if(!String.IsNullOrEmpty(sourceRepoUrl)) {
             var ghMatch = Regex.Match(sourceRepoUrl, @"git@github.com:(?<owner>[^/]+)/(?<repo>[^\.]+)(\.git)?");
             if(!ghMatch.Success) {
@@ -83,7 +83,7 @@ git gitCommand='add -A :/' gitFolder='${workdir}'
     p.WaitForExit();
     bool doPush = p.ExitCode == 0;
     if(!doPush) {
-        Log.Info("No changes to kvm detected, so nothing to push.");
+        Log.Info("No changes to dnvm detected, so nothing to push.");
     }
 }
 

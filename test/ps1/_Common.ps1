@@ -1,18 +1,17 @@
 # Constants
-Set-Variable -Option Constant "RuntimePackageName" "kre"
-Set-Variable -Option Constant "RuntimeFriendlyName" "K Runtime"
-Set-Variable -Option Constant "RuntimeShortName" "KRE"
-Set-Variable -Option Constant "RuntimeFolderName" ".k"
-Set-Variable -Option Constant "CommandName" "kvm"
-Set-Variable -Option Constant "VersionManagerName" "K Version Manager"
+Set-Variable -Option Constant "RuntimePackageName" "dnx"
+Set-Variable -Option Constant "RuntimeShortName" "DNX"
+Set-Variable -Option Constant "RuntimeFolderName" ".dnx"
+Set-Variable -Option Constant "CommandName" "dnvm"
+Set-Variable -Option Constant "VersionManagerName" ".NET Version Manager"
 Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
 Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
-Set-Variable -Option Constant "HomeEnvVar" "KRE_HOME"
-Set-Variable -Option Constant "UserHomeEnvVar" "KRE_USER_HOME"
-Set-Variable -Option Constant "FeedEnvVar" "KRE_FEED"
+Set-Variable -Option Constant "HomeEnvVar" "DNX_HOME"
+Set-Variable -Option Constant "UserHomeEnvVar" "DNX_USER_HOME"
+Set-Variable -Option Constant "FeedEnvVar" "DNX_FEED"
 Set-Variable -Option Constant "PackageManagerName" "kpm.cmd"
 Set-Variable -Option Constant "RuntimeExecutableName" "k.cmd"
-Set-Variable -Option Constant "RuntimeHostName" "klr.exe"
+Set-Variable -Option Constant "RuntimeHostName" "dnx.exe"
 
 function Write-Banner {
     param($Message)
@@ -69,7 +68,7 @@ function GetRuntimeName {
     "$RuntimePackageName-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
 }
 
-# Borrowed from kvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)
+# Borrowed from dnvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)
 # Modified slightly to take in a Proxy value so that it can be defined separately from the Proxy parameter
 function Add-Proxy-If-Specified {
 param(

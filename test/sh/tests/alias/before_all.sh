@@ -1,5 +1,5 @@
 source $COMMON_HELPERS
-source $_KVM_PATH
+source $_DNVM_PATH
 
 # Get a runtime to use during these tests
-$_KVM_COMMAND_NAME install "$_TEST_VERSION"
+$_DNVM_COMMAND_NAME install "$_TEST_VERSION"

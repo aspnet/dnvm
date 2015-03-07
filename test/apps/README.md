@@ -1,2 +1,2 @@
 # Test Apps
-Sample K apps for testing KVM installations.
+Sample DNX apps for testing DNVM installations.
