@@ -1,4 +1,4 @@
-use import="Files"
+﻿use import="Files"
 use import="BuildEnv"
 use import="Environment"
 
@@ -15,9 +15,9 @@ default TEST_DIR='${Path.Combine(BASE_DIR, "test")}'
 default Configuration='${GetEnvironmentVariable("Configuration")}'
 
 @{
-  if (string.IsNullOrEmpty(GetEnvironmentVariable("K_BUILD_VERSION")))
+  if (string.IsNullOrEmpty(GetEnvironmentVariable("DNX_BUILD_VERSION")))
   {
-    SetEnvironmentVariable("K_BUILD_VERSION", BuildNumber);
+    SetEnvironmentVariable("DNX_BUILD_VERSION", BuildNumber);
   }
   if (string.IsNullOrEmpty(GetEnvironmentVariable("K_AUTHOR")))
   {
@@ -39,13 +39,13 @@ default DNVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("DNVM_DEPLOY_BR
 
     update-file updateFile='${Path.Combine(TARGET_DIR, "dnvm.ps1")}' @{
         updateText = updateText
-            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("K_BUILD_VERSION"))
+            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("DNX_BUILD_VERSION"))
             .Replace("{{AUTHORS}}", AUTHORS);
     }
 
     update-file updateFile='${Path.Combine(TARGET_DIR, "dnvm.sh")}' @{
         updateText = updateText
-            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("K_BUILD_VERSION"))
+            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("DNX_BUILD_VERSION"))
             .Replace("{{AUTHORS}}", AUTHORS);
     }
 

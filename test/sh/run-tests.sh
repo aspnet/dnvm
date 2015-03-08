@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # Determine my directory
 SCRIPT_DIR=$(dirname $0)
@@ -25,7 +25,7 @@ source $COMMON_HELPERS
 
 export DNX_FEED
 
-# This is a KRE to use for testing various commands. It doesn't matter what version it is
+# This is a DNX to use for testing various commands. It doesn't matter what version it is
 [ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta3-11001"
 [ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='5d428438fb2596d6e553763217ea247c3b1314be'
 [ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$DNX_FEED/package/$_DNVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
