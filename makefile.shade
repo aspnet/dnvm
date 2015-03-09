@@ -1,4 +1,4 @@
-﻿use import="Files"
+use import="Files"
 use import="BuildEnv"
 use import="Environment"
 

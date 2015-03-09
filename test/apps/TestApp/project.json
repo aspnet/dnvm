@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "0.0.1-*",
     "description": "Quick app to exercise a few .NET things",
     "dependencies": {
