@@ -2,8 +2,6 @@
     "version": "0.0.1-*",
     "description": "Quick app to exercise a few .NET things",
     "dependencies": {
-        "Microsoft.Framework.Runtime.Interfaces": { "version": "1.0.0-*", "type": "build" },
-        "Microsoft.Framework.CommandLineUtils": { "version": "1.0.0-*", "type": "build" }
     },
     "commands": {
         "run": "run"
@@ -12,6 +10,7 @@
         "dnx451": { },
         "dnxcore50": {
             "dependencies": {
+                "System.Runtime": "4.0.0-*",
                 "System.Console": "4.0.0-*",
                 "System.Collections": "4.0.10-*",
                 "System.Diagnostics.Process": "4.0.0-*",

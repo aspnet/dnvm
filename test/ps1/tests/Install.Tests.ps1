@@ -103,6 +103,19 @@ Describe "install" -Tag "install" {
         }
     }
 
+    Context "When installing an alias" {
+        __dnvmtest_run install $TestRuntimeVersion -Alias "test_install_alias" | Out-Null
+        $runtimeName = GetRuntimeName "CoreCLR" "x86"
+        $runtimePath = "$UserPath\runtimes\$runtimeName"
+        if(Test-Path $runtimePath) { del -rec -for $runtimePath }
+        $runtimePath | Should Not Exist
+        
+        It "downloads the same version but with the specified runtime" {
+            __dnvmtest_run install "test_install_alias" -r coreclr | Out-Null
+            $runtimePath | Should Exist
+        }
+    }
+
     Context "When installing latest" {
         $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
         It "downloads a runtime" {

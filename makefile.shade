@@ -50,11 +50,11 @@ default DNVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("DNVM_DEPLOY_BR
     }
 
 #run-ps1-tests target='test' if='!IsLinux'
-    @{/*exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'*/}
+    exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
 	 
 
 #run-sh-tests target='test' if='IsLinux'
-    @{/*exec program='/bin/bash' commandline="${Path.Combine(TEST_DIR, "sh", "run-tests.sh")} ${IsTeamCity?"-t ":""}-v" workingdir="${Path.Combine(TEST_DIR, "sh")}"*/}
+    exec program='/bin/bash' commandline="${Path.Combine(TEST_DIR, "sh", "run-tests.sh")} ${IsTeamCity?"-t ":""}-v" workingdir="${Path.Combine(TEST_DIR, "sh")}"
 
 #push-dnvm target='deploy' if='DEPLOY_DNVM == "1" && !String.IsNullOrEmpty(DNVM_DEPLOY_REPO) && !String.IsNullOrEmpty(DNVM_DEPLOY_BRANCH)'
 	push-dnvm repo="${DNVM_DEPLOY_REPO}" branch="${DNVM_DEPLOY_BRANCH}" files="${Path.Combine(TARGET_DIR, "dnvm.cmd")};${Path.Combine(TARGET_DIR, "dnvm.ps1")};${Path.Combine(TARGET_DIR, "dnvm.sh")}" baseMessage=":arrow_up: dnvm.ps1, dnvm.cmd, dnvm.sh"

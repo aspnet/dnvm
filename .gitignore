@@ -4,7 +4,10 @@ testwork/
 .urchin*
 
 # Ignore the folder created when pushing to Home - It should be cleaned up by the task, but sometimes isn't.
-.dotnetsdk/
+.pushdnvm/
+
+# Ignore lock files
+project.lock.json
 
 [Oo]bj/
 [Bb]in/
