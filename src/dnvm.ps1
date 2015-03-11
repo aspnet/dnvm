@@ -1054,13 +1054,18 @@ function dnvm-install {
         }
         elseif ($Runtime -eq "coreclr") {
             if ($NoNative) {
-              _WriteOut "Skipping native image compilation."
+                _WriteOut "Skipping native image compilation."
             }
             else {
-              _WriteOut "Compiling native images for $runtimeFullName to improve startup performance..."
-              Write-Progress -Activity "Installing runtime" "Generating runtime native images" -Id 1
-              Start-Process $CrossGenCommand -Wait -WindowStyle Hidden
-              _WriteOut "Finished native image compilation."
+                _WriteOut "Compiling native images for $runtimeFullName to improve startup performance..."
+                Write-Progress -Activity "Installing runtime" "Generating runtime native images" -Id 1
+                if ($DebugPreference -eq 'SilentlyContinue') {
+                    Start-Process $CrossGenCommand -Wait -WindowStyle Hidden
+                }
+                else {
+                    Start-Process $CrossGenCommand -Wait -NoNewWindow
+                }
+                _WriteOut "Finished native image compilation."
             }
         }
         else {
