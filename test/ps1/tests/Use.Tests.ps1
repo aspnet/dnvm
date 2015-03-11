@@ -94,18 +94,4 @@ Describe "use" -Tag "use" {
             (Get-Command $RuntimeHostName -ErrorAction SilentlyContinue) | Should BeNullOrEmpty
         }
     }
-
-    Context "When use-ing a non-existant version" {
-        It "should throw an error" {
-            __dnvmtest_run use $notRealRuntimeVersion | Out-Null
-            $__dnvmtest_err[0].Exception.Message | Should Be "Cannot find $notRealRuntimeName, do you need to run '$CommandName install $notRealRuntimeVersion'?"
-        }
-    }
-
-    Context "When use-ing a non-existant alias" {
-        It "should throw an error" {
-            __dnvmtest_run use "bogus_alias_that_does_not_exist" | Out-Null
-            $__dnvmtest_err[0].Exception.Message | Should Be "Cannot find $RuntimePackageName-clr-win-x86.bogus_alias_that_does_not_exist, do you need to run '$CommandName install bogus_alias_that_does_not_exist'?"
-        }
-    }
 }

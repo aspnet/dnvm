@@ -70,10 +70,6 @@ Describe "install" -Tag "install" {
         It "returns a non-zero exit code" {
             $__dnvmtest_exit | Should Not Be 0
         }
-
-        It "throws a 404 error" {
-            $__dnvmtest_err[0].Exception.Message | Should Be 'Exception calling "DownloadFile" with "2" argument(s): "The remote server returned an error: (404) Not Found."'
-        }
     }
 
     Context "When no architecture is specified" {
