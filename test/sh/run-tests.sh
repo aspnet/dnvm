@@ -27,7 +27,7 @@ export DNX_FEED
 
 # This is a DNX to use for testing various commands. It doesn't matter what version it is
 [ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta4-11244"
-[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='8c7235198a38430cc9a3da6716b42ab2a6524dfe'
+[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='777a1278ce10bf472a6e76629f9387129699c9e1'
 [ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$DNX_FEED/package/$_DNVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
 [ -z "$_NUPKG_NAME" ]       && export _NUPKG_NAME="$_DNVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
 [ -z "$_NUPKG_FILE" ]       && export _NUPKG_FILE="$TEST_WORK_DIR/${_NUPKG_NAME}.nupkg"
