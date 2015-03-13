@@ -959,7 +959,7 @@ function dnvm-install {
     }
 
     if ($VersionNuPkgOrAlias -eq "latest") {
-		Write-Progress -Activity "Installing runtime" "Determining latest runtime" -Id 1
+        Write-Progress -Activity "Installing runtime" "Determining latest runtime" -Id 1
         $VersionNuPkgOrAlias = Find-Latest $Runtime $Architecture
     }
 
@@ -969,7 +969,7 @@ function dnvm-install {
         if(!(Test-Path $VersionNuPkgOrAlias)) {
             throw "Unable to locate package file: '$VersionNuPkgOrAlias'"
         }
-		Write-Progress -Activity "Installing runtime" "Parsing package file name" -Id 1
+        Write-Progress -Activity "Installing runtime" "Parsing package file name" -Id 1
         $runtimeFullName = [System.IO.Path]::GetFileNameWithoutExtension($VersionNuPkgOrAlias)
         $Architecture = Get-PackageArch $runtimeFullName
         $Runtime = Get-PackageRuntime $runtimeFullName
@@ -1008,12 +1008,12 @@ function dnvm-install {
         New-Item -Type Directory $UnpackFolder | Out-Null
 
         if($IsNuPkg) {
-			Write-Progress -Activity "Installing runtime" "Copying package" -Id 1
+            Write-Progress -Activity "Installing runtime" "Copying package" -Id 1
             _WriteDebug "Copying local nupkg $VersionNuPkgOrAlias to $DownloadFile"
             Copy-Item $VersionNuPkgOrAlias $DownloadFile
         } else {
             # Download the package
-			Write-Progress -Activity "Installing runtime" "Downloading runtime" -Id 1
+            Write-Progress -Activity "Installing runtime" "Downloading runtime" -Id 1
             _WriteDebug "Downloading version $VersionNuPkgOrAlias to $DownloadFile"
             Download-Package $PackageVersion $Architecture $Runtime $DownloadFile -Proxy:$Proxy
         }
@@ -1034,7 +1034,7 @@ function dnvm-install {
             if (-not $NoNative) {
                 if ((Is-Elevated) -or $Ngen) {
                     $runtimeBin = Get-RuntimePath $runtimeFullName
-                    Write-Progress -Activity "Installing runtime" "Generating runtime native images for your machine" -Id 1
+                    Write-Progress -Activity "Installing runtime" "Generating runtime native images" -Id 1
                     Ngen-Library $runtimeBin $Architecture
                 }
                 else {
@@ -1048,7 +1048,7 @@ function dnvm-install {
             }
             else {
               _WriteOut "Compiling native images for $runtimeFullName to improve startup performance..."
-              Write-Progress -Activity "Installing runtime" "Generating runtime native images for your machine" -Id 1
+              Write-Progress -Activity "Installing runtime" "Generating runtime native images" -Id 1
               Start-Process $CrossGenCommand -Wait -WindowStyle Hidden
               _WriteOut "Finished native image compilation."
             }
