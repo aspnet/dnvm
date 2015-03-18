@@ -17,7 +17,7 @@ Describe "alias" -Tag "alias" {
 
         It "writes the alias file" {
             "$UserPath\alias\$testAlias.txt" | Should Exist
-            "$UserPath\alias\$testAlias.txt" | Should ContainExactly $runtimeName
+            cat "$UserPath\alias\$testAlias.txt" | Should Be $runtimeName
         }
     }
 
@@ -26,7 +26,7 @@ Describe "alias" -Tag "alias" {
 
         It "writes the x86/CLR variant to the alias file" {
             "$UserPath\alias\$testDefaultAlias.txt" | Should Exist
-            "$UserPath\alias\$testDefaultAlias.txt" | Should ContainExactly $runtimeName
+            cat "$UserPath\alias\$testDefaultAlias.txt" | Should Be $runtimeName
         }
     }
 
@@ -42,6 +42,15 @@ Describe "alias" -Tag "alias" {
         __dnvmtest_run alias $testAlias | Out-Null
         It "outputs the value of the alias" {
             $__dnvmtest_out.Trim() | Should Be "Alias '$testAlias' is set to '$runtimeName'"
+        }
+    }
+    
+    Context "When aliasing a full package name" {
+        __dnvmtest_run alias "alias_fullname_test" $runtimeName | Out-Null
+
+        It "correctly writes the alias" {
+            "$UserPath\alias\alias_fullname_test.txt" | Should Exist
+            cat "$UserPath\alias\alias_fullname_test.txt" | Should Be $runtimeName
         }
     }
 

@@ -339,7 +339,12 @@ function Write-Alias {
         [Parameter(Mandatory=$false)][string]$Architecture,
         [Parameter(Mandatory=$false)][string]$Runtime)
 
-    $runtimeFullName = Get-RuntimeName $Version $Architecture $Runtime
+    # If the first character is non-numeric, it's a full runtime name
+    if(![Char]::IsDigit($Version[0])) {
+        $runtimeFullName = $Version
+    } else {
+        $runtimeFullName = Get-RuntimeName $Version $Architecture $Runtime
+    }
     $aliasFilePath = Join-Path $AliasesDir "$Name.txt"
     $action = if (Test-Path $aliasFilePath) { "Updating" } else { "Setting" }
     
