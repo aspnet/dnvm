@@ -896,7 +896,7 @@ function dnvm-upgrade {
         [Parameter(Mandatory=$false)]
         [switch]$Ngen)
 
-    dnvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen
+    dnvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen -Persistent:$true
 }
 
 <#
@@ -920,6 +920,8 @@ function dnvm-upgrade {
     Skip generation of native images
 .PARAMETER Ngen
     For CLR flavor only. Generate native images for runtime libraries on Desktop CLR to improve startup time. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
+.PARAMETER Persistent
+    Make the installed runtime useable across all processes run by the current user
 .DESCRIPTION
     A proxy can also be specified by using the 'http_proxy' environment variable
 
@@ -954,7 +956,10 @@ function dnvm-install {
         [switch]$NoNative,
 
         [Parameter(Mandatory=$false)]
-        [switch]$Ngen)
+        [switch]$Ngen,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$Persistent)
 
     if(!$VersionNuPkgOrAlias) {
         _WriteOut "A version, nupkg path, or the string 'latest' must be provided."
@@ -1033,7 +1038,7 @@ function dnvm-install {
         _WriteDebug "Cleaning temporary directory $UnpackFolder"
         Remove-Item $UnpackFolder -Force | Out-Null
 
-        dnvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime
+        dnvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime -Persistent:$Persistent
 
         if ($Runtime -eq "clr") {
             if (-not $NoNative) {
