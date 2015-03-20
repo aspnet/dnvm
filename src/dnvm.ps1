@@ -511,7 +511,7 @@ function Unpack-Package([string]$DownloadFile, [string]$UnpackFolder) {
       try {
           # Shell will not recognize nupkg as a zip and throw, so rename it to zip
           $runtimeZip = [System.IO.Path]::ChangeExtension($DownloadFile, "zip")
-          Rename-Item $runtimeFile $runtimeZip
+          Rename-Item $DownloadFile $runtimeZip
           # Use the shell to uncompress the nupkg
           $shell_app=new-object -com shell.application
           $zip_file = $shell_app.namespace($runtimeZip)
