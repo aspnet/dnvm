@@ -1174,18 +1174,9 @@ function dnvm-name {
 }
 
 
-<#
-.SYNOPSIS
-    Checks if a specified file exists in the destination folder and if not, copies the file
-    to the destination folder. 
-.PARAMETER Filaneme
-    Name of the file to copy
-.PARAMETER SourceFolder
-    Path to the folder containing the source file
-.PARAMETER DestinationFolder
-    Path to the folder into which the source file should be copied
-#>
-function safe-filecopy {
+# Checks if a specified file exists in the destination folder and if not, copies the file
+# to the destination folder. 
+function Safe-Filecopy {
     param(
         [Parameter(Mandatory=$true, Position=0)] $Filename, 
         [Parameter(Mandatory=$true, Position=1)] $SourceFolder,
@@ -1193,29 +1184,27 @@ function safe-filecopy {
 
     # Make sure the destination folder is created if it doesn't already exist.
     if(!(Test-Path $DestinationFolder)) {
-        _WriteOut -NoNewLine "Creating destination folder '$DestinationFolder' ... "
+        _WriteOut "Creating destination folder '$DestinationFolder' ... "
         
         New-Item -Type Directory $Destination | Out-Null
-        
-        _WriteOut "Done" -ForegroundColor "Green"
     }
 
     $sourceFilePath = Join-Path $SourceFolder $Filename
     $destFilePath = Join-Path $DestinationFolder $Filename
 
     if(Test-Path $sourceFilePath) {
-        _WriteOut -NoNewLine "Installing '$Filename' to '$DestinationFolder' ... "
+        _WriteOut "Installing '$Filename' to '$DestinationFolder' ... "
 
         if (Test-Path $destFilePath) {
-            _WriteOut "Skipping: file already exists" -ForegroundColor Yellow
+            _WriteOut "  Skipping: file already exists" -ForegroundColor Yellow
         }
         else {
             Copy-Item $sourceFilePath $destFilePath -Force
-            _WriteOut "Done" -ForegroundColor "Green"
         }
     }
     else {
-        _WriteOut "WARNING: Unable to install: Could not find '$Filename' in '$SourceFolder'. " }
+        _WriteOut "WARNING: Unable to install: Could not find '$Filename' in '$SourceFolder'. " 
+    }
 }
 
 <#
@@ -1237,8 +1226,8 @@ function dnvm-setup {
     $ScriptFolder = Split-Path -Parent $ScriptPath
 
     # Copy script files (if necessary):
-    safe-filecopy "$CommandName.ps1" $ScriptFolder $Destination
-    safe-filecopy "$CommandName.cmd" $ScriptFolder $Destination
+    Safe-Filecopy "$CommandName.ps1" $ScriptFolder $Destination
+    Safe-Filecopy "$CommandName.cmd" $ScriptFolder $Destination
 
     # Configure Environment Variables
     # Also, clean old user home values if present
