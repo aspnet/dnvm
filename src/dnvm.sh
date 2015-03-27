@@ -80,18 +80,22 @@ __dnvm_package_runtime() {
 __dnvm_download() {
     local runtimeFullName="$1"
     local runtimeFolder="$2"
+    local force="$3"
 
     local pkgName=$(__dnvm_package_name "$runtimeFullName")
     local pkgVersion=$(__dnvm_package_version "$runtimeFullName")
     local url="$DNX_FEED/package/$pkgName/$pkgVersion"
     local runtimeFile="$runtimeFolder/$runtimeFullName.nupkg"
 
+    if [ -n "$force" ]; then
+        echo "Forcing download by deleting $runtimeFolder directory"
+        rm -rf "$runtimeFolder"
+    fi
+
     if [ -e "$runtimeFolder" ]; then
         echo "$runtimeFullName already installed."
         return 0
     fi
-
-    echo "Downloading $runtimeFullName from $DNX_FEED"
 
     if ! __dnvm_has "curl"; then
         echo "$_DNVM_COMMAND_NAME needs curl to proceed." >&2;
@@ -100,7 +104,10 @@ __dnvm_download() {
 
     mkdir -p "$runtimeFolder" > /dev/null 2>&1
 
-    local httpResult=$(curl -L -D - "$url" -o "$runtimeFile" 2>/dev/null | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
+    echo "Downloading $runtimeFullName from $DNX_FEED"
+    echo "Download: $url"
+
+    local httpResult=$(curl -L -D - "$url" -o "$runtimeFile" -# | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
     [[ $httpResult == "404" ]] && echo "$runtimeFullName was not found in repository $DNX_FEED" && return 1
     [[ $httpResult != "302" && $httpResult != "200" ]] && echo "HTTP Error $httpResult fetching $runtimeFullName from $DNX_FEED" && return 1
@@ -229,8 +236,8 @@ dnvm()
         ;;
 
         "upgrade" )
-            [ $# -ne 1 ] && __dnvm_help && return
-            $_DNVM_COMMAND_NAME install latest -p
+            shift
+            $_DNVM_COMMAND_NAME install latest -p $1
         ;;
 
         "install" )
@@ -239,6 +246,7 @@ dnvm()
             local persistent=
             local versionOrAlias=
             local alias=
+            local force=
             while [ $# -ne 0 ]
             do
                 if [[ $1 == "-p" || $1 == "-persistent" ]]; then
@@ -246,6 +254,8 @@ dnvm()
                 elif [[ $1 == "-a" || $1 == "-alias" ]]; then
                     local alias=$2
                     shift
+                elif [[ $1 == "-f" || $1 == "-force" ]]; then
+                    local force="-f"
                 elif [[ -n $1 ]]; then
                     [[ -n $versionOrAlias ]] && echo "Invalid option $1" && __dnvm_help && return 1
                     local versionOrAlias=$1
@@ -277,7 +287,7 @@ dnvm()
             else
                 local runtimeFullName="$(__dnvm_requested_version_or_alias $versionOrAlias)"
                 local runtimeFolder="$_DNVM_USER_PACKAGES/$runtimeFullName"
-                __dnvm_download "$runtimeFullName" "$runtimeFolder"
+                __dnvm_download "$runtimeFullName" "$runtimeFolder" "$force"
                 [[ $? == 1 ]] && return 1
                 $_DNVM_COMMAND_NAME use "$versionOrAlias" "$persistent"
                 [[ -n $alias ]] && $_DNVM_COMMAND_NAME alias "$alias" "$versionOrAlias"
