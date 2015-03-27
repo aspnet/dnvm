@@ -13,7 +13,7 @@ _DNVM_VERSION_MANAGER_NAME=".NET Version Manager"
 _DNVM_DEFAULT_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 _DNVM_HOME_VAR_NAME="DNX_HOME"
 
-[ "$_DNVM_BUILDNUMBER" = "{{*" ] && _DNVM_BUILDNUMBER="HEAD"
+[ "$_DNVM_BUILDNUMBER" = {{* ] && _DNVM_BUILDNUMBER="HEAD"
 
 __dnvm_has() {
     type "$1" > /dev/null 2>&1
