@@ -9,8 +9,7 @@ Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
 Set-Variable -Option Constant "HomeEnvVar" "DNX_HOME"
 Set-Variable -Option Constant "UserHomeEnvVar" "DNX_USER_HOME"
 Set-Variable -Option Constant "FeedEnvVar" "DNX_FEED"
-Set-Variable -Option Constant "PackageManagerName" "kpm.cmd"
-Set-Variable -Option Constant "RuntimeExecutableName" "k.cmd"
+Set-Variable -Option Constant "PackageManagerName" "dnu.cmd"
 Set-Variable -Option Constant "RuntimeHostName" "dnx.exe"
 
 function Write-Banner {

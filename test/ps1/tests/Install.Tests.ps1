@@ -34,9 +34,9 @@ function DefineInstallTests($clr, $arch) {
         It "can run the TestApp sample" {
             pushd "$TestAppsDir\TestApp"
             try {
-                "$runtimeRoot\bin\$RuntimeExecutableName" | Should Exist
+                "$runtimeRoot\bin\$RuntimeHostName" | Should Exist
                 
-                $output = & "$runtimeRoot\bin\$RuntimeExecutableName" run
+                $output = & "$runtimeRoot\bin\$RuntimeHostName" . run
                 $LASTEXITCODE | Should Be 0
                 $fullOutput = [String]::Join("`r`n", $output)
                 $output | ForEach-Object { Write-Verbose $_ }
