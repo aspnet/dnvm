@@ -13,7 +13,7 @@ _DNVM_VERSION_MANAGER_NAME=".NET Version Manager"
 _DNVM_DEFAULT_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 _DNVM_HOME_VAR_NAME="DNX_HOME"
 
-[ "$_DNVM_BUILDNUMBER" = {{* ] && _DNVM_BUILDNUMBER="HEAD"
+[[ "$_DNVM_BUILDNUMBER" = {{* ]] && _DNVM_BUILDNUMBER="HEAD"
 
 __dnvm_has() {
     type "$1" > /dev/null 2>&1
@@ -179,47 +179,61 @@ __echo_art(){
     printf "%b" "\e[0m"
 }
 
+__print_color() {
+    local asciiCode=$1
+    local text=$2
+    printf "\e[0;%b%b\e[0m \n" "$asciiCode" "$text"
+}
+
 __dnvm_help() {
     __echo_art
     echo ""
     echo "$_DNVM_VERSION_MANAGER_NAME - Version 1.0.0-$_DNVM_BUILDNUMBER"
-    [ "$_DNVM_AUTHORS" != "{{*" ] && echo "By $_DNVM_AUTHORS"
+    [[ "$_DNVM_AUTHORS" != {{* ]] && echo "By $_DNVM_AUTHORS"
     echo ""
-    echo "USAGE: $_DNVM_COMMAND_NAME <command> [options]"
+    printf "%b" "\e[0;36mUSAGE:\e[33m $_DNVM_COMMAND_NAME <command> [options] \e[0m \n"
     echo ""
-    echo "$_DNVM_COMMAND_NAME upgrade"
-    echo "install latest $_DNVM_RUNTIME_SHORT_NAME from feed"
-    echo "add $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
-    echo "set installed version as default"
+    __print_color "33m" "$_DNVM_COMMAND_NAME upgrade [-f|-force]"
+    echo "  install latest $_DNVM_RUNTIME_SHORT_NAME from feed"
+    echo "  adds $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
+    echo "  set installed version as default"
     echo ""
-    echo "$_DNVM_COMMAND_NAME install <semver>|<alias>|<nupkg>|latest [-a|-alias <alias>] [-p -persistent]"
-    echo "<semver>|<alias>  install requested $_DNVM_RUNTIME_SHORT_NAME from feed"
-    echo "<nupkg>           install requested $_DNVM_RUNTIME_SHORT_NAME from local package on filesystem"
-    echo "latest            install latest version of $_DNVM_RUNTIME_SHORT_NAME from feed"
-    echo "-a|-alias <alias> set alias <alias> for requested $_DNVM_RUNTIME_SHORT_NAME on install"
-    echo "-p -persistent    set installed version as default"
-    echo "add $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
+    echo "  -f|forces         force upgrade. Overwrite existing version of $_DNVM_RUNTIME_SHORT_NAME if already installed"
     echo ""
-    echo "$_DNVM_COMMAND_NAME use <semver>|<alias>|<package>|none [-p -persistent]"
-    echo "<semver>|<alias>|<package>  add $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line   "
-    echo "none                        remove $_DNVM_RUNTIME_SHORT_NAME bin from path of current command line"
-    echo "-p -persistent              set selected version as default"
+    __print_color "33m" "$_DNVM_COMMAND_NAME install <semver>|<alias>|<nupkg>|latest [-a|-alias <alias>] [-p|-persistent] [-f|-force]"
+    echo "  <semver>|<alias>  install requested $_DNVM_RUNTIME_SHORT_NAME from feed"
+    echo "  <nupkg>           install requested $_DNVM_RUNTIME_SHORT_NAME from local package on filesystem"
+    echo "  latest            install latest version of $_DNVM_RUNTIME_SHORT_NAME from feed"
     echo ""
-    echo "$_DNVM_COMMAND_NAME list"
-    echo "list $_DNVM_RUNTIME_SHORT_NAME versions installed "
+    echo "  -a|-alias <alias> set alias <alias> for requested $_DNVM_RUNTIME_SHORT_NAME on install"
+    echo "  -p|-persistent    set installed version as default"
+    echo "  -f|force          force install. Overwrite existing version of $_DNVM_RUNTIME_SHORT_NAME if already installed"
     echo ""
-    echo "$_DNVM_COMMAND_NAME alias"
-    echo "list $_DNVM_RUNTIME_SHORT_NAME aliases which have been defined"
+    echo "  adds $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
     echo ""
-    echo "$_DNVM_COMMAND_NAME alias <alias>"
-    echo "display value of the specified alias"
+    __print_color "33m" "$_DNVM_COMMAND_NAME use <semver>|<alias>|<package>|none [-p -persistent]"
+    echo "  <semver>|<alias>|<package>  add $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line   "
+    echo "  none                        remove $_DNVM_RUNTIME_SHORT_NAME bin from path of current command line"
+    echo "  -p|-persistent              set selected version as default"
     echo ""
-    echo "$_DNVM_COMMAND_NAME alias <alias> <semver>|<alias>|<package>"
-    echo "<alias>                      the name of the alias to set"
-    echo "<semver>|<alias>|<package>   the $_DNVM_RUNTIME_SHORT_NAME version to set the alias to. Alternatively use the version of the specified alias"
+    __print_color "33m" "$_DNVM_COMMAND_NAME list"
+    echo "  list $_DNVM_RUNTIME_SHORT_NAME versions installed "
     echo ""
-    echo "$_DNVM_COMMAND_NAME unalias <alias>"
-    echo "remove the specified alias"
+    __print_color "33m" "$_DNVM_COMMAND_NAME alias"
+    echo "  list $_DNVM_RUNTIME_SHORT_NAME aliases which have been defined"
+    echo ""
+    __print_color "33m" "$_DNVM_COMMAND_NAME alias <alias>"
+    echo "  display value of the specified alias"
+    echo ""
+    __print_color "33m" "$_DNVM_COMMAND_NAME alias <alias> <semver>|<alias>|<package>"
+    echo "  <alias>                      the name of the alias to set"
+    echo "  <semver>|<alias>|<package>   the $_DNVM_RUNTIME_SHORT_NAME version to set the alias to. Alternatively use the version of the specified alias"
+    echo ""
+    __print_color "33m" "$_DNVM_COMMAND_NAME unalias <alias>"
+    echo "  remove the specified alias"
+    echo ""
+    __print_color "33m" "$_DNVM_COMMAND_NAME [help|-h|-help|--help]"
+    echo "  displays this help text."
     echo ""
 }
 
@@ -231,7 +245,7 @@ dnvm()
     fi
 
     case $1 in
-        "help" )
+        "help"|"-h"|"-help"|"--help" )
             __dnvm_help
         ;;
 
