@@ -163,7 +163,17 @@ __dnvm_locate_runtime_bin_from_full_name() {
     [ -e "$_DNVM_USER_PACKAGES/$runtimeFullName/bin" ] && echo "$_DNVM_USER_PACKAGES/$runtimeFullName/bin" && return
 }
 
+__echo_art(){
+    printf "%b" "\e[0;36m"
+    echo "    ___  _  ___   ____  ___"
+    echo "   / _ \/ |/ / | / /  |/  /"
+    echo "  / // /    /| |/ / /|_/ / "
+    echo " /____/_/|_/ |___/_/  /_/  "
+    printf "%b" "\e[0m"
+}
+
 __dnvm_help() {
+    __echo_art
     echo ""
     echo "$_DNVM_VERSION_MANAGER_NAME - Version 1.0.0-$_DNVM_BUILDNUMBER"
     [ "$_DNVM_AUTHORS" != "{{*" ] && echo "By $_DNVM_AUTHORS"
