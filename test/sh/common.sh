@@ -11,8 +11,7 @@ _DNVM_VERSION_MANAGER_NAME=".NET Version Manager"
 _DNVM_DEFAULT_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 _DNVM_HOME_VAR_NAME="DNX_HOME"
 
-_DNVM_RUNTIME_EXEC_NAME="k"
-_DNVM_PACKAGE_MANAGER_NAME="kpm"
+_DNVM_PACKAGE_MANAGER_NAME="dnu"
 _DNVM_RUNTIME_HOST_NAME="dnx"
 
 if [ "$NO_COLOR" != "1" ]; then

@@ -7,11 +7,11 @@ source $_DNVM_PATH
 $_DNVM_COMMAND_NAME install latest
 
 # Test the runtime
-has $_DNVM_RUNTIME_EXEC_NAME || die "$_DNVM_RUNTIME_EXEC_NAME didn't install the runtime :("
+has $_DNVM_RUNTIME_HOST_NAME || die "didn't install the runtime :("
 has $_DNVM_PACKAGE_MANAGER_NAME || die "installed runtime didn't have a package manager?"
 
 pushd "$TEST_APPS_DIR/TestApp"
 $_DNVM_PACKAGE_MANAGER_NAME restore || die "failed to restore packages"
-OUTPUT=$($_DNVM_RUNTIME_EXEC_NAME run || die "failed to run hello application")
+OUTPUT=$($_DNVM_RUNTIME_HOST_NAME . run || die "failed to run hello application")
 echo $OUTPUT | grep 'Runtime is sane!' || die "unexpected output from sample app: $OUTPUT"
 popd
