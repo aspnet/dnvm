@@ -77,7 +77,7 @@ Describe "install" -Tag "install" {
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses x86" {
-            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
+            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed.`r`nAdding $UserPath\runtimes\$runtimeName\bin to process PATH"
         }
     }
 
@@ -86,7 +86,7 @@ Describe "install" -Tag "install" {
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses Desktop CLR" {
-            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
+            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed.`r`nAdding $UserPath\runtimes\$runtimeName\bin to process PATH"
         }
     }
 
@@ -95,7 +95,7 @@ Describe "install" -Tag "install" {
         $runtimeName = GetRuntimeName -clr CLR -arch x86
 
         It "uses x86/Desktop" {
-            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
+            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed.`r`nAdding $UserPath\runtimes\$runtimeName\bin to process PATH"
         }
     }
 
@@ -128,7 +128,7 @@ Describe "install" -Tag "install" {
         $runtimePath = "$UserPath\runtimes\$runtimeName"
         It "ensures the runtime is installed" {
             __dnvmtest_run install $TestRuntimeVersion -arch x86 -r "CLR" | Out-Null
-            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed."
+            $__dnvmtest_out.Trim() | Should Be "'$runtimeName' is already installed.`r`nAdding $UserPath\runtimes\$runtimeName\bin to process PATH"
             $runtimePath | Should Exist
         }
     }

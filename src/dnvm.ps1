@@ -1038,8 +1038,6 @@ function dnvm-install {
         _WriteDebug "Cleaning temporary directory $UnpackFolder"
         Remove-Item $UnpackFolder -Force | Out-Null
 
-        dnvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime -Persistent:$Persistent
-
         if ($Runtime -eq "clr") {
             if (-not $NoNative) {
                 if ((Is-Elevated) -or $Ngen) {
@@ -1072,6 +1070,8 @@ function dnvm-install {
             _WriteOut "Unexpected platform: $Runtime. No optimization would be performed on the package installed."
         }
     }
+
+    dnvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime -Persistent:$Persistent
 
     if($Alias) {
         _WriteDebug "Aliasing installed runtime to '$Alias'"
