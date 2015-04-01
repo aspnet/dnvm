@@ -55,7 +55,7 @@ __dnvm_find_latest() {
     local platform="mono"
 
     if ! __dnvm_has "curl"; then
-        echo -e "${Red}$_DNVM_COMMAND_NAME needs curl to proceed. ${RCol}" >&2;
+       printf "%b\n" "${Red}$_DNVM_COMMAND_NAME needs curl to proceed. ${RCol}" >&2;
         return 1
     fi
 
@@ -104,17 +104,17 @@ __dnvm_download() {
     local runtimeFile="$runtimeFolder/$runtimeFullName.nupkg"
 
     if [ -n "$force" ]; then
-        echo -e "${Yel}Forcing download by deleting $runtimeFolder directory ${RCol}"
+        printf "%b\n" "${Yel}Forcing download by deleting $runtimeFolder directory ${RCol}"
         rm -rf "$runtimeFolder"
     fi
 
     if [ -e "$runtimeFolder" ]; then
-        echo -e "${Red} $runtimeFullName already installed. ${RCol}"
+       printf "%b\n" "${Gre}$runtimeFullName already installed. ${RCol}"
         return 0
     fi
     
     if ! __dnvm_has "curl"; then
-        echo -e "${Red}$_DNVM_COMMAND_NAME needs curl to proceed. ${RCol}" >&2;
+       printf "%b\n" "${Red}$_DNVM_COMMAND_NAME needs curl to proceed. ${RCol}" >&2;
         return 1
     fi
 
@@ -125,7 +125,7 @@ __dnvm_download() {
 
     local httpResult=$(curl -L -D - "$url" -o "$runtimeFile" -# | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
-    [[ $httpResult == "404" ]] && echo -e "${Red}$runtimeFullName was not found in repository $DNX_FEED ${RCol}" && return 1
+    [[ $httpResult == "404" ]] &&printf "%b\n" "${Red}$runtimeFullName was not found in repository $DNX_FEED ${RCol}" && return 1
     [[ $httpResult != "302" && $httpResult != "200" ]] && echo "${Red}HTTP Error $httpResult fetching $runtimeFullName from $DNX_FEED ${RCol}" && return 1
 
     __dnvm_unpack $runtimeFile $runtimeFolder
@@ -187,12 +187,12 @@ __dnvm_locate_runtime_bin_from_full_name() {
 }
 
 __echo_art() {
-    printf "%b" "${Cya}"
+  printf "%b" "${Cya}"
     echo "    ___  _  ___   ____  ___"
     echo "   / _ \/ |/ / | / /  |/  /"
     echo "  / // /    /| |/ / /|_/ / "
     echo " /____/_/|_/ |___/_/  /_/  "
-    printf "%b" "${RCol}"
+   printf "%b" "${RCol}"
 }
 
 __dnvm_help() {
@@ -201,15 +201,15 @@ __dnvm_help() {
     echo "$_DNVM_VERSION_MANAGER_NAME - Version 1.0.0-$_DNVM_BUILDNUMBER"
     [[ "$_DNVM_AUTHORS" != {{* ]] && echo "By $_DNVM_AUTHORS"
     echo ""
-    echo -e "${Cya}USAGE:{Yel} $_DNVM_COMMAND_NAME <command> [options] ${RCol} \n"
+   printf "%b\n" "${Cya}USAGE:${Yel} $_DNVM_COMMAND_NAME <command> [options] ${RCol} \n"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME upgrade [-f|-force] ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME upgrade [-f|-force] ${RCol}"
     echo "  install latest $_DNVM_RUNTIME_SHORT_NAME from feed"
     echo "  adds $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
     echo "  set installed version as default"
     echo "  -f|forces         force upgrade. Overwrite existing version of $_DNVM_RUNTIME_SHORT_NAME if already installed"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME install <semver>|<alias>|<nupkg>|latest [-a|-alias <alias>] [-p|-persistent] [-f|-force] ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME install <semver>|<alias>|<nupkg>|latest [-a|-alias <alias>] [-p|-persistent] [-f|-force] ${RCol}"
     echo "  <semver>|<alias>  install requested $_DNVM_RUNTIME_SHORT_NAME from feed"
     echo "  <nupkg>           install requested $_DNVM_RUNTIME_SHORT_NAME from local package on filesystem"
     echo "  latest            install latest version of $_DNVM_RUNTIME_SHORT_NAME from feed"
@@ -219,28 +219,28 @@ __dnvm_help() {
     echo ""
     echo "  adds $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME use <semver>|<alias>|<package>|none [-p -persistent] ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME use <semver>|<alias>|<package>|none [-p -persistent] ${RCol}"
     echo "  <semver>|<alias>|<package>  add $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line   "
     echo "  none                        remove $_DNVM_RUNTIME_SHORT_NAME bin from path of current command line"
     echo "  -p|-persistent              set selected version as default"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME list ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME list ${RCol}"
     echo "  list $_DNVM_RUNTIME_SHORT_NAME versions installed "
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME alias ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME alias ${RCol}"
     echo "  list $_DNVM_RUNTIME_SHORT_NAME aliases which have been defined"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME alias <alias> ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME alias <alias> ${RCol}"
     echo "  display value of the specified alias"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME alias <alias> <semver>|<alias>|<package> ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME alias <alias> <semver>|<alias>|<package> ${RCol}"
     echo "  <alias>                      the name of the alias to set"
     echo "  <semver>|<alias>|<package>   the $_DNVM_RUNTIME_SHORT_NAME version to set the alias to. Alternatively use the version of the specified alias"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME unalias <alias> ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME unalias <alias> ${RCol}"
     echo "  remove the specified alias"
     echo ""
-    echo -e "${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol}"
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol}"
     echo "  displays this help text."
     echo ""
 }
@@ -251,8 +251,6 @@ dnvm()
         __dnvm_help
         return
     fi
-
-
 
     case $1 in
         "help"|"-h"|"-help"|"--help" )
@@ -288,15 +286,14 @@ dnvm()
             done
 
             if ! __dnvm_has "mono"; then
-                echo -e "${Yel}It appears you don't have Mono available. Remember to get Mono before trying to run $DNVM_RUNTIME_SHORT_NAME application. ${RCol}" >&2;
-                return 1
+               printf "%b\n" "${Yel}It appears you don't have Mono available. Remember to get Mono before trying to run $DNVM_RUNTIME_SHORT_NAME application. ${RCol}" >&2;
             fi
 
             if [[ "$versionOrAlias" == "latest" ]]; then
                 echo "Determining latest version"
                 versionOrAlias=$(__dnvm_find_latest)
                 [[ $? == 1 ]] && echo "Error: Could not find latest version from feed $DNX_FEED" && return 1
-                echo -e "Latest version is ${Cya}$versionOrAlias ${RCol}"
+               printf "%b\n" "Latest version is ${Cya}$versionOrAlias ${RCol}"
             fi
 
             if [[ "$versionOrAlias" == *.nupkg ]]; then
