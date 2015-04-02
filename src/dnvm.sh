@@ -57,7 +57,7 @@ __dnvm_find_latest() {
     local platform="mono"
 
     if ! __dnvm_has "curl"; then
-       printf "%b\n" "${Red}$_DNVM_COMMAND_NAME needs curl to proceed. ${RCol}" >&2;
+        printf "%b\n" "${Red}$_DNVM_COMMAND_NAME needs curl to proceed. ${RCol}" >&2;
         return 1
     fi
 
@@ -96,9 +96,20 @@ __dnvm_package_runtime() {
 }
 
 __dnvm_update_self() {
+    local dnvmFileLocation="$_DNVM_DNVM_DIR/dnvm.sh"
+    if [ ! -e $dnvmFileLocation ]; then
+        local formattedDnvmFileLocation=`(echo $dnvmFileLocation | sed s=$HOME=~=g)`
+        local formattedDnvmHome=`(echo $_DNVM_DNVM_DIR | sed s=$HOME=~=g)`
+        printf "%b\n" "${Red}$formattedDnvmFileLocation doesn't exist. This command assumes you have installed dnvm in the usual location and are trying to update it. If you want to use update-self then dnvm.sh should be sourced from $formattedDnvmHome ${RCol}"
+        return 1
+    fi
     printf "%b\n" "${Cya}Downloading dnvm.sh from $_DNVM_UPDATE_LOCATION ${RCol}"
-    curl -L -D - "$_DNVM_UPDATE_LOCATION" -o "$_DNVM_DNVM_DIR/dnvm.sh" -#
-    source "$_DNVM_DNVM_DIR/dnvm.sh"
+    local httpResult=$(curl -L -D - "$_DNVM_UPDATE_LOCATION" -o "$dnvmFileLocation" -# | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
+
+    [[ $httpResult == "404" ]] &&printf "%b\n" "${Red}404. Unable to download DNVM from $_DNVM_UPDATE_LOCATION ${RCol}" && return 1
+    [[ $httpResult != "302" && $httpResult != "200" ]] && echo "${Red}HTTP Error $httpResult fetching DNVM from $_DNVM_UPDATE_LOCATION ${RCol}" && return 1
+
+    source "$dnvmFileLocation"
 }
 
 __dnvm_download() {
