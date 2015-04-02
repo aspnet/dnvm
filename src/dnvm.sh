@@ -11,6 +11,7 @@ _DNVM_RUNTIME_FOLDER_NAME=".dnx"
 _DNVM_COMMAND_NAME="dnvm"
 _DNVM_VERSION_MANAGER_NAME=".NET Version Manager"
 _DNVM_DEFAULT_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
+_DNVM_UPDATE_LOCATION="https://raw.githubusercontent.com/aspnet/Home/dev/dnvm.sh"
 _DNVM_HOME_VAR_NAME="DNX_HOME"
 
 if [ "$NO_COLOR" != "1" ]; then
@@ -46,6 +47,7 @@ fi
 
 _DNVM_USER_PACKAGES="$DNX_USER_HOME/runtimes"
 _DNVM_ALIAS_DIR="$DNX_USER_HOME/alias"
+_DNVM_DNVM_DIR="$DNX_USER_HOME/dnvm"
 
 if [ -z "$DNX_FEED" ]; then
     DNX_FEED="$_DNVM_DEFAULT_FEED"
@@ -91,6 +93,12 @@ __dnvm_package_name() {
 __dnvm_package_runtime() {
     local runtimeFullName="$1"
     echo "$runtimeFullName" | sed "s/$_DNVM_RUNTIME_PACKAGE_NAME-\([^.-]*\).*/\1/"
+}
+
+__dnvm_update_self() {
+    printf "%b\n" "${Cya}Downloading dnvm.sh from $_DNVM_UPDATE_LOCATION ${RCol}"
+    curl -L -D - "$_DNVM_UPDATE_LOCATION" -o "$_DNVM_DNVM_DIR/dnvm.sh" -#
+    source "$_DNVM_DNVM_DIR/dnvm.sh"
 }
 
 __dnvm_download() {
@@ -243,6 +251,8 @@ __dnvm_help() {
    printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol}"
     echo "  displays this help text."
     echo ""
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME update-self ${RCol}"
+    echo "  updates dnvm itself."
 }
 
 dnvm()
@@ -255,6 +265,10 @@ dnvm()
     case $1 in
         "help"|"-h"|"-help"|"--help" )
             __dnvm_help
+        ;;
+
+        "update-self" )
+            __dnvm_update_self
         ;;
 
         "upgrade" )
