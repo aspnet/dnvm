@@ -1,5 +1,12 @@
 #Requires -Version 3
 
+if (Test-Path env:WEBSITE_SITE_NAME)
+{
+    # This script is run in Azure Web Sites
+    # Disable progress indicator
+    $ProgressPreference = "SilentlyContinue"
+}
+
 $ScriptPath = $MyInvocation.MyCommand.Definition
 
 $Script:UseWriteHost = $true
