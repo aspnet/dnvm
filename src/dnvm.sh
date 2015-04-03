@@ -96,6 +96,14 @@ __dnvm_package_runtime() {
     echo "$runtimeFullName" | sed "s/$_DNVM_RUNTIME_PACKAGE_NAME-\([^.-]*\).*/\1/"
 }
 
+__dnvm_package_arch() {
+    local runtimeFullName="$1"
+    if [[ "$runtimeFullName" =~ $_DNVM_RUNTIME_PACKAGE_NAME-[^-.]*-[^-.]*-[^-.]*\..* ]];
+    then
+        echo "$runtimeFullName" | sed "s/$_DNVM_RUNTIME_PACKAGE_NAME-[^-.]*-[^-.]*-\([^-.]*\)\..*/\1/"
+    fi
+}
+
 __dnvm_update_self() {
     local dnvmFileLocation="$_DNVM_DNVM_DIR/dnvm.sh"
     if [ ! -e $dnvmFileLocation ]; then
@@ -190,7 +198,7 @@ __dnvm_requested_version_or_alias() {
            local runtimeFullName=$(cat "$_DNVM_ALIAS_DIR/$versionOrAlias.alias")
            local pkgName=$(echo $runtimeFullName | sed "s/\([^.]*\).*/\1/")
            local pkgVersion=$(echo $runtimeFullName | sed "s/[^.]*.\(.*\)/\1/")
-           local pkgPlatform=$(echo "$pkgName" | sed "s/$_DNVM_RUNTIME_PACKAGE_NAME-\([^.-]*\).*/\1/")
+           local pkgPlatform=$(echo "$pkgName" | sed "s/$_DNVM_RUNTIME_PACKAGE_NAME-\([^.]*\).*/\1/")
         else
             local pkgVersion=$versionOrAlias
             local pkgPlatform="mono"
@@ -441,7 +449,7 @@ dnvm()
 
             if [[ $# == 1 ]]; then
                 echo ""
-                local format="%-20s %s\n"
+                local format="%-25s %s\n"
                 printf "$format" "Alias" "Name"
                 printf "$format" "-----" "----"
                 if [ -d "$_DNVM_ALIAS_DIR" ]; then
@@ -511,29 +519,29 @@ dnvm()
                 done
             fi
 
-            local formatString="%-6s %-20s %-7s %-20s %s\n"
-            printf "$formatString" "Active" "Version" "Runtime" "Location" "Alias"
-            printf "$formatString" "------" "-------" "-------" "--------" "-----"
+            local formatString="%-6s %-20s %-7s %-4s %-20s %s\n"
+            printf "$formatString" "Active" "Version" "Runtime" "Arch" "Location" "Alias"
+            printf "$formatString" "------" "-------" "-------" "----" "--------" "-----"
 
             local formattedHome=`(echo $_DNVM_USER_PACKAGES | sed s=$HOME=~=g)`
             for f in $(find $_DNVM_USER_PACKAGES -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \;); do
                 local active=""
                 [[ $PATH == *"$_DNVM_USER_PACKAGES/$f/bin"* ]] && local active="  *"
-                local pkgName=$(__dnvm_package_runtime "$f")
+                local pkgRuntime=$(__dnvm_package_runtime "$f")
+                local pkgName=$(__dnvm_package_name "$f")
                 local pkgVersion=$(__dnvm_package_version "$f")
+                local pkgArch=$(__dnvm_package_arch "$f")
 
                 local alias=""
                 local delim=""
                 for i in "${arr[@]}"; do
-                    temp="$_DNVM_RUNTIME_PACKAGE_NAME-$pkgName.$pkgVersion"
-                    temp2="$_DNVM_RUNTIME_PACKAGE_NAME-$pkgName-x86.$pkgVersion"
-                    if [[ ${i#*/} == $temp || ${i#*/} == $temp2 ]]; then
+                    if [[ ${i#*/} == "$pkgName.$pkgVersion" ]]; then
                         alias+="$delim${i%/*}"
                         delim=", "
                     fi
                 done
 
-                printf "$formatString" "$active" "$pkgVersion" "$pkgName" "$formattedHome" "$alias"
+                printf "$formatString" "$active" "$pkgVersion" "$pkgRuntime" "$pkgArch" "$formattedHome" "$alias"
                 [[ $# == 2 ]] && echo "" &&  return 0
             done
 
