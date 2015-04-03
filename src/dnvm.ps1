@@ -97,6 +97,8 @@ Set-Variable -Option Constant "HomeEnvVar" "DNX_HOME"
 
 Set-Variable -Option Constant "RuntimeShortFriendlyName" "DNX"
 
+Set-Variable -Option Constant "DNVMUpgradeUrl" "https://raw.githubusercontent.com/aspnet/Home/dev/dnvm.ps1"
+
 Set-Variable -Option Constant "AsciiArt" @"
    ___  _  ___   ____  ___
   / _ \/ |/ / | / /  |/  /
@@ -650,6 +652,24 @@ function Is-Elevated() {
 }
 
 ### Commands
+
+<#
+.SYNOPSIS
+    Updates DNVM to the latest version.
+.PARAMETER Proxy
+    Use the given address as a proxy when accessing remote server
+#>
+function dnvm-update-self {
+    param(
+        [Parameter(Mandatory=$false)] 
+        [string]$Proxy)
+
+    _WriteOut "Updating $CommandName from $DNVMUpgradeUrl"
+    $wc = New-Object System.Net.WebClient
+    Apply-Proxy $wc -Proxy:$Proxy
+    $dnvmFile = Join-Path $PSScriptRoot "dnvm.ps1"
+    $wc.DownloadFile($DNVMUpgradeUrl, $dnvmFile)
+}
 
 <#
 .SYNOPSIS
