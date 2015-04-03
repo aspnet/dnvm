@@ -107,7 +107,7 @@ Describe "install" -Tag "install" {
         $runtimePath | Should Not Exist
         
         It "downloads the same version but with the specified runtime" {
-            __dnvmtest_run install "test_install_alias" -r coreclr | Out-Null
+            __dnvmtest_run install "test_install_alias" -r coreclr -nonative | Out-Null
             $runtimePath | Should Exist
         }
     }

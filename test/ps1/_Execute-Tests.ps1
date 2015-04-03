@@ -81,14 +81,14 @@ $env:DNX_USER_HOME=$UserPath
 mkdir $UserPath | Out-Null
 
 # Helper function to run dnvm and capture stuff.
-$Global:__dnvmtest_out = $null
-$Global:__dnvmtest_exit = $null
 function __dnvmtest_run {
     $oldWP = $WarningPreference
     $WarningPreference = "SilentlyContinue"
 
+    
+    $Global:__dnvmtest_out = $null
     $Global:__dnvmtest_exit = $null
-    $__TeeTo = "__dnvmtest_out"
+    $__TestWriteTo = "__dnvmtest_out"
     try {
         & $CommandPath @args
         $Global:__dnvmtest_exit = $LASTEXITCODE
