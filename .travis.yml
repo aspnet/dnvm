@@ -1,4 +1,8 @@
 language: csharp
 sudo: false
+addons:
+  apt:
+    packages:
+    - zsh
 script:
   - ./build.sh verify
