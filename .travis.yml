@@ -5,4 +5,4 @@ addons:
     packages:
     - zsh
 script:
-  - ./build.sh --quiet verify
+  - ./build.sh verify
