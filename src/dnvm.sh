@@ -194,6 +194,9 @@ __dnvm_unpack() {
     #Set shell commands as executable
     find "$runtimeFolder/bin/" -type f \
         -exec sh -c "head -c 11 {} | grep '/bin/bash' > /dev/null"  \; -print | xargs chmod 775
+
+    #Set dnx to be executable
+    chmod 775 "$runtimeFolder/bin/dnx"
 }
 
 __dnvm_requested_version_or_alias() {
