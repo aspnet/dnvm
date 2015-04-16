@@ -84,7 +84,8 @@ Set-Variable -Option Constant "CommandFriendlyName" ".NET Version Manager"
 Set-Variable -Option Constant "DefaultUserDirectoryName" ".dnx"
 Set-Variable -Option Constant "OldUserDirectoryNames" @(".kre", ".k")
 Set-Variable -Option Constant "RuntimePackageName" "dnx"
-Set-Variable -Option Constant "DefaultFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
+Set-Variable -Option Constant "DefaultFeed" "https://www.nuget.org/api/v2"
+Set-Variable -Option Constant "DefaultUnstableFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
 Set-Variable -Option Constant "CrossGenCommand" "k-crossgen"
 Set-Variable -Option Constant "CommandPrefix" "dnvm-"
 Set-Variable -Option Constant "DefaultArchitecture" "x86"
@@ -147,6 +148,7 @@ $DeprecatedCommands = @("unalias")
 $RuntimeHomes = $env:DNX_HOME
 $UserHome = $env:DNX_USER_HOME
 $ActiveFeed = $env:DNX_FEED
+$ActiveUnstableFeed = $env:DNX_UNSTABLE_FEED
 
 # Default Exit Code
 $Script:ExitCode = $ExitCodes.Success
@@ -171,6 +173,10 @@ if($CmdPathFile) {
 
 if(!$ActiveFeed) {
     $ActiveFeed = $DefaultFeed
+}
+
+if(!$ActiveUnstableFeed) {
+    $ActiveUnstableFeed = $DefaultUnstableFeed
 }
 
 # Determine where runtimes can exist (RuntimeHomes)
@@ -443,13 +449,12 @@ function Find-Latest {
         [string]$Feed,
         [string]$Proxy
     )
-    if(!$Feed) { $Feed = $ActiveFeed }
 
+    if(!$Feed) { $Feed = $ActiveFeed }
     _WriteOut "Determining latest version"
 
     $RuntimeId = Get-RuntimeId -Architecture:"$architecture" -Runtime:"$runtime"
     $url = "$Feed/GetUpdates()?packageIds=%27$RuntimeId%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
-
     # NOTE: DO NOT use Invoke-WebRequest. It requires PowerShell 4.0!
 
     $wc = New-Object System.Net.WebClient
@@ -464,9 +469,11 @@ function Find-Latest {
 
     $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
 
-    if (![String]::IsNullOrWhiteSpace($version)) {
+    if($version) {
         _WriteDebug "Found latest version: $version"
         $version
+    } else {
+        throw "There are no runtimes matching the name $RuntimeId on feed $feed."
     }
 }
 
@@ -928,6 +935,8 @@ function dnvm-unalias {
     Skip generation of native images
 .PARAMETER Ngen
     For CLR flavor only. Generate native images for runtime libraries on Desktop CLR to improve startup time. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
+.PARAMETER Unstable
+    Upgrade from our unstable dev feed. This will give you the latest development version of the runtime. 
 #>
 function dnvm-upgrade {
     param(
@@ -956,9 +965,12 @@ function dnvm-upgrade {
         [switch]$NoNative,
 
         [Parameter(Mandatory=$false)]
-        [switch]$Ngen)
+        [switch]$Ngen,
 
-    dnvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen -Persistent:$true
+        [Parameter(Mandatory=$false)]
+        [switch]$Unstable)
+
+    dnvm-install "latest" -Alias:$Alias -Architecture:$Architecture -Runtime:$Runtime -Force:$Force -Proxy:$Proxy -NoNative:$NoNative -Ngen:$Ngen -Unstable:$Unstable -Persistent:$true
 }
 
 <#
@@ -984,9 +996,10 @@ function dnvm-upgrade {
     For CLR flavor only. Generate native images for runtime libraries on Desktop CLR to improve startup time. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
 .PARAMETER Persistent
     Make the installed runtime useable across all processes run by the current user
+.PARAMETER Unstable
+    Upgrade from our unstable dev feed. This will give you the latest development version of the runtime.
 .DESCRIPTION
     A proxy can also be specified by using the 'http_proxy' environment variable
-
 #>
 function dnvm-install {
     param(
@@ -1021,7 +1034,15 @@ function dnvm-install {
         [switch]$Ngen,
 
         [Parameter(Mandatory=$false)]
-        [switch]$Persistent)
+        [switch]$Persistent,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$Unstable)
+
+    $selectedFeed = $ActiveFeed
+    if($Unstable) {
+        $selectedFeed = $ActiveUnstableFeed
+    }
 
     if(!$VersionNuPkgOrAlias) {
         _WriteOut "A version, nupkg path, or the string 'latest' must be provided."
@@ -1032,7 +1053,7 @@ function dnvm-install {
 
     if ($VersionNuPkgOrAlias -eq "latest") {
         Write-Progress -Activity "Installing runtime" "Determining latest runtime" -Id 1
-        $VersionNuPkgOrAlias = Find-Latest $Runtime $Architecture
+        $VersionNuPkgOrAlias = Find-Latest $Runtime $Architecture -Feed:$selectedFeed
     }
 
     $IsNuPkg = $VersionNuPkgOrAlias.EndsWith(".nupkg")
@@ -1088,7 +1109,8 @@ function dnvm-install {
             # Download the package
             Write-Progress -Activity "Installing runtime" "Downloading runtime" -Id 1
             _WriteDebug "Downloading version $VersionNuPkgOrAlias to $DownloadFile"
-            Download-Package $PackageVersion $Architecture $Runtime $DownloadFile -Proxy:$Proxy
+
+            Download-Package $PackageVersion $Architecture $Runtime $DownloadFile -Proxy:$Proxy -Feed:$selectedFeed
         }
 
         Write-Progress -Activity "Installing runtime" "Unpacking runtime" -Id 1
@@ -1382,7 +1404,7 @@ try {
         $Script:ExitCode = $ExitCodes.UnknownCommand
     }
 } catch {
-    Write-Error $_
+    throw
     if(!$Script:ExitCode) { $Script:ExitCode = $ExitCodes.OtherError }
 }
 
