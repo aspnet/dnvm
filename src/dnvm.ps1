@@ -129,6 +129,8 @@ if(!$ColorScheme) {
         "Help_Optional"=[ConsoleColor]::Gray
         "Help_Command"=[ConsoleColor]::DarkYellow
         "Help_Executable"=[ConsoleColor]::DarkYellow
+        "Feed_Name"=[ConsoleColor]::Cyan
+        "Warning" = [ConsoleColor]::Yellow
     }
 }
 
@@ -169,14 +171,6 @@ if($CmdPathFile) {
         Remove-Item $CmdPathFile -Force
     }
     _WriteDebug "Using CMD PATH file: $CmdPathFile"
-}
-
-if(!$ActiveFeed) {
-    $ActiveFeed = $DefaultFeed
-}
-
-if(!$ActiveUnstableFeed) {
-    $ActiveUnstableFeed = $DefaultUnstableFeed
 }
 
 # Determine where runtimes can exist (RuntimeHomes)
@@ -281,11 +275,32 @@ function Write-Usage {
     if(!$Authors.StartsWith("{{")) {
         _WriteOut "By $Authors"
     }
-    _WriteOut
     _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Header "usage:"
     _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Executable " $CommandName"
     _WriteOut -NoNewLine -ForegroundColor $ColorScheme.Help_Command " <command>"
     _WriteOut -ForegroundColor $ColorScheme.Help_Argument " [<arguments...>]"
+}
+
+function Write-Feeds {
+    _WriteOut
+    _WriteOut -ForegroundColor $ColorScheme.Help_Header "Current feed settings:"
+    _WriteOut -NoNewline -ForegroundColor $ColorScheme.Feed_Name "Default Stable: "
+    _WriteOut "$DefaultFeed"
+    _WriteOut -NoNewline -ForegroundColor $ColorScheme.Feed_Name "Default Unstable: "
+    _WriteOut "$DefaultUnstableFeed"
+    _WriteOut -NoNewline -ForegroundColor $ColorScheme.Feed_Name "Current Stable Override: "
+    if($ActiveFeed) {
+        _WriteOut "$ActiveFeed"
+    } else {
+        _WriteOut "<none>"
+    }
+    _WriteOut -NoNewline -ForegroundColor $ColorScheme.Feed_Name "Current Unstable Override: "
+    if($ActiveUnstableFeed) {
+        _WriteOut "$ActiveUnstableFeed"
+    } else {
+        _WriteOut "<none>"
+    }
+
 }
 
 function Get-RuntimeAlias {
@@ -446,11 +461,11 @@ function Find-Latest {
     param(
         [string]$runtime = "",
         [string]$architecture = "",
+        [Parameter(Mandatory=$true)]
         [string]$Feed,
         [string]$Proxy
     )
 
-    if(!$Feed) { $Feed = $ActiveFeed }
     _WriteOut "Determining latest version"
 
     $RuntimeId = Get-RuntimeId -Architecture:"$architecture" -Runtime:"$runtime"
@@ -503,11 +518,10 @@ function Download-Package(
     [string]$Architecture,
     [string]$Runtime,
     [string]$DestinationFile,
+    [Parameter(Mandatory=$true)]
     [string]$Feed,
     [string]$Proxy) {
 
-    if(!$Feed) { $Feed = $ActiveFeed }
-    
     $url = "$Feed/package/" + (Get-RuntimeId $Architecture $Runtime) + "/" + $Version
     
     _WriteOut "Downloading $runtimeFullName from $feed"
@@ -538,8 +552,12 @@ function Download-Package(
         }
       }
 
-      if($Global:downloadData.Error){
-        throw "Unable to download package: {0}" -f $Global:downloadData.Error.Message
+      if($Global:downloadData.Error) {
+        if($Global:downloadData.Error.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound){
+            throw "The server returned a 404 (NotFound). This is most likely caused by the feed not having the version that you typed. Check that you typed the right version and try again. Other possible causes are the feed doesn't have a $RuntimeShortFriendlyName of the right name format or some other error caused a 404 on the server."
+        } else {
+            throw "Unable to download package: {0}" -f $Global:downloadData.Error.Message
+        }
       }
 
       Write-Progress -Activity ("Downloading $RuntimeShortFriendlyName from $url") -Id 2 -ParentId 1 -Completed
@@ -810,6 +828,7 @@ function dnvm-help {
         }
     } else {
         Write-Usage
+        Write-Feeds
         _WriteOut
         _WriteOut -ForegroundColor $ColorScheme.Help_Header "commands: "
         Get-Command "$CommandPrefix*" | 
@@ -1039,10 +1058,23 @@ function dnvm-install {
         [Parameter(Mandatory=$false)]
         [switch]$Unstable)
 
-    $selectedFeed = $ActiveFeed
+    $selectedFeed = ""
+
     if($Unstable) {
         $selectedFeed = $ActiveUnstableFeed
-    }
+        if(!$selectedFeed) {
+            $selectedFeed = $DefaultUnstableFeed
+        } else {
+            _WriteOut -ForegroundColor $ColorScheme.Warning "Default unstable feed ($DefaultUnstableFeed) is being overridden by the value of the DNX_UNSTABLE_FEED environment variable ($ActiveUnstableFeed)"
+        }
+    } else {
+        $selectedFeed = $ActiveFeed
+        if(!$selectedFeed) {
+            $selectedFeed = $DefaultFeed
+        } else {
+            _WriteOut -ForegroundColor $ColorScheme.Warning "Default stable feed ($DefaultFeed) is being overridden by the value of the DNX_FEED environment variable ($ActiveFeed)"
+        }   
+    }    
 
     if(!$VersionNuPkgOrAlias) {
         _WriteOut "A version, nupkg path, or the string 'latest' must be provided."

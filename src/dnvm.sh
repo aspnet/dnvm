@@ -384,14 +384,14 @@ dnvm()
                 if [ -z "$DNX_ACTIVE_FEED" ]; then
                     DNX_ACTIVE_FEED="$_DNVM_DEFAULT_FEED"
                 else
-                    printf "%b\n" "${Yel}Default stable feed ($_DNVM_DEFAULT_FEED) is being overwritten by the value of the DNX_FEED variable ($DNX_FEED). ${RCol}"
+                    printf "%b\n" "${Yel}Default stable feed ($_DNVM_DEFAULT_FEED) is being overridden by the value of the DNX_FEED variable ($DNX_FEED). ${RCol}"
                 fi
             else
                 DNX_ACTIVE_FEED="$DNX_UNSTABLE_FEED"
                 if [ -z "$DNX_ACTIVE_FEED" ]; then
                     DNX_ACTIVE_FEED="$_DNVM_DEFAULT_UNSTABLE_FEED"
                 else
-                    printf "%b\n" "${Yel}Default unstable feed ($_DNVM_DEFAULT_UNSTABLE_FEED) is being overwritten by the value of the DNX_UNSTABLE_FEED variable ($DNX_UNSTABLE_FEED). ${RCol}"
+                    printf "%b\n" "${Yel}Default unstable feed ($_DNVM_DEFAULT_UNSTABLE_FEED) is being overridden by the value of the DNX_UNSTABLE_FEED variable ($DNX_UNSTABLE_FEED). ${RCol}"
                 fi
             fi
 
