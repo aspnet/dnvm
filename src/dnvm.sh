@@ -261,14 +261,22 @@ __dnvm_description() {
    printf "%b\n" "${Yel}Current feed settings:${RCol}"
    printf "%b\n" "${Cya}Default Stable:${Yel} $_DNVM_DEFAULT_FEED"
    printf "%b\n" "${Cya}Default Unstable:${Yel} $_DNVM_DEFAULT_UNSTABLE_FEED"
-   printf "%b\n" "${Cya}Current Stable Override:${Yel} $DNX_FEED"
-   printf "%b\n" "${Cya}Current Unstable Override:${Yel} $DNX_UNSTABLE_FEED${RCol}"
+   
+   local dnxStableOverride="<none>"
+   [[ -n $DNX_FEED ]] && dnxStableOverride="$DNX_FEED"
+
+   printf "%b\n" "${Cya}Current Stable Override:${Yel} $dnxStableOverride"
+   
+   local dnxUnstableOverride="<none>"
+   [[ -n $DNX_UNSTABLE_FEED ]] && dnxUnstableOverride="$DNX_UNSTABLE_FEED"
+    
+   printf "%b\n" "${Cya}Current Unstable Override:${Yel} $dnxUnstableOverride${RCol}"
     echo ""
 
 }
 
 __dnvm_help() {
-    __dnvm_description
+    UNSTABLE___dnvm_description
    printf "%b\n" "${Cya}USAGE:${Yel} $_DNVM_COMMAND_NAME <command> [options] ${RCol}"
     echo ""
    printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME upgrade [-f|-force] [-u|-unstable] ${RCol}"
