@@ -162,7 +162,11 @@ __dnvm_download() {
 
     local httpResult=$(curl -L -D - "$url" -o "$runtimeFile" -# | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
-    [[ $httpResult == "404" ]] &&printf "%b\n" "${Red}$runtimeFullName was not found in repository $DNX_ACTIVE_FEED ${RCol}" && return 1
+    if [[ $httpResult == "404" ]]; then
+        printf "%b\n" "${Red}$runtimeFullName was not found in repository $DNX_ACTIVE_FEED ${RCol}"
+        printf "%b\n" "${Cya}This is most likely caused by the feed not having the version that you typed. Check that you typed the right version and try again. Other possible causes are the feed doesn't have a $DNVM_RUNTIME_SHORT_NAME of the right name format or some other error caused a 404 on the server.${RCol}"
+        return 1
+    fi
     [[ $httpResult != "302" && $httpResult != "200" ]] && echo "${Red}HTTP Error $httpResult fetching $runtimeFullName from $DNX_ACTIVE_FEED ${RCol}" && return 1
 
     __dnvm_unpack $runtimeFile $runtimeFolder
