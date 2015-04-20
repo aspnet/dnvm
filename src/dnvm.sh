@@ -346,7 +346,7 @@ dnvm()
     if [ $# -lt 1 ]; then
         __dnvm_description
 
-        printf "%b\n" "Use ${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol} to displays help text."
+        printf "%b\n" "Use ${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol} to display help text."
         echo ""
         return
     fi
