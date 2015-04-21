@@ -433,7 +433,7 @@ dnvm()
                 if [ -e "$runtimeFolder" ]; then
                   echo "$runtimeFullName already installed"
                 else
-                  mkdir "$runtimeFolder" > /dev/null 2>&1
+                  mkdir -p "$runtimeFolder" > /dev/null 2>&1
                   cp -a "$versionOrAlias" "$runtimeFile"
                   __dnvm_unpack "$runtimeFile" "$runtimeFolder"
                   [[ $? == 1 ]] && return 1
