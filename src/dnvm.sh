@@ -469,8 +469,7 @@ dnvm()
                     PATH=$(__dnvm_prepend_path "$PATH" "$runtimeBin")
 
                     if [[ -n $persistent ]]; then
-                        local runtimeVersion=$(__dnvm_package_version "$runtimeFullName")
-                        $_DNVM_COMMAND_NAME alias default "$runtimeVersion"
+                        $_DNVM_COMMAND_NAME alias default "$runtimeFullName"
                     fi
                 ;;
             esac
