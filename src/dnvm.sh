@@ -587,9 +587,16 @@ dnvm()
                 echo ""
                 return
             fi
-
             shift
             local name="$1"
+
+            if [[ $# == 1 ]]; then
+                [[ ! -e "$_DNVM_ALIAS_DIR/$name.alias" ]] && echo "There is no alias called '$name'" && return
+                cat "$_DNVM_ALIAS_DIR/$name.alias"
+                echo ""
+                return
+            fi
+
             shift
             local versionOrAlias="$1"
             shift
@@ -604,13 +611,6 @@ dnvm()
                     fi
                     shift
              done
-           
-            if [[ $# == 2 ]]; then
-                [[ ! -e "$_DNVM_ALIAS_DIR/$name.alias" ]] && echo "There is no alias called '$name'" && return
-                cat "$_DNVM_ALIAS_DIR/$name.alias"
-                echo ""
-                return
-            fi
 
             local runtimeFullName=$(__dnvm_requested_version_or_alias "$versionOrAlias" "$runtime" "$arch")
 
