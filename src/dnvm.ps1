@@ -1148,12 +1148,15 @@ function dnvm-install {
         Write-Progress -Activity "Installing runtime" "Unpacking runtime" -Id 1
         Unpack-Package $DownloadFile $UnpackFolder
 
-        New-Item -Type Directory $RuntimeFolder -Force | Out-Null
-        _WriteOut "Installing to $RuntimeFolder"
-        _WriteDebug "Moving package contents to $RuntimeFolder"
-        Move-Item "$UnpackFolder\*" $RuntimeFolder
-        _WriteDebug "Cleaning temporary directory $UnpackFolder"
-        Remove-Item $UnpackFolder -Force | Out-Null
+        if(Test-Path $RuntimeFolder) {
+            # Ensure the runtime hasn't been installed in the time it took to download the package.
+            _WriteOut "'$runtimeFullName' is already installed."
+        }
+        else {
+            _WriteOut "Installing to $RuntimeFolder"
+            _WriteDebug "Moving package contents to $RuntimeFolder"
+            Move-Item $UnpackFolder $RuntimeFolder
+        }
 
         dnvm-use $PackageVersion -Architecture:$Architecture -Runtime:$Runtime -Persistent:$Persistent
 
