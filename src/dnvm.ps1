@@ -341,8 +341,8 @@ function Get-RuntimeName(
     if(Test-Path $aliasPath) {
         $BaseName = Get-Content $aliasPath
 
-        $Architecture = GetArch $Architecture (Get-PackageArch $BaseName)
-        $Runtime = GetRuntime $Runtime (Get-PackageArch $BaseName)
+        $Architecture = Get-PackageArch $BaseName
+        $Runtime = Get-PackageRuntime $BaseName
         $Version = Get-PackageVersion $BaseName
     }
     
