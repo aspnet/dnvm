@@ -120,6 +120,13 @@ Describe "install" -Tag "install" {
         # TODO: Check that it actually installed the latest?
     }
 
+    Context "When installing latest linux package" {
+        $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
+        It "downloads a runtime" {
+            __dnvmtest_run install latest -arch x86 -r CLR -OS Linux | Out-Null
+        }
+    }
+
     Context "When installing an already-installed runtime" {
         # Clear active runtime
         __dnvmtest_run use none | Out-Null
