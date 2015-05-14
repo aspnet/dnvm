@@ -94,6 +94,7 @@ Set-Variable -Option Constant "CommandPrefix" "dnvm-"
 Set-Variable -Option Constant "DefaultArchitecture" "x86"
 Set-Variable -Option Constant "DefaultRuntime" "clr"
 Set-Variable -Option Constant "AliasExtension" ".txt"
+Set-Variable -Option Constant "DefaultOperatingSystem" "win"
 
 # These are intentionally using "%" syntax. The environment variables are expanded whenever the value is used.
 Set-Variable -Option Constant "OldUserHomes" @("%USERPROFILE%\.kre", "%USERPROFILE%\.k")
@@ -912,6 +913,10 @@ function dnvm-list {
         [Parameter(Mandatory=$false)][switch]$Detailed)
     $aliases = Get-RuntimeAlias
 
+    if(-not $PassThru) {
+        Check-Runtimes
+    }
+
     $items = @()
     $RuntimeHomes | ForEach-Object {
         _WriteDebug "Scanning $_ for runtimes..."
@@ -923,15 +928,19 @@ function dnvm-list {
     if($PassThru) {
         $items
     } else {
-        #TODO: Probably a better way to do this.
-        if($Detailed) {
-            $items | 
-                Sort-Object Version, Runtime, Architecture, OperatingSystem, Alias | 
-                Format-Table -AutoSize -Property @{name="Active";expression={if($_.Active) { "*" } else { "" }};alignment="center"}, "Version", "Runtime", "Architecture", "OperatingSystem", "Alias", "Location"
+        if($items) {
+            #TODO: Probably a better way to do this.
+            if($Detailed) {
+                $items | 
+                    Sort-Object Version, Runtime, Architecture, OperatingSystem, Alias | 
+                    Format-Table -AutoSize -Property @{name="Active";expression={if($_.Active) { "*" } else { "" }};alignment="center"}, "Version", "Runtime", "Architecture", "OperatingSystem", "Alias", "Location"
+            } else {
+                $items | 
+                    Sort-Object Version, Runtime, Architecture, OperatingSystem, Alias | 
+                    Format-Table -AutoSize -Property @{name="Active";expression={if($_.Active) { "*" } else { "" }};alignment="center"}, "Version", "Runtime", "Architecture", "OperatingSystem", "Alias"
+            }
         } else {
-            $items | 
-                Sort-Object Version, Runtime, Architecture, OperatingSystem, Alias | 
-                Format-Table -AutoSize -Property @{name="Active";expression={if($_.Active) { "*" } else { "" }};alignment="center"}, "Version", "Runtime", "Architecture", "OperatingSystem", "Alias"
+            _WriteOut "No runtimes installed. You can run `dnvm install latest` or `dnvm upgrade` to install a runtime."
         }
     }
 }
@@ -1510,6 +1519,35 @@ function dnvm-setup {
     }
 }
 
+function Check-Runtimes(){
+    $runtimesInstall = $false;
+    foreach($runtimeHomeDir in $RuntimeHomes) {
+        if (Test-Path "$runtimeHomeDir\runtimes") {
+            if(Test-Path "$runtimeHomeDir\runtimes\$RuntimePackageName-*"){
+                $runtimesInstall = $true;
+                break;
+            }
+        }
+    }
+    
+    if (-not $runtimesInstall){
+        $title = "Getting started"
+        $message = "It looks like you don't have any runtimes installed. Do you want us to install a $RuntimeShortFriendlyName to get you started?"
+    
+        $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Install the latest runtime for you"
+    
+        $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Do not install the latest runtime and continue"
+    
+        $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+    
+        $result = $host.ui.PromptForChoice($title, $message, $options, 0)
+        
+        if($result -eq 0){
+            dnvm-upgrade
+        }
+    }
+}
+
 ### The main "entry point"
 
 # Check for old DNX_HOME values
@@ -1550,7 +1588,7 @@ if($cmdargs -icontains "-amd64") {
 $cmdargs = @($cmdargs | Where-Object { @("-amd64", "-x86", "-x64") -notcontains $_ })
 
 if(!$cmd) {
-    _WriteOut "You must specify a command!"
+    Check-Runtimes
     $cmd = "help"
     $Script:ExitCode = $ExitCodes.InvalidArguments
 }
