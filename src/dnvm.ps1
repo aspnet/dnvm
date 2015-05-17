@@ -751,7 +751,7 @@ function dnvm-help {
             $Script:ExitCodes = $ExitCodes.UnknownCommand
             return
         }
-        $help = Get-Help "dnvm-$Command"
+        $help = Get-Help "dnvm-$Command" -ShowWindow:$false
         if($PassThru) {
             $help
         } else {
