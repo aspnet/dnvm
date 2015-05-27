@@ -36,3 +36,7 @@ nuget.exe
 *.*sdf
 *.ipch
 *.sln.ide
+
+# Vim files
+*.swp
+*.swo
