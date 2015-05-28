@@ -63,8 +63,12 @@ function GetActiveRuntimeName {
 }
 
 function GetRuntimeName {
-    param($clr, $arch, $ver = $TestRuntimeVersion)
-    "$RuntimePackageName-$($clr.ToLowerInvariant())-win-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
+    param($clr, $arch, $os = "win", $ver = $TestRuntimeVersion)
+    if($clr -eq "mono") {
+        "$RuntimePackageName-mono.$($ver.ToLowerInvariant())"
+    } else {
+        "$RuntimePackageName-$($clr.ToLowerInvariant())-$($os.ToLowerInvariant())-$($arch.ToLowerInvariant()).$($ver.ToLowerInvariant())"
+    }
 }
 
 # Borrowed from dnvm itself, but we can't really use that one so unfortunately we have to use copy-pasta :)

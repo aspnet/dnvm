@@ -1,4 +1,4 @@
-function DefineInstallTests($clr, $arch) {
+function DefineInstallTests($clr, $arch, $os) {
     $runtimeHome = $UserPath
     $alias = "install_test_$arch_$clr"
 
@@ -8,13 +8,17 @@ function DefineInstallTests($clr, $arch) {
         $fxName = "Asp.Net,Version=v5.0"
     }
 
-    $runtimeName = GetRuntimeName $clr $arch
+    $runtimeName = GetRuntimeName $clr $arch -OS:$os
     $runtimeRoot = "$runtimeHome\runtimes\$runtimeName"
 
-    Context "When installing $clr on $arch" {
+    Context "When installing $clr on $arch for $os" {
         It "downloads and unpacks a runtime" {
             # Never crossgen in the automated tests since it takes a loooong time :(.
-            __dnvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -a $alias -nonative | Out-Null
+            if($clr -eq "mono") {
+                __dnvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -os $os -nonative | Out-Null
+            } else {
+                __dnvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -a $alias -os $os -nonative | Out-Null
+            }
             $__dnvmtest_exit | Should Be 0
         }
 
@@ -22,47 +26,53 @@ function DefineInstallTests($clr, $arch) {
             $runtimeRoot | Should Exist
         }
 
-        It "can restore packages for the TestApp sample" {
-            pushd "$TestAppsDir\TestApp"
-            try {
-                & "$runtimeRoot\bin\$PackageManagerName" restore
-            } finally {
-                popd
+        #We want to verify that non windows runtimes install, but they will not be able to restore or run an app.
+        if($os -eq "win") {
+            It "can restore packages for the TestApp sample" {
+                pushd "$TestAppsDir\TestApp"
+                try {
+                    & "$runtimeRoot\bin\$PackageManagerName" restore
+                } finally {
+                    popd
+                }
             }
-        }
 
-        It "can run the TestApp sample" {
-            pushd "$TestAppsDir\TestApp"
-            try {
-                "$runtimeRoot\bin\$RuntimeHostName" | Should Exist
-                
-                $output = & "$runtimeRoot\bin\$RuntimeHostName" . run
-                $LASTEXITCODE | Should Be 0
-                $fullOutput = [String]::Join("`r`n", $output)
-                $output | ForEach-Object { Write-Verbose $_ }
-
-                $fullOutput | Should Match "Runtime is sane!"
-            } finally {
-                popd
+            It "can run the TestApp sample" {
+                pushd "$TestAppsDir\TestApp"
+                try {
+                    "$runtimeRoot\bin\$RuntimeHostName" | Should Exist
+                    
+                    $output = & "$runtimeRoot\bin\$RuntimeHostName" . run
+                    $LASTEXITCODE | Should Be 0
+                    $fullOutput = [String]::Join("`r`n", $output)
+                    $output | ForEach-Object { Write-Verbose $_ }
+    
+                    $fullOutput | Should Match "Runtime is sane!"
+                } finally {
+                    popd
+                }
             }
-        }
 
-        It "assigned the requested alias" {
-            "$UserPath\alias\$alias.txt" | Should Exist
-            "$UserPath\alias\$alias.txt" | Should ContainExactly $runtimeName
-        }
-
-        It "uses the new Runtime" {
-            GetActiveRuntimeName $runtimeHome | Should Be "$runtimeName"
+            It "assigned the requested alias" {
+                "$UserPath\alias\$alias.txt" | Should Exist
+                "$UserPath\alias\$alias.txt" | Should ContainExactly $runtimeName
+            }
+    
+            It "uses the new Runtime" {
+                GetActiveRuntimeName $runtimeHome | Should Be "$runtimeName"
+            }
         }
     }
 }
 
 Describe "install" -Tag "install" {
-    DefineInstallTests "CLR" "x86"
-    DefineInstallTests "CLR" "x64"
-    DefineInstallTests "CoreCLR" "x86"
-    DefineInstallTests "CoreCLR" "x64"
+    DefineInstallTests "CLR" "x86" "win"
+    DefineInstallTests "CLR" "x64" "win"
+    DefineInstallTests "CoreCLR" "x86" "win"
+    DefineInstallTests "CoreCLR" "x64" "win"
+    DefineInstallTests "CoreCLR" "x64" "linux"
+    DefineInstallTests "CoreCLR" "x64" "darwin"
+    DefineInstallTests "Mono" "x86" "linux"
 
     Context "When installing a non-existant Runtime version" {
         __dnvmtest_run install "0.0.1-thisisnotarealruntime" | Out-Null
@@ -123,7 +133,33 @@ Describe "install" -Tag "install" {
     Context "When installing latest linux package" {
         $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
         It "downloads a runtime" {
-            __dnvmtest_run install latest -arch x86 -r CLR -OS Linux | Out-Null
+            __dnvmtest_run install latest -arch x86 -r mono -OS Linux | Out-Null
+        }
+        
+        It "returns a zero exit code" {
+            $__dnvmtest_exit | Should Be 0
+        }
+    }
+
+    Context "When installing latest darwin package" {
+        $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
+        It "downloads a runtime" {
+            __dnvmtest_run install latest -arch x86 -r mono -OS Darwin | Out-Null
+        }
+        
+        It "returns a zero exit code" {
+            $__dnvmtest_exit | Should Be 0
+        }
+    }
+
+    Context "When installing latest darwin coreclr" {
+        $previous = @(dir "$UserPath\runtimes" | select -ExpandProperty Name)
+        It "downloads a runtime" {
+            __dnvmtest_run install latest -arch x64 -r CoreCLR -OS Darwin | Out-Null
+        }
+        
+        It "returns a zero exit code" {
+            $__dnvmtest_exit | Should Be 0
         }
     }
 
