@@ -261,11 +261,11 @@ function GetArch($Architecture, $FallBackArch = $DefaultArchitecture) {
     }
 }
 
-function GetRuntime($Runtime) {
+function GetRuntime($Runtime, $FallBackRuntime = $DefaultRuntime) {
     if(![String]::IsNullOrWhiteSpace($Runtime)) {
         $Runtime
     } else {
-        $DefaultRuntime
+        $FallBackRuntime
     }
 }
 
@@ -342,7 +342,7 @@ function Get-RuntimeName(
         $BaseName = Get-Content $aliasPath
 
         $Architecture = GetArch $Architecture (Get-PackageArch $BaseName)
-        $Runtime = GetRuntime $Runtime (Get-PackageArch $BaseName)
+        $Runtime = GetRuntime $Runtime (Get-PackageRuntime $BaseName)
         $Version = Get-PackageVersion $BaseName
     }
     
