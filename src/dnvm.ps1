@@ -751,7 +751,7 @@ function dnvm-help {
             $Script:ExitCodes = $ExitCodes.UnknownCommand
             return
         }
-        $help = Get-Help "dnvm-$Command"
+        $help = Get-Help "dnvm-$Command" -ShowWindow:$false
         if($PassThru) {
             $help
         } else {
@@ -833,7 +833,7 @@ function dnvm-help {
         _WriteOut -ForegroundColor $ColorScheme.Help_Header "commands: "
         Get-Command "$CommandPrefix*" | 
             ForEach-Object {
-                $h = Get-Help $_.Name
+                $h = Get-Help $_.Name -ShowWindow:$false
                 $name = $_.Name.Substring($CommandPrefix.Length)
                 if($DeprecatedCommands -notcontains $name) {
                     _WriteOut -NoNewLine "    "
