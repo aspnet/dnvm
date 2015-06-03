@@ -88,3 +88,34 @@ param(
     $wc.Proxy = $wp
   }
 }
+
+function Get-FileHash
+{
+    param ([string] $Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf))
+    {
+        return $null
+    }
+
+    $item = Get-Item -LiteralPath $Path
+    if ($item -isnot [System.IO.FileSystemInfo])
+    {
+        return $null
+    }
+
+    $stream = $null
+
+    try
+    {
+        $sha = New-Object System.Security.Cryptography.SHA256CryptoServiceProvider
+        $stream = $item.OpenRead()
+        $bytes = $sha.ComputeHash($stream)
+        return [convert]::ToBase64String($bytes)
+    }
+    finally
+    {
+        if ($null -ne $stream) { $stream.Close() }
+        if ($null -ne $sha)    { $sha.Clear() }
+    }
+}
