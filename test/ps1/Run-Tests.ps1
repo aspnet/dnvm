@@ -91,6 +91,6 @@ $PSBoundParameters.Keys | ForEach-Object {
 }
 
 # Launch the script that will actually run the tests in a new shell
+& powershell -Version 2 -NoProfile -NoLogo -Command "& `"$PSScriptRoot\_Execute-Tests.ps1`" $childArgs -RunningInNewPowershell"
 & powershell -NoProfile -NoLogo -Command "& `"$PSScriptRoot\_Execute-Tests.ps1`" $childArgs -RunningInNewPowershell"
-
 exit $LASTEXITCODE

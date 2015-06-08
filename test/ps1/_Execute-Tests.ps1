@@ -1,4 +1,4 @@
-#Requires -Version 3
+#Requires -Version 2
 param(
     [string]$PesterPath = $null,
     [string]$PesterRef = "anurse/teamcity",
@@ -23,14 +23,24 @@ if(!$RunningInNewPowershell) {
     throw "Don't use this script to run the tests! Use Run-Tests.ps1, it sets up a new powershell instance in which to run the tests!"
 }
 
-. "$PSScriptRoot\_Common.ps1"
+$scriptDir = $PSScriptRoot
+if (!$scriptDir) {
+    if ($MyInvocation.MyCommand.Path) {
+        $scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
+    }
+}
+
+Write-Host "Script Dir: $scriptDir"
+
+. "$scriptDir\_Common.ps1"
 
 # Set defaults
-if(!$PesterPath) { $PesterPath = Join-Path $PSScriptRoot ".pester" }
-if(!$TestsPath) { $TestsPath = Join-Path $PSScriptRoot "tests" }
-if(!$TargetPath) { $TargetPath = Convert-Path (Join-Path $PSScriptRoot "../../src/dnvm.ps1") }
-if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $PSScriptRoot "testwork" }
-if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../apps") }
+if(!$PesterPath) { $PesterPath = Join-Path $scriptDir ".pester" }
+if(!$TestsPath) { $TestsPath = Join-Path $scriptDir "tests" }
+if(!$TargetPath) { $TargetPath = Convert-Path (Join-Path $scriptDir "../../src/dnvm.ps1") }
+if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $scriptDir "testwork" }
+if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $scriptDir "../apps") }
+
 
 # Configure the Runtimes we're going to use in testing. The actual runtime doesn't matter since we're only testing
 # that dnvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
@@ -38,7 +48,7 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $PSScriptRoot "../app
 $env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
 $TestRuntimeVersion = "1.0.0-beta4-11566"
 $specificNupkgUrl = "$($env:DNX_FEED)/package/dnx-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "0081E0E5F98D9DE3BD078932AED162DA8611B4A904137C74F489E1BBC379C6DE"
+$specificNupkgHash = "AIHg5fmNneO9B4kyrtFi2oYRtKkEE3x09Inhu8N5xt4="
 $specificNupkgName = "dnx-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
@@ -109,7 +119,7 @@ $specificNupkgPath = Join-Path $downloadDir $specificNupkgName
 # If the test package exists
 if(Test-Path $specificNupkgPath) {
     # Test it against the expected hash
-    if((Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash -ne $specificNupkgHash) {
+    if((Get-FileHash $specificNupkgPath) -ne $specificNupkgHash) {
         # Failed to match, kill it with fire!
         Write-Host "Test prerequisites are corrupt, redownloading."
         rm -for $specificNupkgPath
@@ -123,7 +133,7 @@ if(!(Test-Path $specificNupkgPath)) {
     $wc.DownloadFile($specificNupkgUrl, $specificNupkgPath)
 
     # Test it against the expected hash
-    $actualHash = (Get-FileHash -Algorithm SHA256 $specificNupkgPath).Hash
+    $actualHash = (Get-FileHash $specificNupkgPath)
     if($actualHash -ne $specificNupkgHash) {
         # Failed to match, we downloaded a corrupt package??
         throw "Test prerequisite $specificNupkgUrl failed to download. The hash '$actualHash' does not match the expected value."
@@ -161,7 +171,7 @@ function TeamCityEscape($str) {
 
 # Generate TeamCity Output
 if($TeamCity) {
-    Write-Host "##teamcity[testSuiteStarted name='$CommandName.ps1']"
+    Write-Host "##teamcity[testSuiteStarted name='$CommandName.ps1 on PSv$($Host.Version.Major)']"
     $result.TestResult | Group-Object Describe | ForEach-Object {
         $describe = TeamCityEscape $_.Name
         Write-Host "##teamcity[testSuiteStarted name='$describe']"
@@ -196,5 +206,4 @@ if($TeamCity) {
 }
 
 # Set the exit code!
-
 $host.SetShouldExit($result.FailedCount)
