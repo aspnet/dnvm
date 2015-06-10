@@ -752,7 +752,11 @@ function dnvm-help {
             $Script:ExitCodes = $ExitCodes.UnknownCommand
             return
         }
-        $help = Get-Help "dnvm-$Command" -ShowWindow:$false
+        if($Host.Version.Major -lt 3) {
+            $help = Get-Help "dnvm-$Command"
+        } else {
+            $help = Get-Help "dnvm-$Command" -ShowWindow:$false
+        }
         if($PassThru -Or $Host.Version.Major -lt 3) {
             $help
         } else {
@@ -834,7 +838,11 @@ function dnvm-help {
         _WriteOut -ForegroundColor $ColorScheme.Help_Header "commands: "
         Get-Command "$CommandPrefix*" | 
             ForEach-Object {
-                $h = Get-Help $_.Name -ShowWindow:$false
+                if($Host.Version.MajorVersion -lt 3) {
+                    $h = Get-Help $_.Name
+                } else {
+                    $h = Get-Help $_.Name -ShowWindow:$false
+                }
                 $name = $_.Name.Substring($CommandPrefix.Length)
                 if($DeprecatedCommands -notcontains $name) {
                     _WriteOut -NoNewLine "    "
