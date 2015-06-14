@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # A bunch of helper functions and variables!
 
 # "Constants"

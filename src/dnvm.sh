@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # dnvm.sh
 # Source this file from your .bash-profile or script to use
 

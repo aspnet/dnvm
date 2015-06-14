@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Determine my directory
 SCRIPT_DIR=$(dirname $0)
