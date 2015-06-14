@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Simple smoke test for the runtime fetched by $_DNVM_COMMAND_NAME. To help ensure that it is unpacked correctly and such
 
 source $COMMON_HELPERS

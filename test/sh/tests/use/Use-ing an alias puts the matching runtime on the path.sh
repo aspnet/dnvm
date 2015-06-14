@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 source $COMMON_HELPERS
 source $_DNVM_PATH
 
