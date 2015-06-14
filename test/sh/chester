@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 VERSION="0.1.0"
 
 # A bunch of helper functions and variables!
