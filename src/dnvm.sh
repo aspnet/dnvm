@@ -208,7 +208,7 @@ __dnvm_unpack() {
 
     #Set shell commands as executable
     find "$runtimeFolder/bin/" -type f \
-        -exec sh -c "head -c 11 {} | grep '/usr/bin/env bash' > /dev/null"  \; -print | xargs chmod 775
+        -exec sh -c "head -c 11 {} | grep '/usr/bin/env bash\|/bin/bash' > /dev/null"  \; -print | xargs chmod 775
 
     #Set dnx to be executable
     chmod 775 "$runtimeFolder/bin/dnx"
