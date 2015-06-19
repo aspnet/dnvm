@@ -1299,6 +1299,17 @@ function dnvm-run {
     param(
         [Parameter(Mandatory=$true, Position=0)]
         [string]$VersionOrAlias,
+
+        [Alias("arch")]
+        [ValidateSet("", "x86", "x64", "arm")]
+        [Parameter(Mandatory=$false)]
+        [string]$Architecture = "",
+
+        [Alias("r")]
+        [ValidateSet("", "clr", "coreclr")]
+        [Parameter(Mandatory=$false)]
+        [string]$Runtime = "",
+
         [Parameter(Mandatory=$false, Position=1, ValueFromRemainingArguments=$true)]
         [object[]]$DnxArguments)
 
