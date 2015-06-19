@@ -413,7 +413,7 @@ dnvm()
                     fi
                     
                     if [[ $arch == "x86" && $runtime == "coreclr" ]]; then
-                        printf "%b\n" "${Red}Core CLR doesn't currently have a 32 bit build. You must use x64."
+                        printf "%b\n" "${Red}Core CLR doesn't currently have a 32 bit build. You must use x64.${RCol}"
                         return 1
                     fi
                     
