@@ -46,9 +46,9 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $scriptDir "../apps")
 # that dnvm can find it, download it and unpack it successfully. We do run an app in the runtime to do that sanity
 # test, but all we care about in these tests is that the app executes.
 $env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
-$TestRuntimeVersion = "1.0.0-beta5-12021"
+$TestRuntimeVersion = "1.0.0-beta5-12087"
 $specificNupkgUrl = "$($env:DNX_FEED)/package/dnx-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "hZ7KoukWVu9m7UsmurcVtXVNvFiN9VaKFcRB9tkSBn4="
+$specificNupkgHash = "do6PPojJgX4njgFMKJEW5d+NoKgzbwMuXRRucCRsAIw="
 $specificNupkgName = "dnx-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
