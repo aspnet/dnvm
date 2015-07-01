@@ -927,7 +927,7 @@ function dnvm-help {
         _WriteOut -ForegroundColor $ColorScheme.Help_Header "commands: "
         Get-Command "$CommandPrefix*" | 
             ForEach-Object {
-                if($Host.Version.MajorVersion -lt 3) {
+                if($Host.Version.Major -lt 3) {
                     $h = Get-Help $_.Name
                 } else {
                     $h = Get-Help $_.Name -ShowWindow:$false
