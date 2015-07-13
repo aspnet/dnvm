@@ -1009,8 +1009,10 @@ function dnvm-alias {
         [Alias("d")]
         [switch]$Delete,
 
+        [Parameter(Position=0)]
         [string]$Name,
 
+        [Parameter(Position=1)]
         [string]$Version,
 
         [Alias("arch")]
@@ -1338,7 +1340,7 @@ function dnvm-install {
                 }
             }
             #If there is nothing left in the temp folder remove it. There could be other installs happening at the same time as this.
-            if(-Not(Test-Path $(Join-Path $TempFolder "*"))) {
+            if(Test-Path $(Join-Path $TempFolder "*")) {
                 Remove-Item $TempFolder -Recurse
             }
         }

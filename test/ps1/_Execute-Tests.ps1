@@ -48,9 +48,9 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $scriptDir "../apps")
 #$env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
 #NOTE: This should be set back to release once we have non windows DNX on that feed.
 $env:DNX_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
-$TestRuntimeVersion = "1.0.0-beta5-12087"
+$TestRuntimeVersion = "1.0.0-beta6-12208"
 $specificNupkgUrl = "$($env:DNX_FEED)/package/dnx-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "do6PPojJgX4njgFMKJEW5d+NoKgzbwMuXRRucCRsAIw="
+$specificNupkgHash = "75aOIb/kOT3UYsTKcE1vmD0WeJUmChHk54mm4JItxjM="
 $specificNupkgName = "dnx-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
