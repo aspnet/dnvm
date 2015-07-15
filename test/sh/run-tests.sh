@@ -20,14 +20,14 @@ source $COMMON_HELPERS
 [ -z "$TEST_SHELLS" ]       && export TEST_SHELLS="bash zsh"
 [ -z "$TEST_DIR" ]          && export TEST_DIR="$SCRIPT_DIR/tests"
 [ -z "$CHESTER" ]           && export CHESTER="$SCRIPT_DIR/chester"
-[ -z "$DNX_FEED" ]          && export DNX_FEED="https://www.myget.org/F/aspnetrelease/api/v2" # doesn't really matter what the feed is, just that it is a feed
+[ -z "$DNX_FEED" ]          && export DNX_FEED="https://www.myget.org/F/aspnetvnext/api/v2" # doesn't really matter what the feed is, just that it is a feed
 [ -z "$TEST_APPS_DIR" ]     && export TEST_APPS_DIR="$REPO_ROOT/test/apps"
 
 export DNX_FEED
 
 # This is a DNX to use for testing various commands. It doesn't matter what version it is
-[ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta5-12087"
-[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='1d28c7b3524deacb22050db8e3b339f27a7f43b8'
+[ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta6-12208"
+[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='1e01296cdfcb94ab5eb22c658a6b1ec922cebd93'
 [ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$DNX_FEED/package/$_DNVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
 [ -z "$_NUPKG_NAME" ]       && export _NUPKG_NAME="$_DNVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
 [ -z "$_NUPKG_FILE" ]       && export _NUPKG_FILE="$TEST_WORK_DIR/${_NUPKG_NAME}.nupkg"
