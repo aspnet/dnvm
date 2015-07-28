@@ -785,7 +785,7 @@ function dnvm-update-self {
     Apply-Proxy $wc -Proxy:$Proxy
     
     $dnvmFile = Join-Path $PSScriptRoot "dnvm.ps1"
-    $tempDnvmFile = Join-Path $PSScriptRoot "dnvm.ps1" "temp"
+    $tempDnvmFile = Join-Path $PSScriptRoot "temp"
     $backupFilePath = Join-Path $PSSCriptRoot "dnvm.ps1.bak"
 
     $wc.DownloadFile($DNVMUpgradeUrl, $tempDnvmFile)
