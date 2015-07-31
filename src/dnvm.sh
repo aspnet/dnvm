@@ -736,6 +736,10 @@ dnvm()
             [[ ! -d $_DNVM_USER_PACKAGES ]] && echo "$_DNVM_RUNTIME_FRIENDLY_NAME is not installed." && return 1
 
             local searchGlob="$_DNVM_RUNTIME_PACKAGE_NAME-*"
+            local runtimes=$(find $_DNVM_USER_PACKAGES -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \; | sort -t. -k2 -k3 -k4 -k1)
+
+            [[ -z $runtimes ]] && echo 'No runtimes installed. You can run `dnvm install latest` or `dnvm upgrade` to install a runtime.' && return
+
             echo ""
 
             # Separate empty array declaration from initialization
@@ -764,7 +768,7 @@ dnvm()
             fi
 
             local formattedHome=`(echo $_DNVM_USER_PACKAGES | sed s=$HOME=~=g)`
-            for f in $(find $_DNVM_USER_PACKAGES -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \; | sort -t. -k2 -k3 -k4 -k1); do
+            for f in $runtimes; do
                 local active=""
                 [[ $PATH == *"$_DNVM_USER_PACKAGES/$f/bin"* ]] && local active="  *"
                 local pkgRuntime=$(__dnvm_package_runtime "$f")
