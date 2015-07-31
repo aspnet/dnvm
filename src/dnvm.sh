@@ -764,7 +764,7 @@ dnvm()
             fi
 
             local formattedHome=`(echo $_DNVM_USER_PACKAGES | sed s=$HOME=~=g)`
-            for f in $(find $_DNVM_USER_PACKAGES -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \;); do
+            for f in $(find $_DNVM_USER_PACKAGES -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \; | sort -t. -k2 -k3 -k4 -k1); do
                 local active=""
                 [[ $PATH == *"$_DNVM_USER_PACKAGES/$f/bin"* ]] && local active="  *"
                 local pkgRuntime=$(__dnvm_package_runtime "$f")
