@@ -359,7 +359,7 @@ function Get-RuntimeAlias {
     if($Aliases -eq $null) {
         _WriteDebug "Scanning for aliases in $AliasesDir"
         if(Test-Path $AliasesDir) {
-            $Aliases = @(Get-ChildItem ($UserHome + "\alias\") | Select-Object @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }})
+            $Aliases = @(Get-ChildItem ($UserHome + "\alias\") | Select-Object @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}, @{label='Orphan';expression={-Not (Test-Path ($RuntimesDir + "\" + (Get-Content $_.FullName)))}})
         } else {
             $Aliases = @()
         }
@@ -396,18 +396,20 @@ function Get-RuntimeAliasOrRuntimeInfo(
 filter List-Parts {
     param($aliases)
 
-    $binDir = Join-Path $_.FullName "bin"
-    if (!(Test-Path $binDir)) {
-        return
+	$location = ""
+
+	$binDir = Join-Path $_.FullName "bin"
+	if ((Test-Path $binDir)) {
+        $location = $_.Parent.FullName
     }
-    $active = IsOnPath $binDir
-    
+	$active = IsOnPath $binDir
+
     $fullAlias=""
     $delim=""
 
     foreach($alias in $aliases) {
         if($_.Name.Split('\', 2) -contains $alias.Name) {
-            $fullAlias += $delim + $alias.Alias
+            $fullAlias += $delim + $alias.Alias + (&{if($alias.Orphan){" (missing)"}})
             $delim = ", "
         }
     }
@@ -426,7 +428,7 @@ filter List-Parts {
         Runtime = $parts2[1]
         OperatingSystem = $parts2[2]
         Architecture = $parts2[3]
-        Location = $_.Parent.FullName
+        Location = $location
         Alias = $fullAlias
     }
 }
@@ -977,6 +979,10 @@ function dnvm-list {
             $items += Get-ChildItem "$_\runtimes\$RuntimePackageName-*" | List-Parts $aliases
         }
     }
+
+	$aliases | Where-Object {$_.Orphan} | ForEach-Object {
+		$items += $_ | Select-Object @{label='Name';expression={$_.Name}}, @{label='FullName';expression={Join-Path $RuntimesDir $_.Name}} | List-Parts $aliases
+	}
 
     if($PassThru) {
         $items
