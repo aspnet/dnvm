@@ -95,9 +95,15 @@ for shell in $TEST_SHELLS; do
         fi
     fi
     mkdir "$TEST_WORK_DIR/$shell"
+    mkdir "$TEST_WORK_DIR/$shell/runtimes"
+    mkdir "$TEST_WORK_DIR/${shell}_global"
+    mkdir "$TEST_WORK_DIR/${shell}_global/runtimes"
 
     export DNX_USER_HOME="$TEST_WORK_DIR/$shell"
     [ -d $DNX_USER_HOME ] || mkdir $DNX_USER_HOME
+
+    export DNX_GLOBAL_HOME="$TEST_WORK_DIR/${shell}_global"
+    [ -d $DNX_GLOBAL_HOME ] || mkdir $DNX_GLOBAL_HOME
 
     pushd "$SCRIPT_DIR/tests" >/dev/null 2>&1
     $CHESTER $@ -s $shell -n $shell "*"

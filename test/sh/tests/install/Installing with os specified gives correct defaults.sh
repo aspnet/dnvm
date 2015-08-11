@@ -24,3 +24,5 @@ RUNTIME_PATH="$DNX_USER_HOME/runtimes/$_DNVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VE
 
 [ -f "$RUNTIME_PATH/bin/$_DNVM_RUNTIME_HOST_NAME" ] || die "$_DNVM_COMMAND_NAME did not include '$_DNVM_RUNTIME_HOST_NAME' command!"
 [ -f "$RUNTIME_PATH/bin/$_DNVM_PACKAGE_MANAGER_NAME" ] || die "$_DNVM_COMMAND_NAME did not include '$_DNVM_PACKAGE_MANAGER_NAME' command!"
+
+rm -Rf $DNX_USER_HOME/runtimes

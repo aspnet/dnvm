@@ -1,4 +1,6 @@
 Describe "entrypoint" -Tag "entrypoint" {
+    __dnvmtest_run install $TestRuntimeVersion | Out-Null
+
     Context "When an invalid command is specified" {
         It "returns exit code and displays help" {
             __dnvmtest_run sdfjklsdfljkasdfjklasdfjkl | Out-Null
@@ -13,4 +15,6 @@ Describe "entrypoint" -Tag "entrypoint" {
             $__dnvmtest_out | Should Match "usage:"
         }
     }
+
+    del -rec -for $UserPath\runtimes\
 }

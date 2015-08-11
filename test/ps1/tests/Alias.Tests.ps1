@@ -99,4 +99,22 @@ Describe "alias" -Tag "alias" {
             "$UserPath\alias\$testAlias.txt" | Should Not Exist
         }
     }
+
+    Context "When aliasing global dnx" {
+        $runtimeName = GetRuntimeName "CLR" "x86"
+        if(Test-Path $UserPath\runtimes\$runtimeName) { del -rec -for $UserPath\runtimes\$runtimeName }
+        __dnvmtest_run install $TestRuntimeVersion -arch x86 -r "CLR" -g | Out-Null
+        __dnvmtest_run alias globalAlias $TestRuntimeVersion | Out-Null
+        
+        It "keeps alias local" {
+            "$UserPath\alias\globalAlias.txt" | Should Exist   
+        }
+
+        It "references global installed dnx" {
+            __dnvmtest_run use globalAlias | Out-Null
+            $__dnvmtest_out.Trim() | Should Be "Adding $GlobalPath\runtimes\$runtimeName\bin to process PATH"
+        }
+
+        if(Test-Path $GlobalPath\runtimes\$runtimeName) { del -rec -for $GlobalPath\runtimes\$runtimeName }
+    }
 }

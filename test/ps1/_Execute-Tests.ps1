@@ -39,6 +39,7 @@ if(!$PesterPath) { $PesterPath = Join-Path $scriptDir ".pester" }
 if(!$TestsPath) { $TestsPath = Join-Path $scriptDir "tests" }
 if(!$TargetPath) { $TargetPath = Convert-Path (Join-Path $scriptDir "../../src/dnvm.ps1") }
 if(!$TestWorkingDir) { $TestWorkingDir = Join-Path $scriptDir "testwork" }
+if(!$TestWorkingGlobalDir) { $TestWorkingGlobalDir = Join-Path $scriptDir "testworkGlobal" }
 if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $scriptDir "../apps") }
 
 
@@ -48,9 +49,9 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $scriptDir "../apps")
 #$env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
 #NOTE: This should be set back to release once we have non windows DNX on that feed.
 $env:DNX_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
-$TestRuntimeVersion = "1.0.0-beta6-12208"
+$TestRuntimeVersion = "1.0.0-beta8-15530"
 $specificNupkgUrl = "$($env:DNX_FEED)/package/dnx-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "75aOIb/kOT3UYsTKcE1vmD0WeJUmChHk54mm4JItxjM="
+$specificNupkgHash = "PJpvX+iILTIUA0HxKMPRSU6oO4vkEKe1J/wsors0rIw="
 $specificNupkgName = "dnx-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
@@ -62,9 +63,16 @@ if(Test-Path "$TestWorkingDir\$RuntimeFolderName") {
     Write-Banner "Wiping old test working area"
     del -rec -for "$TestWorkingDir\$RuntimeFolderName"
 }
+if(Test-Path "$TestWorkingGlobalDir\$RuntimeFolderName") {
+    Write-Banner "Wiping old global test working area"
+    del -rec -for "$TestWorkingGlobalDir\$RuntimeFolderName"
+}
 
 if(!(Test-Path $TestWorkingDir)) {
     mkdir $TestWorkingDir | Out-Null
+}
+if(!(Test-Path $TestWorkingGlobalDir)) {
+    mkdir $TestWorkingGlobalDir | Out-Null
 }
 
 # Import the module and set up test environment
@@ -88,8 +96,10 @@ Remove-EnvVar PATH
 
 # Set up the user/global install directories to be inside the test work area
 $UserPath = "$TestWorkingDir\$RuntimeFolderName"
-$env:DNX_HOME=$UserPath
+$GlobalPath = "$TestWorkingGlobalDir\$RuntimeFolderName"
+$env:DNX_HOME="$($UserPath);$($GlobalPath)"
 $env:DNX_USER_HOME=$UserPath
+$env:DNX_GLOBAL_HOME=$GlobalPath
 mkdir $UserPath | Out-Null
 
 # Helper function to run dnvm and capture stuff.

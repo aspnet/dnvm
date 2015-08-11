@@ -37,4 +37,18 @@ Describe "list" -Tag "list" {
             $default.Location | Should Not BeNullOrEmpty
         }
     }
+
+    Context "When list contains a global dnx" {
+        $runtimeName = GetRuntimeName "CLR" "x86"
+        if(Test-Path $UserPath\runtimes\$runtimeName) { del -rec -for $UserPath\runtimes\$runtimeName }
+        if(Test-Path $GlobalPath\runtimes\$runtimeName) { del -rec -for $GlobalPath\runtimes\$runtimeName }
+        __dnvmtest_run install $TestRuntimeVersion -arch x86 -r "CLR" -g | Out-Null
+
+        $runtimes = (__dnvmtest_run list -PassThru -Detailed)
+        It "shows location correctly" {
+            $runtimes | Where { $_.Location -like "$GlobalPath\runtimes" } | Should Not BeNullOrEmpty
+        }
+
+        if(Test-Path $GlobalPath\runtimes\$runtimeName) { del -rec -for $GlobalPath\runtimes\$runtimeName }
+    }
 }
