@@ -418,7 +418,7 @@ filter List-Parts {
     $parts2 = $parts1[0].Split('-', 4)
 
     if($parts1[0] -eq "$RuntimePackageName-mono") {
-        $parts2 += "linux/darwin"
+        $parts2 += "linux/osx"
         $parts2 += "x86/x64"
     }
 
