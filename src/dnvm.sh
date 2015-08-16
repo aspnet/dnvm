@@ -376,6 +376,7 @@ __dnvm_help() {
     echo "  -f|force          force install. Overwrite existing version of $_DNVM_RUNTIME_SHORT_NAME if already installed"
     echo "  -u|unstable       use unstable feed. Installs the $_DNVM_RUNTIME_SHORT_NAME from the unstable feed"
     echo "  -r|runtime        The runtime flavor to install [mono or coreclr] (default: mono)"
+    echo "  -file             A json file (global.json) that defines the version, architecture, and runtime to be installed."
     echo ""
     echo "  adds $_DNVM_RUNTIME_SHORT_NAME bin to path of current command line"
     echo ""
@@ -450,7 +451,7 @@ dnvm()
         ;;
 
         "install" )
-            [ $# -lt 2 ] && __dnvm_help && return
+            [ $# -lt 1 ] && __dnvm_help && return
             shift
             local persistent=
             local versionOrAlias=
@@ -460,6 +461,7 @@ dnvm()
             local os=
             local runtime=
             local arch=
+            local file=
             while [ $# -ne 0 ]
             do
                 if [[ $1 == "-p" || $1 == "-persistent" ]]; then
@@ -477,6 +479,9 @@ dnvm()
                 elif [[ $1 == "-OS" ]]; then
                     local os=$2
                     shift
+                elif [[ $1 == "-file" ]]; then
+                    local file=$2
+                    shift
                 elif [[ $1 == "-arch" ]]; then
                     local arch=$2
                     shift
@@ -492,6 +497,23 @@ dnvm()
                 fi
                 shift
             done
+
+            if [[ ! -z $file ]]; then
+                if [ ! -f $file ]; then
+                    printf "%b\n" "${Red}File ($file) doesn't exist.${RCol}"
+                    return 1
+                fi
+
+                sdk=$(cat $file | tr -d " " | tr "{}," "\n" | awk "/sdk/,/}/ { print }" | grep ":" | grep -v "sdk" | tr -d "\"}{,"| tr ":" " ")
+                versionOrAlias=$(echo "$sdk" | grep "version" | awk '{print $2}')
+                runtime=$(echo "$sdk" | grep "runtime" | awk '{print $2}')
+                arch=$(echo "$sdk" | grep "architecture" | awk '{print $2}')
+
+                if [ -z "$versionOrAlias" ] || [ -z "$runtime" ] || [ -z "$arch" ]; then
+                    printf "%b\n" "${Red}A version, architecture, and runtime must be provided in the file.${RCol}"
+                    return 1
+                fi
+            fi
 
             if [[ $arch == "x86" && $runtime == "coreclr" && $os != "win" ]]; then
                 printf "%b\n" "${Red}Core CLR doesn't currently have a 32 bit build. You must use x64.${RCol}"
