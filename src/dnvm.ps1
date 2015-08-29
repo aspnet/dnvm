@@ -986,6 +986,14 @@ filter ColorActive {
 
 <#
 .SYNOPSIS
+	Displays the DNVM version.
+#>
+function dnvm-version {
+	_WriteOut "$FullVersion"
+}
+
+<#
+.SYNOPSIS
     Lists available runtimes
 .PARAMETER Detailed
     Display more detailed information on each runtime
