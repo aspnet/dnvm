@@ -763,13 +763,33 @@ dnvm()
             fi
 
             if [[ $2 == "-detailed" ]]; then
-                local formatString="%-6s %-20s %-7s %-4s %-15s %-20s %s\n"
-                printf "$formatString" "Active" "Version" "Runtime" "Arch" "OperatingSystem" "Location" "Alias"
-                printf "$formatString" "------" "-------" "-------" "----" "---------------" "--------" "-----"
+                # Calculate widest alias
+                local widestAlias=5
+                for f in `echo $runtimes`; do
+                    local pkgName=$(__dnvm_package_name "$f")
+                    local pkgVersion=$(__dnvm_package_version "$f")
+                    local alias=""
+                    local delim=""
+                    for i in "${arr[@]}"; do
+                        if [[ ${i##*/} == "$pkgName.$pkgVersion" ]]; then
+                            alias+="$delim${i%%/*}"
+                            delim=", "
+                            if [[ "${i%/*}" =~ \/missing$ ]]; then
+                                alias+=" (missing)"
+                            fi
+                        fi
+                    done
+                    if [ "${#alias}" -gt "$widestAlias" ]; then
+                        widestAlias=${#alias}
+                    fi
+                done
+                local formatString="%-6s %-20s %-7s %-12s %-15s %-${widestAlias}s %s\n"
+                printf "$formatString" "Active" "Version" "Runtime" "Architecture" "OperatingSystem" "Alias" "Location"
+                printf "$formatString" "------" "-------" "-------" "------------" "---------------" "-----" "--------"
             else
-                local formatString="%-6s %-20s %-7s %-4s %-15s %s\n"
-                printf "$formatString" "Active" "Version" "Runtime" "Arch" "OperatingSystem" "Alias"
-                printf "$formatString" "------" "-------" "-------" "----" "---------------" "-----"
+                local formatString="%-6s %-20s %-7s %-12s %-15s %s\n"
+                printf "$formatString" "Active" "Version" "Runtime" "Architecture" "OperatingSystem" "Alias"
+                printf "$formatString" "------" "-------" "-------" "------------" "---------------" "-----"
             fi
 
             for f in `echo $runtimes  | sort -t. -k2 -k3 -k4 -k1`; do
@@ -796,7 +816,7 @@ dnvm()
                 done
 
                 if [[ $2 == "-detailed" ]]; then
-                    printf "$formatString" "$active" "$pkgVersion" "$pkgRuntime" "$pkgArch" "$pkgOs" "$formattedHome" "$alias"
+                    printf "$formatString" "$active" "$pkgVersion" "$pkgRuntime" "$pkgArch" "$pkgOs" "$alias" "$formattedHome"
                 else
                     printf "$formatString" "$active" "$pkgVersion" "$pkgRuntime" "$pkgArch" "$pkgOs" "$alias"
                 fi

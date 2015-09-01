@@ -13,4 +13,4 @@ echo dnx-foo-bar.1.0.0-beta7 > $DNX_USER_HOME/alias/foobar.alias
 # List runtimes
 OUTPUT=$($_DNVM_COMMAND_NAME list -detailed || die "failed at listing runtimes")
 echo $OUTPUT | grep -E "\s+1\.0\.0-beta7\s+foo\s+bar\s+foobar\s\(missing\)" || die "expected message was not reported"
-echo $OUTPUT | grep -E "\/runtimes\s+default" || die "expected message was not reported"
+echo $OUTPUT | grep -E "default\s+.*?\/runtimes" || die "expected message was not reported"
