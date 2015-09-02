@@ -1104,7 +1104,7 @@ function dnvm-unalias {
 .PARAMETER Ngen
     For CLR flavor only. Generate native images for runtime libraries on Desktop CLR to improve startup time. This option requires elevated privilege and will be automatically turned on if the script is running in administrative mode. To opt-out in administrative mode, use -NoNative switch.
 .PARAMETER Unstable
-    Upgrade from our unstable dev feed. This will give you the latest development version of the runtime. 
+    Upgrade from the unstable dev feed. This will give you the latest development version of the runtime. 
 #>
 function dnvm-upgrade {
     param(
@@ -1179,7 +1179,7 @@ function dnvm-upgrade {
 .PARAMETER Persistent
     Make the installed runtime useable across all processes run by the current user
 .PARAMETER Unstable
-    Upgrade from our unstable dev feed. This will give you the latest development version of the runtime.
+    Upgrade from the unstable dev feed. This will give you the latest development version of the runtime.
 .DESCRIPTION
     A proxy can also be specified by using the 'http_proxy' environment variable
 #>
