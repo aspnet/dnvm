@@ -792,7 +792,7 @@ dnvm()
                 printf "$formatString" "------" "-------" "-------" "------------" "---------------" "-----"
             fi
 
-            for f in `echo $runtimes  | sort -t. -k2 -k3 -k4 -k1`; do
+            for f in `echo $runtimes | tr " " "\n" | sort -t. -k2 -k3 -k4 -k1`; do
                 local formattedHome=`(echo $_DNVM_USER_PACKAGES | sed s=$HOME=~=g)`
                 local active=""
                 [[ $PATH == *"$_DNVM_USER_PACKAGES/$f/bin"* ]] && local active="  *"
