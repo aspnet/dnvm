@@ -400,8 +400,12 @@ function Get-RuntimeAliasOrRuntimeInfo(
     if(Test-Path $aliasPath) {
         $BaseName = Get-Content $aliasPath
 
-        $Architecture = Get-PackageArch $BaseName
-        $Runtime = Get-PackageRuntime $BaseName
+        if(!$Architecture) {
+            $Architecture = Get-PackageArch $BaseName
+        }
+        if(!$Runtime) {
+            $Runtime = Get-PackageRuntime $BaseName
+        }
         $Version = Get-PackageVersion $BaseName
         $OS = Get-PackageOS $BaseName
     }
@@ -1542,7 +1546,7 @@ function dnvm-use {
         return;
     }
     
-    $runtimeInfo = Get-RuntimeAliasOrRuntimeInfo -Version:$VersionOrAlias -Architecture:$Architecture -Runtime:$Runtime -OS:$OS 
+    $runtimeInfo = Get-RuntimeAliasOrRuntimeInfo -Version:$VersionOrAlias -Architecture:$Architecture -Runtime:$Runtime -OS:$OS
     $runtimeFullName = $runtimeInfo.RuntimeName
     $runtimeBin = Get-RuntimePath $runtimeFullName
     if ($runtimeBin -eq $null) {
