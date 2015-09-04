@@ -1,5 +1,6 @@
 # Ensure some KREs have been installed (if the other tests ran first, we're good)
 __dnvmtest_run install $TestRuntimeVersion -arch "x86" -r "CLR"
+__dnvmtest_run install $TestRuntimeVersion -arch "x64" -r "CoreCLR"
 
 $notRealRuntimeVersion = "0.0.1-notarealruntime"
 
@@ -58,6 +59,17 @@ Describe "use" -Tag "use" {
             $cmd | Should Not BeNullOrEmpty
             $cmd.Definition | Should Be (Convert-Path "$UserPath\runtimes\$runtimeName\bin\$RuntimeHostName")
         }
+    }
+    
+    Context "When use-ing an ailas, overriding -arch and -r" {
+        __dnvmtest_run use $testAlias -arch "x64" -r "CoreCLR" | Out-Null
+        $runtimeName = GetRuntimeName -clr CoreCLR -arch x64
+
+        It "uses x64/CoreCLR variant" {
+            GetActiveRuntimeName | Should Be $runtimeName
+        }
+
+        __dnvmtest_run use none | Out-Null
     }
 
     Context "When use-ing 'none'" {
