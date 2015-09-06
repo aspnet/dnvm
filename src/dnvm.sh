@@ -793,7 +793,7 @@ dnvm()
             local action="Setting"
             [[ -e "$_DNVM_ALIAS_DIR/$name.alias" ]] && action="Updating"
             echo "$action alias '$name' to '$runtimeFullName'"
-            echo "$runtimeFullName" > "$_DNVM_ALIAS_DIR/$name.alias"
+            echo "$runtimeFullName" >| "$_DNVM_ALIAS_DIR/$name.alias"
         ;;
 
         "unalias" )
