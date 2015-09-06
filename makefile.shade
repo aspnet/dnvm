@@ -1,65 +1,12 @@
-use import="Files"
-use import="BuildEnv"
-use import="Environment"
 
-var PRODUCT_VERSION = '1.0.0'
+var VERSION='0.1'
+var FULL_VERSION='0.1'
 var AUTHORS='Microsoft Open Technologies, Inc.'
 
 use-standard-lifecycle
+k-standard-goals
 
-default BASE_DIR='${Directory.GetCurrentDirectory()}'
-default TARGET_DIR='${Path.Combine(BASE_DIR, "artifacts")}'
-default SOURCE_DIR='${Path.Combine(BASE_DIR, "src")}'
-default BUILD_DIR='${Path.Combine(BASE_DIR, "build")}'
-default TEST_DIR='${Path.Combine(BASE_DIR, "test")}'
-default Configuration='${GetEnvironmentVariable("Configuration")}'
+#xml-docs-test .clean .build-compile description='Check generated XML documentation files for errors' target='test'
+  k-xml-docs-test
 
-@{
-  if (string.IsNullOrEmpty(GetEnvironmentVariable("DNX_BUILD_VERSION")))
-  {
-    SetEnvironmentVariable("DNX_BUILD_VERSION", BuildNumber);
-  }
-  if (string.IsNullOrEmpty(GetEnvironmentVariable("K_AUTHOR")))
-  {
-    SetEnvironmentVariable("K_AUTHOR", AUTHORS);
-  }
-  if (string.IsNullOrEmpty(Configuration))
-  {
-    Configuration = "Debug";
-    SetEnvironmentVariable("Configuration", Configuration);
-  }
-}
 
-default DEPLOY_DNVM="${Environment.GetEnvironmentVariable("DEPLOY_DNVM")}"
-default DNVM_DEPLOY_REPO="${Environment.GetEnvironmentVariable("DNVM_DEPLOY_REPO")}"
-default DNVM_DEPLOY_BRANCH="${Environment.GetEnvironmentVariable("DNVM_DEPLOY_BRANCH")}"
-
-#copy-dnvm target='compile'
-    copy sourceDir='${SOURCE_DIR}' outputDir='${TARGET_DIR}' include='*.*' overwrite='${true}'
-
-    update-file updateFile='${Path.Combine(TARGET_DIR, "dnvm.ps1")}' @{
-        updateText = updateText
-            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("DNX_BUILD_VERSION"))
-            .Replace("{{AUTHORS}}", AUTHORS);
-    }
-
-    update-file updateFile='${Path.Combine(TARGET_DIR, "dnvm.sh")}' @{
-        updateText = updateText
-            .Replace("{{BUILD_VERSION}}", Environment.GetEnvironmentVariable("DNX_BUILD_VERSION"))
-            .Replace("{{AUTHORS}}", AUTHORS);
-    }
-
-#run-ps1-tests target='test' if='!IsLinux'
-    exec program='powershell' commandline='-ExecutionPolicy RemoteSigned -NoProfile -NoLogo -Command & "${Path.Combine(TEST_DIR, "ps1", "Run-Tests.ps1")} ${IsTeamCity?"-TeamCity":""}'
-	 
-
-#run-sh-tests target='test' if='IsLinux'
-    exec program='/bin/bash' commandline="${Path.Combine(TEST_DIR, "sh", "run-tests.sh")} ${IsTeamCity?"-t ":""}-v" workingdir="${Path.Combine(TEST_DIR, "sh")}"
-
-#push-dnvm target='deploy' if='DEPLOY_DNVM == "1" && !String.IsNullOrEmpty(DNVM_DEPLOY_REPO) && !String.IsNullOrEmpty(DNVM_DEPLOY_BRANCH)'
-	push-dnvm repo="${DNVM_DEPLOY_REPO}" branch="${DNVM_DEPLOY_BRANCH}" files="${Path.Combine(TARGET_DIR, "dnvm.cmd")};${Path.Combine(TARGET_DIR, "dnvm.ps1")};${Path.Combine(TARGET_DIR, "dnvm.sh")}" baseMessage=":arrow_up: dnvm.ps1, dnvm.cmd, dnvm.sh"
-
-functions @{
-    string GetEnvironmentVariable(string key) { return Environment.GetEnvironmentVariable(key); }
-    void SetEnvironmentVariable(string key, string value) { Environment.SetEnvironmentVariable(key, value); }
-}

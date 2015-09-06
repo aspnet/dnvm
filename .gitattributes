@@ -22,7 +22,6 @@
 *.h text=auto
 *.hxx text=auto
 *.py text=auto
-*.ps1 txt=auto
 *.rb text=auto
 *.java text=auto
 *.html text=auto

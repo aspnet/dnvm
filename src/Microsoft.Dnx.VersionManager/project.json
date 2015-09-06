@@ -1,0 +1,28 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "The .NET Version Manager, a set of command line utilities to update and configure which .NET Runtime to use.",
+  "authors": [ "Microsoft" ],
+  "tags": [ "dnvm", "dnx" ],
+  "projectUrl": "https://github.com/aspnet/dnvm",
+  "licenseUrl": "https://github.com/aspnet/dnvm/blob/dev/LICENSE.txt",
+
+  "dependencies": {
+    "Microsoft.Framework.CommandLineUtils.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    },
+    "Microsoft.CSharp": "4.0.1-*",
+    "System.Collections": "4.0.11-*",
+    "System.Console": "4.0.0-*",
+    "System.Linq": "4.0.1-*",
+    "System.Threading": "4.0.11-*"
+  },
+
+  "commands": {
+    "dnvm1": "Microsoft.Dnx.VersionManager"
+  },
+
+  "frameworks": {
+    "dnxcore50": { }
+  }
+}
