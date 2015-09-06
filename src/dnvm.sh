@@ -816,10 +816,12 @@ dnvm()
             local runtimes=""
             for location in `echo $DNX_HOME | tr ":" "\n"`; do
                 location+="/runtimes"
-                local oruntimes="$(find $location -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \;)"
-                for v in `echo $oruntimes | tr "\n" " "`; do
-                    runtimes+="$v:$location"$'\n'
-                done
+                if [ -d "$location" ]; then
+                    local oruntimes="$(find $location -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \;)"
+                    for v in `echo $oruntimes | tr "\n" " "`; do
+                        runtimes+="$v:$location"$'\n'
+                    done
+                fi
             done
 
             [[ -z $runtimes ]] && echo 'No runtimes installed. You can run `dnvm install latest` or `dnvm upgrade` to install a runtime.' && return
