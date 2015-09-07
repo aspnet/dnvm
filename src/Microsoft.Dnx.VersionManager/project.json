@@ -10,12 +10,7 @@
     "Microsoft.Framework.CommandLineUtils.Sources": {
       "version": "1.0.0-*",
       "type": "build"
-    },
-    "Microsoft.CSharp": "4.0.1-*",
-    "System.Collections": "4.0.11-*",
-    "System.Console": "4.0.0-*",
-    "System.Linq": "4.0.1-*",
-    "System.Threading": "4.0.11-*"
+    }
   },
 
   "commands": {
@@ -23,6 +18,15 @@
   },
 
   "frameworks": {
-    "dnxcore50": { }
+    "dnx451": { },
+    "dnxcore50": {
+      "dependencies": {
+        "Microsoft.CSharp": "4.0.1-*",
+        "System.Collections": "4.0.11-*",
+        "System.Console": "4.0.0-*",
+        "System.Linq": "4.0.1-*",
+        "System.Threading": "4.0.11-*"
+      }
+    }
   }
 }
