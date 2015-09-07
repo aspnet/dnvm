@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.VersionManager
 {
@@ -17,15 +18,13 @@ namespace Microsoft.Dnx.VersionManager
 
         public string OperationSystem { get; set; }
 
-        public string Location { get; set; }
-
         public string FullName { get; set; }
 
-        public static string GetRuntimeHome()
+        public static IEnumerable<string> GetRuntimeHomes()
         {
-            var homePath = Environment.ExpandEnvironmentVariables(Environment.GetEnvironmentVariable("DNX_HOME"));
+            var homePaths = Environment.GetEnvironmentVariable("DNX_HOME")?.Split(';');
 
-            if (string.IsNullOrEmpty(homePath))
+            if (homePaths == null || !homePaths.Any())
             {
                 var basePath = Environment.GetEnvironmentVariable("HOME");
                 if (string.IsNullOrEmpty(basePath))
@@ -33,10 +32,59 @@ namespace Microsoft.Dnx.VersionManager
                     basePath = Environment.GetEnvironmentVariable("USERPROFILE");
                 }
 
-                homePath = Path.Combine(basePath, ".dnx");
+                yield return Path.Combine(basePath, ".dnx");
+            }
+            else
+            {
+                foreach (var homePath in homePaths)
+                {
+                    yield return Environment.ExpandEnvironmentVariables(homePath);
+                }
+            }
+        }
+
+        public static string GetRuntimePathFromVersionOrAlias(string versionOrAlias, string runtimeHome, IRuntimeEnvironment env)
+        {
+            if (string.IsNullOrEmpty(runtimeHome))
+            {
+                return null;
             }
 
-            return homePath;
+            var aliasDirectory = Path.Combine(runtimeHome, "alias");
+
+            var aliasFiles = new[] { "{0}.alias", "{0}.txt" };
+
+            // Check alias first
+            foreach (var shortAliasFile in aliasFiles)
+            {
+                var aliasFile = Path.Combine(aliasDirectory, string.Format(shortAliasFile, versionOrAlias));
+
+                if (File.Exists(aliasFile))
+                {
+                    var fullName = File.ReadAllText(aliasFile).Trim();
+
+                    return Path.Combine(runtimeHome, "runtimes", fullName);
+                }
+            }
+
+            // There was no alias, look for the input as a version
+            var version = versionOrAlias;
+            var baseDirectory = Path.Combine(runtimeHome, "runtimes");
+
+            if (string.Equals(env.RuntimeType, "Mono", StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.Combine(baseDirectory, GetRuntime(versionOrAlias, "mono", os: null, arch: null).FullName);
+            }
+            else if (string.Equals(env.OperatingSystem, "Windows", StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.Combine(baseDirectory, GetRuntime(versionOrAlias, "clr", "win", "x86").FullName);
+            }
+            else if (string.Equals(env.OperatingSystem, "Darwin", StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.Combine(baseDirectory, GetRuntime(versionOrAlias, "coreclr", "darwin", "x64").FullName);
+            }
+
+            return Path.Combine(baseDirectory, GetRuntime(versionOrAlias, "coreclr", "linux", "x64").FullName);
         }
 
         public static DnxSdk GetRuntime(string fullName)
@@ -55,21 +103,20 @@ namespace Microsoft.Dnx.VersionManager
 
         public static DnxSdk GetRuntime(string version, string flavor, string os, string arch)
         {
-            return GetRuntime(GetRuntimeHome(), version, flavor, os, arch);
-        }
-
-        public static DnxSdk GetRuntime(string basePath, string version, string flavor, string os, string arch)
-        {
-            var fullName = GetRuntimeName(flavor, os, arch) + $".{version}";
+            string fullName = GetFullName(version, flavor, os, arch);
             return new DnxSdk
             {
                 FullName = fullName,
-                Location = Path.Combine(basePath, "runtimes", fullName),
                 Architecture = arch,
                 Flavor = flavor,
                 OperationSystem = os,
                 Version = version
             };
+        }
+
+        private static string GetFullName(string version, string flavor, string os, string arch)
+        {
+            return GetRuntimeName(flavor, os, arch) + $".{version}";
         }
 
         private static bool TryParseFullName(string fullName, out string flavor, out string os, out string arch, out string version)

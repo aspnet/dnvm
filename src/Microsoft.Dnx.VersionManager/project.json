@@ -10,7 +10,8 @@
     "Microsoft.Framework.CommandLineUtils.Sources": {
       "version": "1.0.0-*",
       "type": "build"
-    }
+    },
+    "Microsoft.Dnx.Runtime.Abstractions": "1.0.0-*"
   },
 
   "commands": {
@@ -25,7 +26,8 @@
         "System.Collections": "4.0.11-*",
         "System.Console": "4.0.0-*",
         "System.Linq": "4.0.1-*",
-        "System.Threading": "4.0.11-*"
+        "System.Threading": "4.0.11-*",
+        "System.IO.FileSystem": "4.0.1-*" 
       }
     }
   }

@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 
 namespace Microsoft.Dnx.VersionManager
 {
     public class Program
     {
+        public Program(IRuntimeEnvironment env)
+        {
+        }
+
         public int Main(string[] args)
         {
             try
