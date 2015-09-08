@@ -400,6 +400,10 @@ __dnvm_description() {
 
 }
 
+__dnvm_version() {
+   echo "1.0.0-$_DNVM_BUILDNUMBER"
+}
+
 __dnvm_help() {
     __dnvm_description
    printf "%b\n" "${Cya}USAGE:${Yel} $_DNVM_COMMAND_NAME <command> [options] ${RCol}"
@@ -471,6 +475,9 @@ __dnvm_help() {
    printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol}"
     echo "  displays this help text."
     echo ""
+   printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME [version|-v|-version|--version] ${RCol}"
+    echo "  print the dnvm version."
+    echo ""
    printf "%b\n" "${Yel}$_DNVM_COMMAND_NAME update-self ${RCol}"
     echo "  updates dnvm itself."
 }
@@ -488,6 +495,10 @@ dnvm()
     case $1 in
         "help"|"-h"|"-help"|"--help" )
             __dnvm_help
+        ;;
+
+        "version"|"-v"|"-version"|"--version" )
+            __dnvm_version
         ;;
 
         "update-self" )
