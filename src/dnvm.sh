@@ -328,24 +328,30 @@ __dnvm_requested_version_or_alias() {
     else
         if [ -e "$_DNVM_ALIAS_DIR/$versionOrAlias.alias" ]; then
             local runtimeFullName=$(cat "$_DNVM_ALIAS_DIR/$versionOrAlias.alias")
-            echo "$runtimeFullName"
-        else
-            local pkgVersion=$versionOrAlias
-            local pkgArchitecture="x64"
-            local pkgSystem=$os
-
-            if [[ -z $runtime || "$runtime" == "mono" ]]; then
-                echo "$_DNVM_RUNTIME_PACKAGE_NAME-mono.$pkgVersion"
-            else
-                if [ "$arch" != "" ]; then
-                    local pkgArchitecture="$arch"
-                fi
-                if [ "$os" == "" ]; then
-                    local pkgSystem=$(__dnvm_current_os)
-                fi
-
-                echo "$_DNVM_RUNTIME_PACKAGE_NAME-$runtime-$pkgSystem-$pkgArchitecture.$pkgVersion"
+            if [[ ! -n "$runtime" && ! -n "$arch" ]]; then
+                echo "$runtimeFullName"
+                return
             fi
+            local pkgVersion=$(__dnvm_package_version "$runtimeFullName")
+        fi
+
+        if [[ ! -n "$pkgVersion" ]]; then
+            local pkgVersion=$versionOrAlias
+        fi
+        local pkgArchitecture="x64"
+        local pkgSystem=$os
+
+        if [[ -z $runtime || "$runtime" == "mono" ]]; then
+            echo "$_DNVM_RUNTIME_PACKAGE_NAME-mono.$pkgVersion"
+        else
+            if [ "$arch" != "" ]; then
+                local pkgArchitecture="$arch"
+            fi
+            if [ "$os" == "" ]; then
+                local pkgSystem=$(__dnvm_current_os)
+            fi
+
+            echo "$_DNVM_RUNTIME_PACKAGE_NAME-$runtime-$pkgSystem-$pkgArchitecture.$pkgVersion"
         fi
     fi
 }
