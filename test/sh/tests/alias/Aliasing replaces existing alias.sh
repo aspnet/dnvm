@@ -1,6 +1,15 @@
 source $COMMON_HELPERS
 source $_DNVM_PATH
 
+# Check which shell currently executing
+if [ -n "$ZSH_VERSION" ]; then
+    # assume Zsh
+    setopt noclobber
+elif [ -n "$BASH_VERSION" ]; then
+    # assume Bash
+    set -o noclobber
+fi
+
 echo "woozlewuzzle" > "$DNX_USER_HOME/alias/test_alias_rename.alias"
 
 # Alias the installed runtime
