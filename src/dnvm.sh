@@ -747,6 +747,7 @@ dnvm()
                     local hostpath="$runtimeBin/dnx"
                     if [[ -e $hostpath ]]; then
                         $hostpath $@
+                        return $?
                     else
                         echo "Cannot find $_DNVM_RUNTIME_SHORT_NAME in $runtimeBin. It may have been corrupted. Use '$_DNVM_COMMAND_NAME install $versionOrAlias -f' to attempt to reinstall it"
                     fi
@@ -757,6 +758,7 @@ dnvm()
                         PATH=$(__dnvm_prepend_path "$PATH" "$runtimeBin")
                         $@
                     )
+                    return $?
                 ;;
                 "use")
                     echo "Adding" $runtimeBin "to process PATH"

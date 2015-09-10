@@ -6,7 +6,7 @@ Describe "run" -Tag "run" {
             __dnvmtest_run use none | Out-Null
             { Get-Command dnx -ErrorAction Stop } | Should Throw
             (__dnvmtest_run run $TestRuntimeVersion | Select-String -SimpleMatch "Microsoft .NET Execution environment CLR-x86-$TestRuntimeVersion") | Should Be $true
-            $__dnvmtest_exit | Should Be 0
+            $__dnvmtest_exit | Should Be 2
         }
     }
 
@@ -16,7 +16,7 @@ Describe "run" -Tag "run" {
             __dnvmtest_run use none | Out-Null
             { Get-Command dnx -ErrorAction Stop } | Should Throw
             (__dnvmtest_run run "test_alias_run" | Select-String -SimpleMatch "Microsoft .NET Execution environment CLR-x86-$TestRuntimeVersion") | Should Be $true
-            $__dnvmtest_exit | Should Be 0
+            $__dnvmtest_exit | Should Be 2
         }
     }
 }
