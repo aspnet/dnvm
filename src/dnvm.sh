@@ -684,9 +684,9 @@ dnvm()
             local arch=
             local runtime=
 
+            local versionOrAlias=
             shift
             if [ $cmd == "use" ]; then
-                local versionOrAlias=
                 while [ $# -ne 0 ]
                 do
                     if [[ $1 == "-p" || $1 == "-persistent" ]]; then
@@ -706,8 +706,20 @@ dnvm()
                     shift
                 done
             else
-                local versionOrAlias=$1
-                shift
+                while [ $# -ne 0 ]
+                do
+                    if [[ $1 == "-a" || $1 == "-arch" ]]; then
+                        local arch=$2
+                        shift
+                    elif [[ $1 == "-r" || $1 == "-runtime" ]]; then
+                        local runtime=$2
+                        shift
+                    elif [[ -n $1 ]]; then
+                        [[ -n $versionOrAlias ]] && break
+                        local versionOrAlias=$1
+                    fi
+                    shift
+                done
             fi
 
             if [[ $cmd == "use" && $versionOrAlias == "none" ]]; then
