@@ -1610,6 +1610,7 @@ function dnvm-run {
     }
     _WriteDebug "> $dnxExe $DnxArguments"
     & $dnxExe @DnxArguments
+    $Script:ExitCode = $LASTEXITCODE
 }
 
 <#
@@ -1652,6 +1653,7 @@ function dnvm-exec {
         & $Command @Arguments
     } finally {
         $env:PATH = $oldPath
+        $Script:ExitCode = $LASTEXITCODE
     }
 }
 
