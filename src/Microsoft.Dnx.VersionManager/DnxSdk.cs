@@ -50,21 +50,10 @@ namespace Microsoft.Dnx.VersionManager
                 return null;
             }
 
-            var aliasDirectory = Path.Combine(runtimeHome, "alias");
-
-            var aliasFiles = new[] { "{0}.alias", "{0}.txt" };
-
-            // Check alias first
-            foreach (var shortAliasFile in aliasFiles)
+            var alias = DnxAlias.GetAlias(runtimeHome, versionOrAlias);
+            if(alias != null)
             {
-                var aliasFile = Path.Combine(aliasDirectory, string.Format(shortAliasFile, versionOrAlias));
-
-                if (File.Exists(aliasFile))
-                {
-                    var fullName = File.ReadAllText(aliasFile).Trim();
-
-                    return Path.Combine(runtimeHome, "runtimes", fullName);
-                }
+                return alias.RuntimeFullName;
             }
 
             // There was no alias, look for the input as a version

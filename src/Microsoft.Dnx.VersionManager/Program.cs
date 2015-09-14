@@ -27,17 +27,27 @@ namespace Microsoft.Dnx.VersionManager
                 {
                     c.Description = "Lists and manages aliases";
 
-                    c.Argument("name", "The name of the alias to read/create/delete");
+                    var aliasName = c.Argument("name", "The name of the alias to read/create/delete");
                     c.Argument("version", "The version to assign to the new alias");
 
-                    c.Option("--delete", "Set this switch to delete the alias with the specified name", CommandOptionType.NoValue);
-                    c.Option("--arch", "The architecture of the runtime to assign to this alias", CommandOptionType.SingleValue);
-                    c.Option("--runtime", "The flavor of the runtime to assign to this alias", CommandOptionType.SingleValue);
+                    var delete = c.Option("--delete", "Set this switch to delete the alias with the specified name", CommandOptionType.NoValue);
+                    var arch = c.Option("--arch", "The architecture of the runtime to assign to this alias", CommandOptionType.SingleValue);
+                    var runtime = c.Option("--runtime", "The flavor of the runtime to assign to this alias", CommandOptionType.SingleValue);
 
                     c.HelpOption("-?|-h|--help");
 
                     c.OnExecute(() =>
                     {
+                        c.ShowRootCommandFullNameAndVersion();
+
+                        if(delete.HasValue())
+                        {
+                            foreach(var runtimeHome in DnxSdk.GetRuntimeHomes())
+                            {
+                                DnxAlias.Delete(runtimeHome, aliasName.Value);
+                            }
+                        }
+
                         return 0;
                     });
                 });
