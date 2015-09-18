@@ -11,8 +11,8 @@ _DNVM_RUNTIME_FOLDER_NAME=".dnx"
 _DNVM_COMMAND_NAME="dnvm"
 _DNVM_PACKAGE_MANAGER_NAME="dnu"
 _DNVM_VERSION_MANAGER_NAME=".NET Version Manager"
-_DNVM_DEFAULT_FEED="https://www.nuget.org/api/v2"
-_DNVM_DEFAULT_UNSTABLE_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
+_DNVM_DEFAULT_FEED="https://aspdist.blob.core.windows.net/assets/dnvm/"
+_DNVM_DEFAULT_CHANNEL="unstable"
 _DNVM_UPDATE_LOCATION="https://raw.githubusercontent.com/aspnet/Home/dev/dnvm.sh"
 
 if [ "$NO_COLOR" != "1" ]; then
@@ -103,10 +103,12 @@ __dnvm_runtime_bitness_defaults()
 
 __dnvm_query_feed() {
     local url=$1
-    xml="$(curl $url 2>/dev/null)"
-    echo $xml | grep \<[a-zA-Z]:Version\>* >> /dev/null || return 1
-    version="$(echo $xml | sed 's/.*<[a-zA-Z]:Version>\([^<]*\).*/\1/')"
-    downloadUrl="$(echo $xml | sed 's/.*<content.*src="\([^"]*\).*/\1/')"
+    local version=$2
+    
+    json="$(curl $url 2>/dev/null)"
+    echo $json | grep "Version:\s\?$version" >> /dev/null || return 1
+    version="$(echo $json | sed -n 's/Version:[ |]\(.*\)/\1/p')"
+    downloadUrl="$(echo $json | sed 's/.*<content.*src="\([^"]*\).*/\1/')"
     echo $version $downloadUrl
 }
 
@@ -128,9 +130,14 @@ __dnvm_find_latest() {
         local packageId="$_DNVM_RUNTIME_PACKAGE_NAME-$platform-$os-$arch"
     fi
 
-    local url="$DNX_ACTIVE_FEED/GetUpdates()?packageIds=%27$packageId%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
-    __dnvm_query_feed $url
-    return $?
+    
+    local url="$DNX_ACTIVE_FEED/channels/$_DNVM_DEFAULT_CHANNEL/index"
+    local json="$(curl $url 2>/dev/null)"
+    #Get first version in file
+    local version="$(echo $json | sed -n 's/Version:[ |]\(.*\)/\1/p')" | head -n 1
+    local filename="$(echo $json | sed -n 's/Filename:[ |]\(.*\)/\1/p')" | head -n 1
+    local downloadUrl="$DNX_ACTIVE_FEED/$filename"
+    return $version $downloadUrl
 }
 
 __dnvm_find_package() {
@@ -147,9 +154,11 @@ __dnvm_find_package() {
         local packageId="$_DNVM_RUNTIME_PACKAGE_NAME-$platform-$os-$arch"
     fi
 
-    local url="$DNX_ACTIVE_FEED/Packages()?\$filter=Id%20eq%27$packageId%27%20and%20Version%20eq%20%27$version%27"
-    __dnvm_query_feed $url
-    return $?
+    #local url="$DNX_ACTIVE_FEED/Packages()?\$filter=Id%20eq%27$packageId%27%20and%20Version%20eq%20%27$version%27"
+    #__dnvm_query_feed $url
+    local filename="$(echo $json | sed -n 's/Filename:[ |]\(.*\)/\1/p')"
+    local url="$DNX_ACTIVE_FEED/channels/$_DNVM_DEFAULT_CHANNEL/$version/$packageId.$version"
+    return $version $url
 }
 
 __dnvm_strip_path() {
