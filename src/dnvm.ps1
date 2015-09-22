@@ -224,8 +224,7 @@ if(!$RuntimeHomes) {
     $UnencodedHomes = "$UserHome;$GlobalHome"
 } elseif ($RuntimeHomes.StartsWith(';')) {
     _WriteOut "Ignoring invalid $HomeEnvVar; value was '$RuntimeHomes'" -ForegroundColor $ColorScheme.Warning
-    Set-Content "env:\$HomeEnvVar" $null
-    [Environment]::SetEnvironmentVariable($HomeEnvVar, $null, "User")
+    Clean-HomeEnv($true)
 
     # Use default instead.
     $UnencodedHomes = "$UserHome;$GlobalHome"
@@ -247,6 +246,22 @@ $GlobalRuntimesDir = Join-Path $GlobalHome "runtimes"
 $Aliases = $null
 
 ### Helper Functions
+# Remove $HomeEnv from process and user environment.
+# Called when current value is invalid or after installing files to default location.
+function Clean-HomeEnv {
+    param([switch]$SkipUserEnvironment)
+
+    if (Test-Path "env:\$HomeEnvVar") {
+        _WriteOut "Removing Process $HomeEnvVar"
+        Set-Content "env:\$HomeEnvVar" $null
+    }
+
+    if (!$SkipUserEnvironment -and [Environment]::GetEnvironmentVariable($HomeEnvVar, "User")) {
+        _WriteOut "Removing User $HomeEnvVar"
+        [Environment]::SetEnvironmentVariable($HomeEnvVar, $null, "User")
+    }
+}
+
 # Checks if a specified file exists in the destination folder and if not, copies the file
 # to the destination folder.
 function Safe-Filecopy {
@@ -1706,21 +1721,8 @@ function dnvm-setup {
         [Environment]::SetEnvironmentVariable("PATH", $userPath, "User")
     }
 
-    # Now the HomeEnvVar
-    _WriteOut "Adding $DestinationHome to Process $HomeEnvVar"
-    $processHome = ""
-    if(Test-Path "env:\$HomeEnvVar") {
-        $processHome = Get-Content "env:\$HomeEnvVar"
-    }
-    $processHome = Change-Path $processHome "$DefaultUserHome" $PathsToRemove
-    Set-Content "env:\$HomeEnvVar" $processHome
-
-    if(!$SkipUserEnvironmentInstall) {
-        _WriteOut "Adding $DestinationHome to User $HomeEnvVar"
-        $userHomeVal = [Environment]::GetEnvironmentVariable($HomeEnvVar, "User")
-        $userHomeVal = Change-Path $userHomeVal "$DefaultUserHome" $PathsToRemove
-        [Environment]::SetEnvironmentVariable($HomeEnvVar, $userHomeVal, "User")
-    }
+    # Now clean up the HomeEnvVar if currently set; script installed to default location.
+    Clean-HomeEnv($SkipUserEnvironmentInstall)
 }
 
 function Check-Runtimes(){
