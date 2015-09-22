@@ -11,8 +11,9 @@ _DNVM_RUNTIME_FOLDER_NAME=".dnx"
 _DNVM_COMMAND_NAME="dnvm"
 _DNVM_PACKAGE_MANAGER_NAME="dnu"
 _DNVM_VERSION_MANAGER_NAME=".NET Version Manager"
-_DNVM_DEFAULT_FEED="https://aspdist.blob.core.windows.net/assets/dnvm/"
+_DNVM_DEFAULT_FEED="https://aspdist.blob.core.windows.net/assets/dnvm"
 _DNVM_DEFAULT_CHANNEL="unstable"
+_DNVM_DEFAULT_UNSTABLE_CHANNEL="dev"
 _DNVM_UPDATE_LOCATION="https://raw.githubusercontent.com/aspnet/Home/dev/dnvm.sh"
 
 if [ "$NO_COLOR" != "1" ]; then
@@ -63,6 +64,7 @@ _DNVM_ALIAS_DIR="$DNX_USER_HOME/alias"
 _DNVM_DNVM_DIR="$DNX_USER_HOME/dnvm"
 
 DNX_ACTIVE_FEED=""
+DNX_ACTIVE_CHANNEL=""
 
 __dnvm_current_os()
 {
@@ -101,17 +103,6 @@ __dnvm_runtime_bitness_defaults()
     fi
 }
 
-__dnvm_query_feed() {
-    local url=$1
-    local version=$2
-    
-    json="$(curl $url 2>/dev/null)"
-    echo $json | grep "Version:\s\?$version" >> /dev/null || return 1
-    version="$(echo $json | sed -n 's/Version:[ |]\(.*\)/\1/p')"
-    downloadUrl="$(echo $json | sed 's/.*<content.*src="\([^"]*\).*/\1/')"
-    echo $version $downloadUrl
-}
-
 __dnvm_find_latest() {
     local platform=$1
     local arch=$2
@@ -129,15 +120,16 @@ __dnvm_find_latest() {
         #dnx-coreclr-linux-x64
         local packageId="$_DNVM_RUNTIME_PACKAGE_NAME-$platform-$os-$arch"
     fi
-
     
-    local url="$DNX_ACTIVE_FEED/channels/$_DNVM_DEFAULT_CHANNEL/index"
-    local json="$(curl $url 2>/dev/null)"
-    #Get first version in file
-    local version="$(echo $json | sed -n 's/Version:[ |]\(.*\)/\1/p')" | head -n 1
-    local filename="$(echo $json | sed -n 's/Filename:[ |]\(.*\)/\1/p')" | head -n 1
+    local url="$DNX_ACTIVE_FEED/channels/$DNX_ACTIVE_CHANNEL/index"
+    local index="$(curl $url 2>/dev/null)"
+
+    local version="$(export IFS=; echo $index | sed -n 's/Latest: \(.*\)/\1/p')"
+    local fullPackageId="$packageId.$version"
+    local filename="$(export IFS=; echo $index | sed -n "s/Filename: \(.*$fullPackageId\)/\1/p")"
+    
     local downloadUrl="$DNX_ACTIVE_FEED/$filename"
-    return $version $downloadUrl
+    echo $version $downloadUrl
 }
 
 __dnvm_find_package() {
@@ -154,11 +146,12 @@ __dnvm_find_package() {
         local packageId="$_DNVM_RUNTIME_PACKAGE_NAME-$platform-$os-$arch"
     fi
 
-    #local url="$DNX_ACTIVE_FEED/Packages()?\$filter=Id%20eq%27$packageId%27%20and%20Version%20eq%20%27$version%27"
-    #__dnvm_query_feed $url
-    local filename="$(echo $json | sed -n 's/Filename:[ |]\(.*\)/\1/p')"
-    local url="$DNX_ACTIVE_FEED/channels/$_DNVM_DEFAULT_CHANNEL/$version/$packageId.$version"
-    return $version $url
+    local url="$DNX_ACTIVE_FEED/channels/$_DNVM_DEFAULT_CHANNEL/index"
+    local index="$(curl $url 2>/dev/null)"
+    
+    local filename="$(export IFS=; echo $index | sed -n "s/Filename: \(.*$packageId.$version\)/\1/p")"
+    local packageUrl="$DNX_ACTIVE_FEED/$filename"
+    echo $packageUrl
 }
 
 __dnvm_strip_path() {
@@ -248,17 +241,10 @@ __dnvm_download() {
     local runtimeFullName="$1"
     local downloadUrl="$2"
     local runtimeFolder="$3"
-    local force="$4"
-    local acceptSudo="$5"
+    local acceptSudo="$4"
 
-    local pkgName=$(__dnvm_package_name "$runtimeFullName")
-    local pkgVersion=$(__dnvm_package_version "$runtimeFullName")
-    local runtimeFile="$runtimeFolder/$runtimeFullName.nupkg"
-
-    if [ -n "$force" ]; then
-        printf "%b\n" "${Yel}Forcing download by deleting $runtimeFolder directory ${RCol}"
-        rm -rf "$runtimeFolder"
-    fi
+    #todo: This will need to change to be whatever the filename in the index is.    
+    local runtimeFile="$runtimeFolder/$runtimeFullName.zip"
 
     if [ -e "$runtimeFolder" ]; then
        printf "%b\n" "${Gre}$runtimeFullName already installed. ${RCol}"
@@ -281,7 +267,7 @@ __dnvm_download() {
         fi
     fi
     echo "Downloading $runtimeFullName from $DNX_ACTIVE_FEED"
-    echo "Download: $downloadUrl"
+    echo "Download: $downloadUrl to $runtimeFile"
 
     local httpResult=$($useSudo curl -L -D - "$downloadUrl" -o "$runtimeFile" -# | grep "^HTTP/1.1" | head -n 1 | sed "s/HTTP.1.1 \([0-9]*\).*/\1/")
 
@@ -555,7 +541,7 @@ dnvm()
                 elif [[ $1 == "-OS" ]]; then
                     local os=$2
                     shift
-		elif [[ $1 == "-y" ]]; then
+		        elif [[ $1 == "-y" ]]; then
                     local acceptSudo=1
                 elif [[ $1 == "-arch" ]]; then
                     local arch=$2
@@ -579,20 +565,20 @@ dnvm()
                 return 1
             fi
 
+            #This will be temporary whilst a more first class channels feature is added. There needs to be 3 values.
             if [ -z $unstable ]; then
-                DNX_ACTIVE_FEED="$DNX_FEED"
-                if [ -z "$DNX_ACTIVE_FEED" ]; then
-                    DNX_ACTIVE_FEED="$_DNVM_DEFAULT_FEED"
-                else
-                    printf "%b\n" "${Yel}Default stable feed ($_DNVM_DEFAULT_FEED) is being overridden by the value of the DNX_FEED variable ($DNX_FEED). ${RCol}"
-                fi
+                DNX_ACTIVE_CHANNEL="$_DNVM_DEFAULT_CHANNEL"
             else
-                DNX_ACTIVE_FEED="$DNX_UNSTABLE_FEED"
-                if [ -z "$DNX_ACTIVE_FEED" ]; then
-                    DNX_ACTIVE_FEED="$_DNVM_DEFAULT_UNSTABLE_FEED"
-                else
-                    printf "%b\n" "${Yel}Default unstable feed ($_DNVM_DEFAULT_UNSTABLE_FEED) is being overridden by the value of the DNX_UNSTABLE_FEED variable ($DNX_UNSTABLE_FEED). ${RCol}"
-                fi
+                DNX_ACTIVE_CHANNEL="$_DNVM_DEFAULT_UNSTABLE_CHANNEL"
+            fi
+
+            echo "Using Channel: $DNX_ACTIVE_CHANNEL"
+
+            DNX_ACTIVE_FEED="$DNX_FEED"
+            if [ -z "$DNX_ACTIVE_FEED" ]; then
+                DNX_ACTIVE_FEED="$_DNVM_DEFAULT_FEED"
+            else
+                printf "%b\n" "${Yel}Default feed ($_DNVM_DEFAULT_FEED) is being overridden by the value of the DNX_FEED variable ($DNX_FEED). ${RCol}"
             fi
 
             if [[ -z $os ]]; then
@@ -624,27 +610,41 @@ dnvm()
                    echo "Determining latest version"
                    read versionOrAlias downloadUrl < <(__dnvm_find_latest "$runtime" "$arch" "$os")
                    [[ $? == 1 ]] && echo "Error: Could not find latest version from feed $DNX_ACTIVE_FEED" && return 1
-                   printf "%b\n" "Latest version is ${Cya}$versionOrAlias ${RCol}"
+                   printf "%b\n" "Latest version is ${Cya}$versionOrAlias located at $downloadUrl${RCol}"
                 else
                     local runtimeFullName=$(__dnvm_requested_version_or_alias "$versionOrAlias" "$runtime" "$arch" "$os")
                     local runtimeVersion=$(__dnvm_package_version "$runtimeFullName")
-
-                    read versionOrAlias downloadUrl < <(__dnvm_find_package "$runtime" "$arch" "$os" "$runtimeVersion")
+                    local versionOrAlias=$runtimeVersion
+                    local downloadUrl=$(__dnvm_find_package "$runtime" "$arch" "$os" "$runtimeVersion")
+                    echo "DownloadURL: $downloadUrl"
                     [[ $? == 1 ]] && echo "Error: Could not find version $runtimeVersion in feed $DNX_ACTIVE_FEED" && return 1
                 fi
                 local runtimeFullName=$(__dnvm_requested_version_or_alias "$versionOrAlias" "$runtime" "$arch" "$os")
                 local runtimeFolder="$runtimeDir/$runtimeFullName"
 
+                #check all runtime homes for the runtime being installed.
+                #we can force install a DNX if it exists in the user or global folder, but not anywhere else.
+                #The installed dnx could be global, so if we are forcing it here we will remove it since we have the
+                #global path handy.
                 local exist=0
                 for folder in `echo $DNX_HOME | tr ":" "\n"`; do
                     if [ -e "$folder/runtimes/$runtimeFullName" ]; then
-                        echo "$runtimeFullName already installed in $folder"
+                        local useSudo=
+                        if [[ ("$folder" == "$DNX_USER_HOME" || "$folder" == "$DNX_GLOBAL_HOME") && -n "$force" ]]; then
+                            if [[ "$folder" == "$DNX_GLOBAL_HOME" ]]; then
+                                useSudo=sudo
+                            fi
+                            printf "%b\n" "${Yel}Forcing download by deleting $folder/runtimes/$runtimeFullName directory ${RCol}"
+                            $useSudo rm -rf "$folder/runtimes/$runtimeFullName"
+                            continue
+                        fi
+                        echo "$runtimeFullName already installed in $folder $DNVM_USER_HOME"
                         exist=1
                     fi
                 done
 
                 if [[ $exist != 1 ]]; then
-                    __dnvm_download "$runtimeFullName" "$downloadUrl" "$runtimeFolder" "$force" "$acceptSudo"
+                    __dnvm_download "$runtimeFullName" "$downloadUrl" "$runtimeFolder" "$acceptSudo"
                 fi
                 [[ $? == 1 ]] && return 1
                 if [[ "$os" == $(__dnvm_current_os) ]]; then
