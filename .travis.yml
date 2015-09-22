@@ -1,5 +1,8 @@
 language: csharp
 sudo: false
+os:
+  - linux
+  - osx
 addons:
   apt:
     packages:
