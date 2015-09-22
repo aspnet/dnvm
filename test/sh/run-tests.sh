@@ -27,8 +27,8 @@ export DNX_FEED
 
 # This is a DNX to use for testing various commands. It doesn't matter what version it is
 [ -z "$_TEST_VERSION" ]     && export _TEST_VERSION="1.0.0-beta7"
-[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='8a6d4af3e65b2a2193ae2ac2b3b94d9d898fded3'
-[ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$DNX_FEED/package/$_DNVM_RUNTIME_PACKAGE_NAME-mono/$_TEST_VERSION"
+[ -z "$_NUPKG_HASH" ]       && export _NUPKG_HASH='234e543292254e18fe57c6f77c54b281d9d600b7'
+[ -z "$_NUPKG_URL" ]        && export _NUPKG_URL="$DNX_FEED/packages/$_TEST_VERSION/$_DNVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION.zip"
 [ -z "$_NUPKG_NAME" ]       && export _NUPKG_NAME="$_DNVM_RUNTIME_PACKAGE_NAME-mono.$_TEST_VERSION"
 [ -z "$_NUPKG_FILE" ]       && export _NUPKG_FILE="$TEST_WORK_DIR/${_NUPKG_NAME}.nupkg"
 
@@ -63,6 +63,8 @@ if [ ! -f "$_NUPKG_FILE" ]; then
 
     curl -L -o $_NUPKG_FILE $_NUPKG_URL >/dev/null 2>&1
     ACTUAL_HASH=$(shasum $_NUPKG_FILE | awk '{ print $1 }')
+    #Doing this for now until we change DNVM and the rest of the infrastructure to handle installing a zip as well as a nupkg.
+    mv "$TEST_WORK_DIR/$_NUPKG_NAME.zip" $_NUPKG_FILE
     [ -e $_NUPKG_FILE ] || die "failed to fetch test nupkg"
     [ "$ACTUAL_HASH" = "$_NUPKG_HASH" ] || die "downloaded nupkg hash '$ACTUAL_HASH' for '$_NUPKG_URL' does not match expected value"
 fi
