@@ -48,10 +48,10 @@ if(!$TestAppsDir) { $TestAppsDir = Convert-Path (Join-Path $scriptDir "../apps")
 # test, but all we care about in these tests is that the app executes.
 #$env:DNX_FEED = "https://www.myget.org/F/aspnetrelease/api/v2"
 #NOTE: This should be set back to release once we have non windows DNX on that feed.
-$env:DNX_FEED = "https://www.myget.org/F/aspnetvnext/api/v2"
-$TestRuntimeVersion = "1.0.0-beta8-15618"
+$env:DNX_FEED = "https://nuget.org/api/v2/"
+$TestRuntimeVersion = "1.0.0-beta7"
 $specificNupkgUrl = "$($env:DNX_FEED)/package/dnx-coreclr-win-x64/$TestRuntimeVersion"
-$specificNupkgHash = "5j65d8HJHUpJ8gHATXJK9wJ6WpEdfz0+48qAAhzND0I="
+$specificNupkgHash = "AvYCzI6R94VSFfzrLF79T9bPQXHjWLB73BwSNJkxOYA="
 $specificNupkgName = "dnx-coreclr-win-x64.$TestRuntimeVersion.nupkg"
 $specificNuPkgFxName = "Asp.Net,Version=v5.0"
 
