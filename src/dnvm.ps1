@@ -870,8 +870,8 @@ function dnvm-update-self {
     _WriteOut "Updating $CommandName from $DNVMUpgradeUrl"
     $wc = New-Object System.Net.WebClient
     Apply-Proxy $wc -Proxy:$Proxy
-	
-	$CurrentScriptRoot = Get-ScriptRoot
+
+    $CurrentScriptRoot = Get-ScriptRoot
     $dnvmFile = Join-Path $CurrentScriptRoot "dnvm.ps1"
     $tempDnvmFile = Join-Path $CurrentScriptRoot "temp"
     $backupFilePath = Join-Path $CurrentScriptRoot "dnvm.ps1.bak"
