@@ -40,3 +40,5 @@ nuget.exe
 # Vim files
 *.swp
 *.swo
+
+.vs/
