@@ -85,9 +85,9 @@ Set-Variable -Option Constant "DefaultUserDirectoryName" ".dnx"
 Set-Variable -Option Constant "DefaultGlobalDirectoryName" "Microsoft DNX"
 Set-Variable -Option Constant "OldUserDirectoryNames" @(".kre", ".k")
 Set-Variable -Option Constant "RuntimePackageName" "dnx"
-Set-Variable -Option Constant "DefaultFeed" "https://www.nuget.org/api/v2"
+Set-Variable -Option Constant "DefaultFeed" "https://aspdist.blob.core.windows.net/assets/dnvm/"
 Set-Variable -Option Constant "DefaultFeedKey" "DNX_FEED"
-Set-Variable -Option Constant "DefaultUnstableFeed" "https://www.myget.org/F/aspnetvnext/api/v2"
+Set-Variable -Option Constant "DefaultUnstableFeed" "https://aspdist.blob.core.windows.net/assets/dnvm/"
 Set-Variable -Option Constant "DefaultUnstableFeedKey" "DNX_UNSTABLE_FEED"
 Set-Variable -Option Constant "CrossGenCommand" "dnx-crossgen"
 Set-Variable -Option Constant "OldCrossGenCommand" "k-crossgen"
@@ -545,56 +545,55 @@ param(
   }
 }
 
-function Find-Package {
-    param(
-        $runtimeInfo,
-        [string]$Feed,
-        [string]$Proxy
+function Join-UrlFragments
+{
+    param
+    (
+        $Parts = $null
     )
-    $url = "$Feed/Packages()?`$filter=Id eq '$($runtimeInfo.RuntimeId)' and Version eq '$($runtimeInfo.Version)'"
-    Invoke-NuGetWebRequest $runtimeInfo.RuntimeId $url $Proxy
+
+    ($Parts | ? { $_ } | % { ([string]$_).trim("/") } | ? { $_ } ) -join "/" 
 }
 
-function Find-Latest {
+function Find-Package {
     param(
         $runtimeInfo,
         [Parameter(Mandatory=$true)]
         [string]$Feed,
-        [string]$Proxy
+        [string]$Proxy,
+        [string]$channel
     )
 
     _WriteOut "Determining latest version"
     $RuntimeId = $runtimeInfo.RuntimeId
     _WriteDebug "Latest RuntimeId: $RuntimeId"
-    $url = "$Feed/GetUpdates()?packageIds=%27$RuntimeId%27&versions=%270.0%27&includePrerelease=true&includeAllVersions=false"
-    Invoke-NuGetWebRequest $RuntimeId $url $Proxy
-}
-
-function Invoke-NuGetWebRequest {
-    param (
-        [string]$RuntimeId,
-        [string]$Url,
-        [string]$Proxy
-    )
-    # NOTE: DO NOT use Invoke-WebRequest. It requires PowerShell 4.0!
+    $url = Join-UrlFragments $Feed,"channels","$channel","index"
+    _WriteDebug "Index URL: $url"
 
     $wc = New-Object System.Net.WebClient
     Apply-Proxy $wc -Proxy:$Proxy
     _WriteDebug "Downloading $Url ..."
+
     try {
-        [xml]$xml = $wc.DownloadString($Url)
+        $index = $wc.DownloadString($Url)
     } catch {
         $Script:ExitCode = $ExitCodes.NoRuntimesOnFeed
         throw "Unable to find any runtime packages on the feed!"
     }
 
-    $version = Select-Xml "//d:Version" -Namespace @{d='http://schemas.microsoft.com/ado/2007/08/dataservices'} $xml
+    if($runtimeInfo.Version -eq "latest") {
+        $version = $index | ?{$_ -match "Latest: (?<version>.+)?"} | %{$matches["version"]}
+    } else {
+        $version = $runtimeInfo.Version
+    }
+    
     if($version) {
-        $downloadUrl = (Select-Xml "//d:content/@src" -Namespace @{d='http://www.w3.org/2005/Atom'} $xml).Node.value
+        $urlPart = $index | ?{$_ -match "Filename: (?<url>.+?$RuntimeId.$version.zip)"} | %{$matches["url"]}
+        $downloadUrl = Join-UrlFragments $Feed,$urlPart
         _WriteDebug "Found $version at $downloadUrl"
         @{ Version = $version; DownloadUrl = $downloadUrl }
     } else {
-        throw "There are no runtimes matching the name $RuntimeId on feed $feed."
+        throw "Thre are no runtimes matching the name $RuntimeId on channel $channel."
     }
 }
 
@@ -689,28 +688,23 @@ function Unpack-Package([string]$DownloadFile, [string]$UnpackFolder) {
 
     $compressionLib = [System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
 
-    if($compressionLib -eq $null) {
-      try {
-          # Shell will not recognize nupkg as a zip and throw, so rename it to zip
-          $runtimeZip = [System.IO.Path]::ChangeExtension($DownloadFile, "zip")
-          Rename-Item $DownloadFile $runtimeZip
-          # Use the shell to uncompress the nupkg
-          $shell_app=new-object -com shell.application
-          $zip_file = $shell_app.namespace($runtimeZip)
-          $destination = $shell_app.namespace($UnpackFolder)
-          $destination.Copyhere($zip_file.items(), 0x14) #0x4 = don't show UI, 0x10 = overwrite files
-      }
-      finally {
-        # Clean up the package file itself.
-        Remove-Item $runtimeZip -Force
-      }
-    } else {
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($DownloadFile, $UnpackFolder)
-        
+    try {
+        if($compressionLib -eq $null) {
+            # Use the shell to uncompress the zip
+            $shell_app=new-object -com shell.application
+            $zip_file = $shell_app.namespace($DownloadFile)
+            $destination = $shell_app.namespace($UnpackFolder)
+            $destination.Copyhere($zip_file.items(), 0x14) #0x4 = don't show UI, 0x10 = overwrite files
+        } else {
+            [System.IO.Compression.ZipFile]::ExtractToDirectory($DownloadFile, $UnpackFolder)
+        }
+    } finally {
         # Clean up the package file itself.
         Remove-Item $DownloadFile -Force
     }
 
+    #NOTE: This can be removed as soon as we start re-packing the zips on blob storage.
+    #for now they are just renamed so we will continue to do this but we can remove it in the near future.
     If (Test-Path -LiteralPath ($UnpackFolder + "\[Content_Types].xml")) {
         Remove-Item -LiteralPath ($UnpackFolder + "\[Content_Types].xml")
     }
@@ -1278,7 +1272,8 @@ function dnvm-install {
         [switch]$Global)
 
     $selectedFeed = ""
-
+    $activeChannel = ""
+    #This will change to a more first class channels feature in the future.
     if($Unstable) {
         $selectedFeed = $ActiveUnstableFeed
         if(!$selectedFeed) {
@@ -1286,6 +1281,7 @@ function dnvm-install {
         } else {
             _WriteOut -ForegroundColor $ColorScheme.Warning "Default unstable feed ($DefaultUnstableFeed) is being overridden by the value of the $DefaultUnstableFeedKey environment variable ($ActiveUnstableFeed)"
         }
+        $activeChannel="dev"
     } else {
         $selectedFeed = $ActiveFeed
         if(!$selectedFeed) {
@@ -1293,6 +1289,7 @@ function dnvm-install {
         } else {
             _WriteOut -ForegroundColor $ColorScheme.Warning "Default stable feed ($DefaultFeed) is being overridden by the value of the $DefaultFeedKey environment variable ($ActiveFeed)"
         }
+        $activeChannel="unstable"
     }
 
     if(!$VersionNuPkgOrAlias) {
@@ -1342,13 +1339,7 @@ function dnvm-install {
     $runtimeInfo = GetRuntimeInfo $Architecture $Runtime $OS $Version
 
     if (!$IsNuPkg) {
-        if ($VersionNuPkgOrAlias -eq "latest") {
-            Write-Progress -Activity "Installing runtime" -Status "Determining latest runtime" -Id 1
-            $findPackageResult = Find-Latest -runtimeInfo:$runtimeInfo -Feed:$selectedFeed
-        }
-        else {
-            $findPackageResult = Find-Package -runtimeInfo:$runtimeInfo -Feed:$selectedFeed
-        }
+        $findPackageResult = Find-Package -runtimeInfo:$runtimeInfo -Feed:$selectedFeed -Channel:$activeChannel
         $Version = $findPackageResult.Version
     }
 
