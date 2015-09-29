@@ -847,7 +847,7 @@ function Is-Elevated() {
 }
 
 function Get-ScriptRoot() {
-    if (!$PSVersionTable.PSVersion.Major -ge 3) {
+    if ($PSVersionTable.PSVersion.Major -ge 3) {
         return $PSScriptRoot
     }
 
