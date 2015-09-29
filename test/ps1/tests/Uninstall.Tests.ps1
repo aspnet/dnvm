@@ -17,7 +17,7 @@ function DefineUninstallTests($clr, $arch, $os) {
             if($clr -eq "mono") {
                 __dnvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -os $os -nonative | Out-Null
             } else {
-                __dnvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -a $alias -os $os -nonative | Out-Null
+                __dnvmtest_run install $TestRuntimeVersion -arch $arch -r $clr -alias $alias -os $os -nonative | Out-Null
             }
 
             $runtimeRoot | Should Exist
