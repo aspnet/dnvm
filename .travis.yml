@@ -1,5 +1,7 @@
 language: csharp
 sudo: false
+mono:
+  - beta
 addons:
   apt:
     packages:
