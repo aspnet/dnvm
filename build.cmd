@@ -4,8 +4,7 @@ cd %~dp0
 SETLOCAL
 SET NUGET_VERSION=latest
 SET CACHED_NUGET=%LocalAppData%\NuGet\nuget.%NUGET_VERSION%.exe
-SET BUILDCMD_KOREBUILD_VERSION=""
-SET BUILDCMD_DNX_VERSION=""
+SET BUILDCMD_KOREBUILD_VERSION=
 
 IF EXIST %CACHED_NUGET% goto copynuget
 echo Downloading latest version of NuGet.exe...
@@ -19,7 +18,7 @@ copy %CACHED_NUGET% .nuget\nuget.exe > nul
 
 :restore
 IF EXIST packages\Sake goto run
-IF %BUILDCMD_KOREBUILD_VERSION%=="" (
+IF "%BUILDCMD_KOREBUILD_VERSION%"=="" (
     .nuget\nuget.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
 ) ELSE (
     .nuget\nuget.exe install KoreBuild -version %BUILDCMD_KOREBUILD_VERSION% -ExcludeVersion -o packages -nocache -pre
