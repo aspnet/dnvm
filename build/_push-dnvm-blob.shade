@@ -1,0 +1,31 @@
+use assembly="System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+
+use namespace='System'
+use namespace='System.IO'
+use namespace='System.Net.Http'
+
+@{
+    var queryString = new Uri(container).Query;
+    var baseAddress = container.Substring(0, container.IndexOf('?')) + "/";
+    
+    var client = new HttpClient()
+    {
+        BaseAddress = new Uri(baseAddress)
+    };
+
+    foreach (string filePath in files.Split(";".ToCharArray()))
+    {
+        var req = new HttpRequestMessage();
+        var fileName = Path.GetFileName(filePath);
+        var stream = File.OpenRead(filePath);
+
+        req.Headers.Add("x-ms-blob-type", "BlockBlob");
+        req.Content = new StreamContent(stream);
+        req.RequestUri = new Uri(client.BaseAddress + fileName + queryString);
+        req.Method = HttpMethod.Put;
+
+        var result = client.SendAsync(req).Result;
+        Log.Info("Copying " + fileName + " to " + client.BaseAddress + fileName);
+        result.EnsureSuccessStatusCode();
+    }
+}
