@@ -1,0 +1,6 @@
+source $COMMON_HELPERS
+source $_DNVM_PATH
+
+$_DNVM_COMMAND_NAME
+
+[ "$?" == "2" ] || die "expected exit code was not returned"

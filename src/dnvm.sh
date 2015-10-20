@@ -504,7 +504,7 @@ dnvm()
 
         printf "%b\n" "Use ${Yel}$_DNVM_COMMAND_NAME [help|-h|-help|--help] ${RCol} to display help text."
         echo ""
-        return
+        return 2
     fi
 
     case $1 in
