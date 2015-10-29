@@ -981,7 +981,8 @@ dnvm()
             if [[ $2 == "-detailed" ]]; then
                 # Calculate widest alias
                 local widestAlias=5
-                for f in `echo $runtimes`; do
+                for f in `echo -e "$runtimes"`; do
+                    f=`echo $f | sed 's/\([:]\).*//'`
                     local pkgName=$(__dnvm_package_name "$f")
                     local pkgVersion=$(__dnvm_package_version "$f")
                     local alias=""
