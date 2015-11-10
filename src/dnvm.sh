@@ -863,7 +863,7 @@ dnvm()
         "alias" )
             [[ $# -gt 9 ]] && __dnvm_help && return
 
-            [[ ! -e "$_DNVM_ALIAS_DIR/" ]] && mkdir "$_DNVM_ALIAS_DIR/" > /dev/null
+            [[ ! -e "$_DNVM_ALIAS_DIR/" ]] && mkdir -p "$_DNVM_ALIAS_DIR/" > /dev/null
 
             if [[ $# == 1 ]]; then
                 echo ""
@@ -1053,6 +1053,8 @@ dnvm()
 
 # Add the home location's bin directory to the path if it doesn't exist
 [[ ":$PATH:" != *":$DNX_USER_HOME/bin:"* ]] && export PATH="$DNX_USER_HOME/bin:$PATH"
+
+[[ ! -d "$_DNVM_USER_PACKAGES" ]] && mkdir -p $_DNVM_USER_PACKAGES
 
 # Generate the command function using the constant defined above.
 $_DNVM_COMMAND_NAME alias default >/dev/null && $_DNVM_COMMAND_NAME use default >/dev/null || true
