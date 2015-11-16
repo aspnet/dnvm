@@ -395,9 +395,23 @@ function Write-Feeds {
 
 function Get-RuntimeAlias {
     if($Aliases -eq $null) {
+    $Aliases = @()
         _WriteDebug "Scanning for aliases in $AliasesDir"
         if(Test-Path $AliasesDir) {
-            $Aliases = @(Get-ChildItem ($UserHome + "\alias\") | Select-Object @{label='Alias';expression={$_.BaseName}}, @{label='Name';expression={Get-Content $_.FullName }}, @{label='Orphan';expression={-Not (Test-Path ($RuntimesDir + "\" + (Get-Content $_.FullName)))}})
+            ForEach ($alias in Get-ChildItem ($UserHome + "\alias\")) {
+                $found = $false
+                ForEach ($dir in $RuntimeDirs) {
+                    if (Test-Path ($dir + "\" + (Get-Content $alias.FullName))) {
+                        $Aliases += New-Object PSObject -Property @{'Alias'=$alias.BaseName;'Name'=(Get-Content $alias.FullName);'Orphan'=$false}
+                        $found = $true
+                        break;
+                    }
+                }
+
+                if (-Not $found) {
+                    $Aliases += New-Object PSObject -Property @{'Alias'=$alias.BaseName;'Name'=(Get-Content $alias.FullName);'Orphan'=$true}
+                }
+            }
         } else {
             $Aliases = @()
         }
