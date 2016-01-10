@@ -351,8 +351,10 @@ __dnvm_requested_version_or_alias() {
         local pkgArchitecture="x64"
         local pkgSystem=$os
 
-        if [[ -z $runtime || "$runtime" == "mono" ]]; then
+        if [[ "$runtime" == "mono" ]]; then
             echo "$_DNVM_RUNTIME_PACKAGE_NAME-mono.$pkgVersion"
+		elif [[ -z $runtime ]]; then
+			echo "$pkgVersion"
         else
             if [ "$arch" != "" ]; then
                 local pkgArchitecture="$arch"
