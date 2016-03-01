@@ -1,21 +1,23 @@
 {
-    "version": "0.0.1-*",
-    "description": "Quick app to exercise a few .NET things",
-    "dependencies": {
-    },
-    "commands": {
-        "run": "run"
-    },
-    "frameworks": {
-        "dnx451": { },
-        "dnxcore50": {
-            "dependencies": {
-                "System.Runtime": "4.0.21-beta-23225",
-                "System.Console": "4.0.0-beta-23225",
-                "System.Collections": "4.0.11-beta-23225",
-                "System.Diagnostics.Process": "4.0.0-beta-23225",
-                "System.Linq": "4.0.1-23225"
-            }
-        }
+  "version": "0.0.1-*",
+  "description": "Quick app to exercise a few .NET things",
+  "dependencies": {},
+  "commands": {
+    "run": "run"
+  },
+  "frameworks": {
+    "dnx451": {},
+    "netstandardapp1.5": {
+      "dependencies": {
+        "System.Runtime": "4.0.21-beta-23225",
+        "System.Console": "4.0.0-beta-23225",
+        "System.Collections": "4.0.11-beta-23225",
+        "System.Diagnostics.Process": "4.0.0-beta-23225",
+        "System.Linq": "4.0.1-23225"
+      },
+      "imports": [
+        "dnxcore50"
+      ]
     }
+  }
 }
