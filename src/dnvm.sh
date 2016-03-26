@@ -948,7 +948,7 @@ dnvm()
             for location in `echo $DNX_HOME | tr ":" "\n"`; do
                 location+="/runtimes"
                 if [ -d "$location" ]; then
-                    local oruntimes="$(find $location -name "$searchGlob" \( -type d -or -type l \) -prune -exec basename {} \;)"
+                    local oruntimes="$(find $location -name "$searchGlob" \( -type d -o -type l \) -prune -exec basename {} \;)"
                     for v in `echo $oruntimes | tr "\n" " "`; do
                         runtimes+="$v:$location"$'\n'
                     done
