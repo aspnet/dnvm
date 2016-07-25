@@ -1779,7 +1779,8 @@ function dnvm-exec {
 #>
 function dnvm-setup {
     param(
-        [switch]$SkipUserEnvironmentInstall)
+        [switch]$SkipUserEnvironmentInstall,
+        [switch]$SkipSetMachineDnxHome)
 
     $DestinationHome = [Environment]::ExpandEnvironmentVariables("$DefaultUserHome")
 
@@ -1811,6 +1812,13 @@ function dnvm-setup {
         $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
         $userPath = Change-Path $userPath $Destination $PathsToRemove
         [Environment]::SetEnvironmentVariable("PATH", $userPath, "User")
+    }
+
+    if(Is-Elevated) {
+        if (!$SkipSetMachineDnxHome) {
+            _WriteOut "Adding Machine $HomeEnvVar"
+            [Environment]::SetEnvironmentVariable($HomeEnvVar, $Destination, [System.EnvironmentVariableTarget]::Machine)
+        }
     }
 
     # Now clean up the HomeEnvVar if currently set; script installed to default location.
