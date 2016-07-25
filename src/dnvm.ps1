@@ -1768,6 +1768,7 @@ function dnvm-exec {
     } finally {
         $Script:ExitCode = $LASTEXITCODE
         $env:PATH = $oldPath
+        $Script:ExitCode = $LASTEXITCODE
     }
 }
 
