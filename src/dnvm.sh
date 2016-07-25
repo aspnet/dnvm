@@ -46,6 +46,10 @@ if __dnvm_has "unsetopt"; then
     unsetopt nomatch 2>/dev/null
 fi
 
+if [[ $(uname) == *"CYGWIN"* ]]; then
+    DNX_USER_HOME=$(cygpath "$HOMEPATH/$_DNVM_RUNTIME_FOLDER_NAME")
+fi
+
 if [ -z "$DNX_USER_HOME" ]; then
     eval DNX_USER_HOME="~/$_DNVM_RUNTIME_FOLDER_NAME"
 fi
@@ -71,13 +75,14 @@ DNX_ACTIVE_FEED=""
 __dnvm_current_os()
 {
     local uname=$(uname)
-    if [[ $uname == "Darwin" ]]; then
+    if [[ $uname == *"CYGWIN"* ]] || [[ $uname == *"MINGW"* ]]; then
+        echo "win"
+    elif [[ $uname == "Darwin" ]]; then
         echo "darwin"
     else
         echo "linux"
     fi
 }
-
 __dnvm_os_runtime_defaults()
 {
     local os=$1
@@ -943,7 +948,6 @@ dnvm()
             [[ ! -d $_DNVM_USER_PACKAGES ]] && echo "$_DNVM_RUNTIME_FRIENDLY_NAME is not installed." && return 1
 
             local searchGlob="$_DNVM_RUNTIME_PACKAGE_NAME-*"
-
             local runtimes=""
             for location in `echo $DNX_HOME | tr ":" "\n"`; do
                 location+="/runtimes"
